@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORA - Watches</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="font-sans bg-white text-gray-800">
+
+
+    <!-- Navbar -->
+    <header class="bg-lime-900 text-white">
+        <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
+            <!-- Logo -->
+
+            <h1 class="text-4xl font-bold text-white-900 tracking-wide" style="font-family: 'Cinzel', serif;">
+                ORA
+            </h1>
+
+
+            <!-- Nav Links -->
+            <nav class="hidden md:flex space-x-6">
+                <a href="#" class="hover:text-yellow-400">Home</a>
+                <a href="#" class="hover:text-yellow-400">Men</a>
+                <a href="#" class="hover:text-yellow-400">Women</a>
+                <a href="#" class="hover:text-yellow-400">New Arrivals</a>
+            </nav>
+
+            <!-- Right Section: Search + Icons -->
+            <div class="flex items-center space-x-4">
+                <!-- Search -->
+                <input type="text" placeholder="Search..." class="px-2 py-1 rounded hidden md:block text-black">
+
+                <!-- Icons -->
+                <a href="#" class="hover:text-yellow-400">
+                    <!-- Wishlist -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 
+               2 6 4 4 6.5 4c1.74 0 3.41 1.01 4.5 2.09C12.09 5.01 
+               13.76 4 15.5 4 18 4 20 6 20 8.5c0 3.78-3.4 6.86-8.55 
+               11.18L12 21z" />
+                    </svg>
+                </a>
+
+                <a href="#" class="hover:text-yellow-400">
+                    <!-- Cart -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 
+               5M7 13l-2 9m12-9l2 9m-6-9v9" />
+                    </svg>
+                </a>
+
+                <a href="#" class="hover:text-yellow-400">
+                    <!-- User / Profile Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4
+             -4 1.79-4 4 1.79 4 4 4zm0 2c-3.31 0-6 
+             2.69-6 6h12c0-3.31-2.69-6-6-6z" />
+                    </svg>
+                </a>
+
+            </div>
+        </div>
+    </header>
+
+
+    <!-- Hero Section -->
+    <section class="relative">
+        <img src="/images/images.jpeg" alt="Hero" class="w-full object-cover h-[500px]">
+        <div
+            class="absolute inset-0 flex flex-col justify-center items-center text-center text-white bg-black bg-opacity-30">
+            <h2 class="text-4xl md:text-5xl font-serif font-bold mb-4">TIMELESS ELEGANCE</h2>
+            <p class="mb-6">Crafted for those who value precision</p>
+            <a href="#" class="bg-yellow-400 text-black px-6 py-3 font-semibold rounded hover:bg-yellow-500">
+                SHOP NOW
+            </a>
+        </div>
+    </section>
+
+    <!-- Category Section -->
+    <section class="py-12 text-center">
+        <h3 class="text-2xl md:text-3xl font-serif font-bold mb-6">GEN Z & MILLENNIAL APPROVED</h3>
+        <p class="text-gray-600 mb-8">Minimal, Stunning & Trend Setting Global Fashion</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+            <div class="relative">
+                <img src="/images/forher.jpeg" alt="For Her" class="w-full h-80 object-cover rounded">
+                <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                    <a href="#" class="bg-gray-200 px-4 py-2 rounded shadow">SHOP FOR HER</a>
+                </div>
+            </div>
+            <div class="relative">
+                <img src="/images/forhim.jpeg" alt="For Him" class="w-full h-80 object-cover rounded ">
+                <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                    <a href="#" class="bg-gray-200 px-4 py-2 rounded shadow">SHOP FOR HIM</a>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- Latest Trends -->
+    <section class="py-12 bg-gray-50">
+        <h3 class="text-center text-2xl font-serif font-bold mb-8">LATEST TRENDS</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <!-- Product Card -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition duration-300">
+                <img src="images/lt1.jpeg" class="w-full h-56 object-cover" alt="">
+                <div class="p-4">
+                    <h4 class="text-gray-800 font-semibold text-lg mb-2">FASTTRACK Elegant Latest Womens</h4>
+                    <p class="text-yellow-500 font-bold text-md">₹ 1299</p>
+                </div>
+            </div>
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition duration-300">
+                <img src="images/lt2.jpeg" class="w-full h-56 object-cover" alt="">
+                <div class="p-4">
+                    <h4 class="text-gray-800 font-semibold text-lg mb-2">ILOZ Stylish Luxury Gold Black</h4>
+                    <p class="text-yellow-500 font-bold text-md">₹ 1599</p>
+                </div>
+            </div>
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition duration-300">
+                <img src="images/lt3.jpeg" class="w-full h-56 object-cover" alt="">
+                <div class="p-4">
+                    <h4 class="text-gray-800 font-semibold text-lg mb-2">Franktime Analogue Bracelet watches</h4>
+                    <p class="text-yellow-500 font-bold text-md">₹ 1799</p>
+                </div>
+            </div>
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition duration-300">
+                <img src="images/lt4.jpeg" class="w-full h-56 object-cover" alt="">
+                <div class="p-4">
+                    <h4 class="text-gray-800 font-semibold text-lg mb-2">POEDAGAR 973 Latest Luxury Watches </h4>
+                    <p class="text-yellow-500 font-bold text-md">₹ 1999</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Top Launches -->
+    <section class="py-12 bg-gray-50">
+        <h3 class="text-center text-2xl font-serif font-bold mb-8">OUR TOP LAUNCHES</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <!-- Product Card -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition duration-300">
+                <img src="images/top1.jpeg" class="w-full h-56 object-cover" alt="Launch 1">
+                <div class="p-4">
+                    <h4 class="text-gray-800 font-semibold text-lg mb-2">NIBOSI Bracelet Analogue women's Watches</h4>
+                    <p class="text-yellow-500 font-bold text-md">₹ 1499</p>
+                </div>
+            </div>
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition duration-300">
+                <img src="images/top2.jpeg" class="w-full h-56 object-cover" alt="Launch 2">
+                <div class="p-4">
+                    <h4 class="text-gray-800 font-semibold text-lg mb-2">Daniel Jubilie Analogue watches</h4>
+                    <p class="text-yellow-500 font-bold text-md">₹ 1699</p>
+                </div>
+            </div>
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition duration-300">
+                <img src="images/top3.jpeg" class="w-full h-56 object-cover" alt="Launch 3">
+                <div class="p-4">
+                    <h4 class="text-gray-800 font-semibold text-lg mb-2">LIGE luxury analogue Watches</h4>
+                    <p class="text-yellow-500 font-bold text-md">₹ 1899</p>
+                </div>
+            </div>
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition duration-300">
+                <img src="images/top4.jpeg" class="w-full h-56 object-cover" alt="Launch 4">
+                <div class="p-4">
+                    <h4 class="text-gray-800 font-semibold text-lg mb-2">FOSSIL Latest Men Watches with Bracelet</h4>
+                    <p class="text-yellow-500 font-bold text-md">₹ 4099</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Sale Section -->
+    <section class="relative bg-gray-100">
+        <div class="grid grid-cols-1 md:grid-cols-3 items-stretch">
+
+            <!-- Left Side: Text -->
+            <div class="flex flex-col justify-center px-6 md:px-12 py-20 bg-gray-100 md:col-span-1">
+                <h3 class="text-6xl font-bold leading-tight mb-6">
+                    <span class="text-gray-400">MEGA</span>
+                    <span class="text-red-600">MAD</span>
+                    <span class="text-gray-400">NESS</span>
+                    <span class="text-yellow-400">SALE</span>
+                </h3>
+
+
+                <p class="text-3xl font-bold text-gray-900 bg-white/80 px-6 py-3 rounded shadow-lg inline-block">
+                    FLAT 50% OFFER
+                </p>
+            </div>
+
+
+            <div class="h-full w-full md:col-span-2">
+                <img src="images/sale.jpeg" alt="Sale Watch" class="w-full h-full object-cover">
+            </div>
+
+        </div>
+    </section>
+
+
+
+
+
+    <!-- Footer -->
+    <footer class="bg-lime-900 text-white py-2">
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+                <h3 class="text-4xl font-bold tracking-wide" style="font-family: 'Cinzel', serif;">
+                    ORA
+                </h3>
+                <p>Contact us at <a href="mailto:info@ora.com" class="underline">info@ora.com</a></p>
+            </div>
+            <div>
+                <h4 class="text-lg font-bold mb-2">Policies</h4>
+                <ul>
+                    <li><a href="#" class="hover:underline">Privacy Policy</a></li>
+                    <li><a href="#" class="hover:underline">Return Policy</a></li>
+                    <li><a href="#" class="hover:underline">Cookies</a></li>
+                    <li><a href="#" class="hover:underline">Terms & Conditions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-bold mb-2">Subscribe to Our Newsletter</h4>
+                <input type="email" placeholder="Enter email" class="px-3 py-2 rounded text-black w-full mb-3">
+                <button
+                    class="bg-yellow-400 text-black px-4 py-2 rounded w-full hover:bg-yellow-500 mb-2">Subscribe</button>
+
+                <!-- Social Media Icons as Circular Buttons -->
+                <div class="flex justify-center gap-4 mt-2">
+                    <!-- Facebook -->
+                    <a href="#"
+                        class="bg-white text-blue-600 hover:bg-yellow-400 hover:text-white w-10 h-10 flex items-center justify-center rounded-full transition">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54v-2.891h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.772-1.63 1.562v1.875h2.773l-.443 2.891h-2.33v6.987C18.343 21.128 22 16.991 22 12z" />
+                        </svg>
+                    </a>
+                    <!-- Twitter -->
+                    <a href="#"
+                        class="bg-white text-blue-400 hover:bg-yellow-400 hover:text-white w-10 h-10 flex items-center justify-center rounded-full transition">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M22.46 6c-.77.34-1.6.57-2.46.68a4.3 4.3 0 0 0 1.88-2.37 8.59 8.59 0 0 1-2.72 1.04 4.28 4.28 0 0 0-7.29 3.9A12.14 12.14 0 0 1 3.15 4.8a4.28 4.28 0 0 0 1.32 5.7 4.24 4.24 0 0 1-1.94-.54v.05a4.28 4.28 0 0 0 3.44 4.2 4.3 4.3 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.97 8.6 8.6 0 0 1-5.33 1.84A8.66 8.66 0 0 1 2 19.54 12.13 12.13 0 0 0 8.29 21c7.55 0 11.68-6.26 11.68-11.68 0-.18-.01-.35-.02-.53A8.36 8.36 0 0 0 22.46 6z" />
+                        </svg>
+                    </a>
+                    <!-- Instagram -->
+                    <a href="#"
+                        class="bg-white text-pink-500 hover:bg-yellow-400 hover:text-white w-10 h-10 flex items-center justify-center rounded-full transition">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm10 2c1.654 0 3 1.346 3 3v10c0 1.654-1.346 3-3 3H7c-1.654 0-3-1.346-3-3V7c0-1.654 1.346-3 3-3h10zm-5 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm4.5-.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="text-center text-sm mt-4">
+            © 2025 ORA | All Rights Reserved
+        </div>
+    </footer>
+
+
+</body>
+
+</html>
