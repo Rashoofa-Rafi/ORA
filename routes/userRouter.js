@@ -4,7 +4,8 @@ const userController=require('../controller/userController')
 
 
 
-router.get('/home',userController.loadHome)
+router.get('/landinghome',userController.loadlandingHome)
+router.get('/pageNotFound',userController.pageNotFound)
 
 
 
