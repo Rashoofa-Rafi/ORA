@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OTP-forgetPassword</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#F5F5F5] flex items-center justify-center min-h-screen">
+
+  <div class="bg-white rounded-3xl shadow-lg flex flex-col md:flex-row items-center w-full max-w-4xl overflow-hidden">
+    <!-- Left Section -->
+    <div class="w-full md:w-1/2 p-10 text-center md:text-left">
+      <h1 class="text-2xl font-extrabold text-black mb-4">Confirm with OTP </h1>
+      <p class="text-gray-600 text-sm mb-6">Please check your email for OTP</p>
+
+      <form class="flex flex-col gap-4">
+       <div class="flex items-center justify-center space-x-4">
+      <!-- OTP Inputs -->
+      <div class="flex space-x-2">
+        <input type="text" maxlength="1" class="otp-input w-14 h-14 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" maxlength="1" class="otp-input w-14 h-14 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" maxlength="1" class="otp-input w-14 h-14 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" maxlength="1" class="otp-input w-14 h-14 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+
+      <!-- Timer -->
+      <span id="timer" class="ml-4 text-gray-600 font-semibold text-lg">01:00</span>
+    </div>
+    <a href="#" class="text-blue-500 text-sm hover:underline">ResendOTP</a>
+        <button
+          type="submit"
+          class="bg-gray-800 text-white font-semibold py-2 rounded-md hover:bg-black transition duration-200">
+          Verify
+        </button>
+
+        <a href="#" class="text-gray-500 text-sm hover:underline">Go back to Login page</a>
+      </form>
+    </div>
+
+    <!-- Right Section (Image) -->
+    <div class="w-full md:w-1/2">
+      <img src="/images/login.jpeg"
+        alt="Jewelry" class="w-full h-full object-cover">
+    </div>
+  </div>
+
+</body>
+
+</html>
+<script>
+    // Auto-focus for OTP inputs
+    const inputs = document.querySelectorAll('.otp-input');
+    inputs.forEach((input, idx) => {
+      input.addEventListener('input', () => {
+        if (input.value.length === 1 && idx < inputs.length - 1) inputs[idx + 1].focus();
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && idx > 0 && input.value.length === 0) inputs[idx - 1].focus();
+      });
+    });
+
+    // Timer in mm:ss format
+    let time = 60; // total seconds
+    const timerEl = document.getElementById('timer');
+
+    const countdown = setInterval(() => {
+      if (time > 0) {
+        time--;
+        const minutes = String(Math.floor(time / 60)).padStart(2, '0');
+        const seconds = String(time % 60).padStart(2, '0');
+        timerEl.textContent = `${minutes}:${seconds}`;
+      } else {
+        clearInterval(countdown);
+        timerEl.textContent = '00:00';
+        // Optional: enable Resend OTP button here
+      }
+    }, 1000);
+  </script>

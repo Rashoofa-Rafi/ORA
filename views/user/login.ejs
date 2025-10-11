@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORA Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white rounded-xl shadow-lg flex overflow-hidden w-full max-w-4xl">
+        <!-- Left: Login Form -->
+        <div class="w-full md:w-1/2 p-10 flex flex-col justify-center">
+            <h1 class="text-4xl font-serif font-bold text-yellow-400 mb-6" style="font-family: 'Cinzel', serif;">ORA</h1>
+
+            
+            <!-- Google Login -->
+<button class="flex items-center justify-center border border-gray-300 rounded-md py-2 mb-4 hover:bg-gray-100 transition">
+    
+    <img src="https://developers.google.com/identity/images/g-logo.png" 
+         alt="Google Logo" class="w-5 h-5 mr-2">
+    <span class="text-gray-700 font-medium">Login with Google</span>
+</button>
+
+
+            <div class="flex items-center my-4 text-gray-400">
+                <hr class="flex-grow border-t border-gray-300">
+                <span class="px-2 text-sm">or</span>
+                <hr class="flex-grow border-t border-gray-300">
+            </div>
+            <form id="myform" >
+            <!-- Email -->
+            <input type="email" placeholder="Email" class="w-full border border-gray-200 rounded-md px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-400"name='email' id="email">
+            <div id="err1" class="text-red-500 text-sm"></div>
+            <!-- Password -->
+            <input type="password" placeholder="Password" class="w-full border border-gray-200 rounded-md px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" name="password" id="password">
+            <div id="err2" class="text-red-500 text-sm"></div>
+            <a href="#" class="text-sm text-gray-500 mb-4 hover:text-gray-700">Forgot password?</a>
+
+            <button class="w-full bg-gray-500 text-white py-2 rounded-md hover:bg-gray-800 mb-4">Login</button>
+            <div id="successmsg" class="text-green-500 text-sm"></div>
+            </form>
+            <p class="text-sm text-gray-600">New User? <a href="/signup" class="text-blue-600 hover:underline">Sign up now..!</a></p>
+        </div>
+
+        <!-- Right: Image -->
+       
+<div class="hidden md:flex w-1/2 items-center justify-center p-6">
+    <img src="/images/login.jpeg" alt="Watch Set" class="rounded-xl shadow-lg object-contain w-full h-full">
+</div>
+
+    </div>
+
+</body>
+
+</html>
+<script>
+    document.getElementById("myform").addEventListener("submit", async (e)=>{
+        e.preventDefault()
+        
+        document.getElementById("err1").textContent=''
+        document.getElementById("err2").textContent=''
+
+        let email=document.getElementById("email").value.trim()
+        let password=document.getElementById("password").value.trim()
+
+        let isValid=true
+
+        let emailRegex= /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(email===""){
+            document.getElementById("err1").textContent="email required"
+            isValid=false
+        }else if(!emailRegex.test(email)){
+            document.getElementById("err1").textContent="Invalid email"
+            isValid=false
+        }
+
+        let passwordRegex=/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/
+        if(password===''){
+            document.getElementById("err2").textContent="password required"
+            isValid=false
+        }else if(!passwordRegex.test(password)){
+            document.getElementById("err2").textContent="password should contain alphabets,numbers and special characters"
+            isValid=false
+        } else if(password.length<8){
+            document.getElementById("err2").textContent='password should contain atleast 8 characters'
+            isValid=false
+        }
+
+        if(!isValid) return
+    
+
+
+    const data={email,password}
+    try{
+        const res = await fetch('/user/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result= await res.json()
+        console.log("result",result)
+        if(result.success){
+            
+            document.getElementById("successmsg").textContent=result.message
+            window.location.href=result.redirectUrl
+            document.getElementById("myform").reset()
+        }else{
+            document.getElementById("successmsg").textContent='Invalid Credential'
+        }
+
+    }catch(error){
+        console.error(error);
+        document.getElementById("successmsg").textContent = 'Server error'
+    }
+    })
+</script>

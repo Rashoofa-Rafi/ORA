@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORA Signup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <!-- Outer Card Container -->
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-4xl flex flex-col md:flex-row">
+
+        <!-- Left: Signup Form -->
+        <div class="w-full md:w-1/2 p-10 flex flex-col justify-center">
+            <h1 class="text-2xl md:text-3xl font-bold mb-6 text-gray-900">Create Account</h1>
+
+            <form  id="myform" method="POST" action="/user/signup"class="flex flex-col space-y-3">
+
+                <input type="text" placeholder="Full Name" class="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" name="fullName" id="fname">
+                <div id="err1" class="text-red-500 text-sm"></div>
+                <input type="email" placeholder="Email" class="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" name="email" id="Email">
+                <div id="err2" class="text-red-500 text-sm"></div>
+                <input type="text" placeholder="Mobile Number" class="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" name="mobile" id="mobile">
+                <div id="err3" class="text-red-500 text-sm"></div>
+                <input type="password" placeholder="Password" class="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" name="password" id="Password">
+                <div id="err4" class="text-red-500 text-sm"></div>
+                <input type="password" placeholder="Confirm Password" class="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" name="Cpassword" id="Cpassword">
+                <div id="err5" class="text-red-500 text-sm"></div>
+                <button type="button" class="text-xs text-gray-500 hover:text-gray-700">Anyone has referred You? Claim the reward <span class="text-orange-400 font-semibold">REFERRAL CODE</span></button>
+
+                <button type="submit" class="bg-gray-500 text-white py-2 rounded-md hover:bg-gray-800 transition mt-2">Submit</button>
+
+            </form>
+            <div id="successMsg" class="text-green-500 mt-2"></div>
+
+            <p class="text-sm text-gray-500 mt-4">Already have an account? <a href="/login" class="text-blue-600 hover:underline">Log in</a></p>
+
+            <div class="flex items-center my-4 text-gray-400">
+                <hr class="flex-grow border-t border-gray-300">
+                <span class="px-2 text-sm">Or register with</span>
+                <hr class="flex-grow border-t border-gray-300">
+            </div>
+
+            <!-- Google Login -->
+            <button class="flex items-center justify-center border border-gray-300 rounded-md py-2 hover:bg-gray-100 transition">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo" class="w-5 h-5 mr-2">
+                <span class="text-gray-700 font-medium">Google</span>
+            </button>
+
+        </div>
+
+        <!-- Right: Image -->
+        <div class="hidden md:flex w-1/2 items-center justify-center p-6 bg-gray-50">
+            <img src="/images/login.jpeg" alt="Signup Image" class="rounded-xl shadow-lg object-cover w-full h-full">
+        </div>
+
+    </div>
+
+</body>
+
+</html>
+
+<script>
+    document.getElementById('myform').addEventListener('submit',  async function(e) {
+    e.preventDefault(); 
+
+    // To Clear old error messages
+    document.getElementById('err1').textContent = ''
+    document.getElementById('err2').textContent = ''
+    document.getElementById('err3').textContent = ''
+    document.getElementById('err4').textContent = ''
+    document.getElementById('err5').textContent = ''
+    document.getElementById('successMsg').textContent = ''
+
+    
+    const fullName = document.getElementById('fname').value.trim()
+    const email = document.getElementById('Email').value.trim()
+    const mobile = document.getElementById('mobile').value.trim()
+    const password = document.getElementById('Password').value
+    const Cpassword = document.getElementById('Cpassword').value
+//set a flag for all fields are valid
+    let isValid = true;
+
+    
+    if (fullName === '') {
+        document.getElementById('err1').textContent = 'Full Name is required';
+        isValid = false;
+    }
+//validate email
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email === '') {
+        document.getElementById('err2').textContent = 'Email is required';
+        isValid = false;
+    } else if (!emailRegex.test(email)) {
+        document.getElementById('err2').textContent = 'Invalid email format';
+        isValid = false;
+    }
+
+     //validate mobile
+    const mobileRegex = /^[0-9]{10}$/;
+    if(mobile===""){
+         document.getElementById('err3').textContent = 'Mobile is required'
+         isValid = false
+    }
+    else if (!mobileRegex.test(mobile)) {
+        document.getElementById('err3').textContent = 'Invalid mobile number';
+        isValid = false;
+    }
+//validate password
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/
+    if (password==='' ){
+         document.getElementById('err4').textContent = 'Password is required'
+         isValid = false
+    }
+    else if(!passwordRegex.test(password)) {
+      document.getElementById('err4').textContent =
+      'Password must include letters, numbers, and special characters'
+      isValid = false
+    }
+    else if (password.length < 8) {
+        document.getElementById('err4').textContent = 'Password must be at least 8 characters';
+        isValid = false;
+    }
+
+    
+    if (Cpassword !== password) {
+        document.getElementById('err5').textContent = 'Passwords do not match';
+        isValid = false;
+    }
+// stop if validation fails
+    if (!isValid) return; 
+
+    
+    const data = { fullName, email, mobile, password };
+
+    try {
+        const res = await fetch('/user/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+            
+            document.getElementById('successMsg').textContent =  result.message;
+            window.location.href = result.redirectUrl
+            document.getElementById('myform').reset();
+        } else {
+             if (result.errors) {
+        if (result.errors.fullName) document.getElementById('err1').textContent = result.errors.fullName.message;
+        if (result.errors.email) document.getElementById('err2').textContent = result.errors.email.message;
+        if (result.errors.mobile) document.getElementById('err3').textContent = result.errors.mobile.message;
+    } else {
+        document.getElementById('successMsg').textContent = result.message || 'Something went wrong';
+    }
+            
+        }
+    } catch (err) {
+        console.error(err);
+        document.getElementById('successMsg').textContent = 'Server error';
+    }
+});
+
+</script>
