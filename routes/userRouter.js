@@ -29,6 +29,10 @@ router.get('/changePassword',(req,res)=>{
 
 router.post('/signup',userController.signup)
 router.post('/login',userController.login)
+router.post('/verifyOTP',userController.verifyOTP)
+router.post('/resendOtp',userController.resendOtp)
+router.post('/forgetPassword',userController.forgetPassword)
+router.post('/changePassword',userController.changePassword)
 
 
 module.exports=router

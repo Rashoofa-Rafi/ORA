@@ -16,7 +16,7 @@
       <h1 class="text-2xl font-extrabold text-black mb-4">Confirm with OTP </h1>
       <p class="text-gray-600 text-sm mb-6">Please check your email for OTP</p>
 
-      <form class="flex flex-col gap-4">
+      <form class="flex flex-col gap-4" id="myform" >
        <div class="flex items-center justify-center space-x-4">
       <!-- OTP Inputs -->
       <div class="flex space-x-2">
@@ -29,14 +29,16 @@
       <!-- Timer -->
       <span id="timer" class="ml-4 text-gray-600 font-semibold text-lg">01:00</span>
     </div>
-    <a href="#" class="text-blue-500 text-sm hover:underline">ResendOTP</a>
+    <a href="#" id="resendOtp" class="text-blue-500 text-sm hover:underline" >ResendOTP</a>
         <button
           type="submit"
           class="bg-gray-800 text-white font-semibold py-2 rounded-md hover:bg-black transition duration-200">
-          Verify
+          Verify OTP
         </button>
+        <div id="errMsg" class="text-red-500 text-sm"></div>
+        <div id="successMsg" class="text-green-600 text-sm"></div>
 
-        <a href="#" class="text-gray-500 text-sm hover:underline">Go back to Login page</a>
+        <a href="/user/forgetPassword" class="text-gray-500 text-sm hover:underline">Go back </a>
       </form>
     </div>
 
@@ -75,7 +77,65 @@
       } else {
         clearInterval(countdown);
         timerEl.textContent = '00:00';
-        // Optional: enable Resend OTP button here
+        
       }
     }, 1000);
+
+    document.getElementById("myform").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const OTP = Array.from(inputs).map((input) => input.value).join("");
+      
+      
+
+    if (OTP.length !== 4) {
+      document.getElementById("errMsg").textContent = "Please enter all 4 digits.";
+      return;
+    }
+
+    try {
+      const res = await fetch("/user/verifyOTP", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ OTP }),
+        
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        document.getElementById("successMsg").textContent = result.message;
+        window.location.href = result.redirectUrl;
+       
+      } else {
+        document.getElementById("errMsg").textContent = result.message;
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      document.getElementById("errMsg").textContent = "Server error";
+    }
+  });
+  //for resend OTP
+   document.getElementById("resendOtp").addEventListener("click", async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/user/resendOtp", {
+        method: "POST",
+        credentials: "same-origin" 
+      });
+      const result = await res.json();
+
+      if (result.success) {
+        alert(result.message)
+        window.location.href=result.redirectUrl
+        time= 60; // Reset timer
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error("Resend error:", error);
+    }
+  });
+
   </script>
