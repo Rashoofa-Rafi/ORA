@@ -4,7 +4,8 @@ const mongoose=require("mongoose")
 const userSchema=new mongoose.Schema({
     fullName:{
         type:String,
-        required:true
+        required: function() { return 
+                this.role !== 'admin'}
      },
      email:{
         type:String,
@@ -14,18 +15,19 @@ const userSchema=new mongoose.Schema({
      mobile:{
         type:String,
         required:false,
-        unique:false,
+        unique:true,
         sparse:true,
+        default:null
      },
      password:{
         type:String,
-        required:true,
+        required:false,
      },
      googleId:{
         type:String,
-        //required:true
-     },
-     role:{
+        required:false
+        
+      }, role:{
         type:String,
         enum:["user","admin"],
         default:'user'

@@ -1,6 +1,8 @@
 const express=require("express")
 const router=express.Router()
 const userController=require('../controller/userController')
+const passport = require('passport')
+
 
 
 
@@ -25,6 +27,17 @@ router.get('/forgetPassword',(req,res)=>{
 router.get('/changePassword',(req,res)=>{
     res.render('user/changePassword')
 })
+router.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+)
+
+router.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login', session: true }),
+  (req, res) => {
+
+    res.redirect('/user/landingHome'); 
+  }
+)
 
 
 router.post('/signup',userController.signup)
@@ -33,6 +46,7 @@ router.post('/verifyOTP',userController.verifyOTP)
 router.post('/resendOtp',userController.resendOtp)
 router.post('/forgetPassword',userController.forgetPassword)
 router.post('/changePassword',userController.changePassword)
+
 
 
 module.exports=router

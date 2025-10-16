@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - ORA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-md">
+        <!-- Logo -->
+        <h1 class="text-3xl font-script text-yellow-300 text-center mb-2">ORA</h1>
+        <!-- Admin Login Title -->
+        <h2 class="text-xl font-semibold text-center mb-6">Admin Login</h2>
+
+        <!-- Login Form -->
+        <form id="myform" class="space-y-4">
+            <div>
+                <input type="email" name="email" placeholder="Email Address" id="email"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                    >
+                    <div id="err1" class="text-red-500 text-sm"></div>
+
+            </div>
+            <div class="relative">
+
+                <input type="password" name="password" placeholder="Password" id="password" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-300" >
+                   <!-- Eye icon for show/hide -->
+                <div id="err2" class="text-red-500 text-sm"></div>
+                
+                   <button type="button" class="absolute right-3 top-2.5 text-gray-500">
+                    👁️
+                </button>
+            </div>
+            <div class="text-right">
+                <a href="/admin/forgetPassword" class="text-sm text-gray-500 hover:text-yellow-400">Forget Password?</a>
+            </div>
+            <button type="submit"
+                class="w-full bg-black text-white font-semibold py-2 rounded-lg hover:bg-gray-800 transition-colors">
+                Login
+            </button>
+            <div id="successMsg" class="text-green-500 text-sm"></div>
+            <div id="errMsg" class="text-red-500 text-sm"></div>
+        </form>
+    </div>
+
+</body>
+
+</html> 
+<script>
+    document.getElementById("myform").addEventListener("submit",async(e)=>{
+        e.preventDefault()
+
+        document.getElementById("err1").textContent=''
+         document.getElementById("err2").textContent=''
+        document.getElementById("successMsg").textContent=''
+
+        let email=document.getElementById('email').value.trim()
+        let password=document.getElementById('password').value.trim()
+
+        let isvalid=true
+
+        let emailRegex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if(email===""){
+            document.getElementById("err1").textContent='Email required'
+            isvalid =false
+        }else if(!emailRegex.test(email)){
+            document.getElementById('err1').textContent='Invalid email'
+            iavalid=false
+        }
+
+        let passwordRegex=/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/
+        if(password===''){
+            document.getElementById('err2').textContent='password required'
+            isvalid=false
+        }else if(password.length<8){
+            document.getElementById('err2').textContent='password should contain atleast 8 characters'
+            isvalid=false
+        }else if(!passwordRegex.test(password)){
+            document.getElementById('err2').textContent='password should contain alphabets,numbers and special characters'
+            isvalid=false
+        }
+        if(!isvalid) return
+
+        try {
+            const res=await fetch('/admin/login',{
+                method:'POST',
+                headers:{'content-Type':'application/json'},
+                credentials:'same-origin',
+                body:JSON.stringify({email,password})
+            })
+            const result=await res.json()
+            if(result.success){
+                document.getElementById('successMsg').textContent=result.message
+                window.location.href=result.redirectUrl
+                document.getElementById('myform').reset()
+            }else{
+                document.getElementById("errMsg").textContent=result.message
+            }
+        } catch (error) {
+            console.error(error)
+            document.getElementById('errMsg').textContent='server error'
+        }
+    })
+</script>
+                    
+
+
+
+
+
+
+                
