@@ -71,10 +71,10 @@ console.log(name,description,image)
 
   } catch (err) {
     console.error(err);
-    console.error("Save error:", err)
+    
     res.status(500).json({ 
         success: false, 
-        message: err.message 
+        message: 'internal server error'
     })
   }
 }

@@ -3,7 +3,12 @@ const path = require('path')
 
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'public/uploads/category'),
+  destination: (req, file, cb) => {
+    let folder = 'public/uploads/other'
+    if (req.originalUrl.startsWith("/admin/category")) folder = 'public/uploads/category'
+    else if (req.originalUrl.startsWith("/admin/subcategory")) folder = 'public/uploads/subcategory'
+    cb(null, folder)
+  },
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 })
 

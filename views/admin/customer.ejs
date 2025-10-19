@@ -79,20 +79,23 @@
                 <div id="errMsg" class="text-red-500 text-sm"></div>
                 <div id="successMsg" class="text-green-500 text-sm"></div>
             </div>        
-        <!-- Pagination -->
-            <div class="mt-4 flex gap-2 justify-center">
-            <% 
-    
-            let startPage = Math.max(1, page - 2);
-            let endPage = Math.min(totalPages, page + 2); 
-            %>
-            <% for(let i = startPage; i <= endPage; i++) { %>
-             <a href="/admin/customers?page=<%= i %>&search=<%= search %>"
-                  class="px-3 py-1 border rounded <%= i === page ? 'bg-yellow-500 text-white' : '' %>">
-            <%= i %>
-             </a>
-            <% } %>
-        </div>
+        <!-- pagination -->
+                    <div class="mt-4 flex justify-center items-center space-x-2">
+                        <a href="/admin/category?page=<%= page - 1 %>&search=<%= search %>"
+                            class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                            Prev
+                        </a>
+                        <% for (let i=1; i <=totalPages; i++) { %>
+                        <a href="/admin/category?page=<%= i %>&search=<%= search %>"
+                                class="px-3 py-1 border rounded <%= page === i ? 'bg-yellow-500 text-white' : 'hover:bg-gray-200' %>">
+                                <%= i %>
+                        </a>
+                            <% } %>
+                        <a href="/admin/category?page=<%= page + 1 %>&search=<%= search %>"
+                                    class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                                    Next
+                        </a>
+                    </div>
                   
                             
         </main>                       

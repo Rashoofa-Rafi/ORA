@@ -135,27 +135,22 @@
                             + Add SubCategory
                         </a>
                     </div>
-
+                  <!-- pagination -->
                     <div class="mt-4 flex justify-center items-center space-x-2">
-                        <!-- Prev Button -->
                         <a href="/admin/category?page=<%= page - 1 %>&search=<%= search %>"
                             class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === 1 ? 'pointer-events-none opacity-50' : '' %>">
                             Prev
                         </a>
-
-                        <!-- Page Numbers -->
                         <% for (let i=1; i <=totalPages; i++) { %>
-                            <a href="/admin/category?page=<%= i %>&search=<%= search %>"
+                        <a href="/admin/category?page=<%= i %>&search=<%= search %>"
                                 class="px-3 py-1 border rounded <%= page === i ? 'bg-yellow-500 text-white' : 'hover:bg-gray-200' %>">
                                 <%= i %>
-                            </a>
+                        </a>
                             <% } %>
-
-                                <!-- Next Button -->
-                                <a href="/admin/category?page=<%= page + 1 %>&search=<%= search %>"
+                        <a href="/admin/category?page=<%= page + 1 %>&search=<%= search %>"
                                     class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === totalPages ? 'pointer-events-none opacity-50' : '' %>">
                                     Next
-                                </a>
+                        </a>
                     </div>
 
                 </main>
@@ -203,6 +198,8 @@
                 descriptionInput.value = category.description
 
             }
+            nameInput.disabled = true
+            descriptionInput.disabled = true
         }
     }
 

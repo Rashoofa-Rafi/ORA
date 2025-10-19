@@ -46,7 +46,10 @@ router.patch('/category/delete/:id',categoryController.deleteCategory)
 
 
 //for subcategory management
-// router.get('/subCategory',subcategoryController.subcategoryInfo)
+router.get('/subCategory',subcategoryController.subcategoryInfo)
+router.post('/subcategory/add',upload.single('image'),subcategoryController.addSubcategory)
+router.patch('/subcategory/edit/:id',upload.single('image'),subcategoryController.editSubcategory)
+router.patch('/subcategory/delete/:id',subcategoryController.deleteSubcategory)
 
 
 
