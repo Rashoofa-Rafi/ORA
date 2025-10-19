@@ -36,6 +36,10 @@ const userSchema=new mongoose.Schema({
         type:Boolean,
         required:false
      },
+     isBlocked:{
+      type:Boolean,
+      required:false
+     },
      walletBalance:{
         type:Number,
         //defualt:0
