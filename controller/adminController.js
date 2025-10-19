@@ -1,5 +1,5 @@
 const express=require('express')
-const Admin=require('../models/userSchema')
+const Admin=require('../models/userSchema.js')
 const bcrypt=require('bcrypt')
 const { generateOTP, sendVerificationEmail } = require('../helpers/generateotp')
 
