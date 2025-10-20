@@ -1,10 +1,10 @@
-<!-- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin-Customers</title>
+    <title>Admin-Subcategory</title>
     <script src="https://cdn.tailwindcss.com"></script>
 
 </head>
@@ -145,11 +145,18 @@ let subcategoryId = null
 
 function openModal(type, subcategory = null) {
     actionType = type
-    
+
+    nameInput.disabled = false
+    descriptionInput.disabled = false
+    categorySelect.disabled = false
 
     
     form.reset()
     errorMsg.classList.add("hidden")
+
+     if (subcategory) {
+        subcategoryId = subcategory._id
+    }
 
     if (type === 'add') {
         title.textContent = "Add Subcategory"
@@ -161,7 +168,7 @@ function openModal(type, subcategory = null) {
         if (subcategory) {
             nameInput.value = subcategory.name
             descriptionInput.value = subcategory.description
-            categorySelect.value = subcategory.category_Id || ""
+            categorySelect.value = subcategory.category_Id?._id || subcategory.category_Id || ""
         }
         
     } else if (type === 'delete') {
@@ -170,7 +177,7 @@ function openModal(type, subcategory = null) {
         if (subcategory) {
             nameInput.value = subcategory.name
             descriptionInput.value = subcategory.description
-            categorySelect.value = subcategory.category_Id || ""
+            categorySelect.value = subcategory.category_Id?._id || subcategory.category_Id || ""
         }
         // Disable inputs for delete
         nameInput.disabled = true

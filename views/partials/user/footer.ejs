@@ -58,5 +58,19 @@
 
 
 </body>
+<script>
+  const btn = document.getElementById('userMenuButton');
+  const dropdown = document.getElementById('userDropdown');
 
+  btn.addEventListener('click', () => {
+    dropdown.classList.toggle('hidden');
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (event) => {
+    if (!btn.contains(event.target) && !dropdown.contains(event.target)) {
+      dropdown.classList.add('hidden');
+    }
+  });
+</script>
 </html>

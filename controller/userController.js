@@ -277,11 +277,34 @@ const login = async (req, res) => {
     }
 }
 
+const logout = async (req, res) => {
+  try {
+    await new Promise((resolve, reject) => {
+      req.logout(err => {
+        if (err) reject(err);
+        else resolve();
+      })
+    })
+
+   req.session.destroy(err => {
+      if (err)
+        onsole.log("Session destroy error:", err);
+      
+      res.clearCookie('connect.sid')
+      return res.redirect('/user/login')
+    });
+
+  } catch (error) {
+    console.error( error)
+    return res.status(500).send("Something went wrong during logout");
+  }
+}
+
 
 
 
 
 module.exports = {
-    signup,forgetPassword , verifyOTP, resendOtp,changePassword ,login
+    signup,forgetPassword , verifyOTP, resendOtp,changePassword ,login,logout
 
 }

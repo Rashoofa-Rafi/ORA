@@ -63,6 +63,7 @@ let addSubcategory = async (req, res) => {
     }
 
     let newsubcategory = new Subcategory({
+      category_Id,
       name,
       description,
       image,
@@ -90,45 +91,65 @@ let addSubcategory = async (req, res) => {
 
 let editSubcategory = async (req, res) => {
   try {
-    const {category_Id, name, description } = req.body
-    const updateData = { name, description }
+    const { category_Id, name, description } = req.body
+
+   
+    if (!category_Id || !name || !description) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required."
+      })
+    }
+
+    
+    const exist = await Subcategory.findOne({
+      category_Id,
+      name,
+      _id: { $ne: req.params.id }
+    })
+
+    if (exist) {
+      return res.status(400).json({
+        success: false,
+        message: "Subcategory already exists in this category."
+      })
+    }
+
+    
+    const updateData = {
+      name,
+      description,
+      category_Id
+    }
 
     if (req.file) {
       updateData.image = req.file.filename
     }
 
-    const subcategory=await Subcategory.findByIdAndUpdate(req.params.id, updateData)
-    if(!subcategory){
-        return res.status(400).json({
-            success:false,
-            message:'Failed to Update subcategory'
-        })
+    
+    const updated = await Subcategory.findByIdAndUpdate(req.params.id, updateData, { new: true })
+
+    if (!updated) {
+      return res.status(400).json({
+        success: false,
+        message: "Failed to update subcategory."
+      })
     }
-// check same subcategory added inside category
-    const exist = await Subcategory.findOne({
-            category_Id,
-            name,
-            _id: { $ne: req.params.id }
-        })
-        if (exist) {
-            return res.status(400).json({ 
-                success: false,
-             message: "Subcategory already exists in this category."
-             })
-        }
-    return res.status(200).json({ 
-        success: true, 
-        message: "Subcategory updated successfully!"
-     })
+
+    return res.status(200).json({
+      success: true,
+      message: "Subcategory updated successfully!"
+    })
 
   } catch (err) {
     console.error(err)
-    res.status(500).json({ 
-        success: false, 
-        message: "Internal server error" 
+    res.status(500).json({
+      success: false,
+      message: "Internal server error"
     })
   }
 }
+
 
 const deleteSubcategory = async (req, res) => {
   try {
