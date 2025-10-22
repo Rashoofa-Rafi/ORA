@@ -49,7 +49,7 @@ const blockStatus= async(req,res)=>{
     await Customer.findByIdAndUpdate(id, { isBlocked });
         res.status(200).json({
             success:true,
-            message: `Customer ${isBlocked} ? 'blocked' : 'unblocked' successfully`,
+            message: `Customer ${isBlocked ? 'blocked' : 'unblocked'} successfully`,
         })
         
     } catch (error) {

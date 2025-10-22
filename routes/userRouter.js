@@ -8,27 +8,15 @@ const passport = require('passport')
 
 
 
-router.get('/landinghome',nocache,isUserAuthenticated,(req,res)=>{
-    res.render('user/landingHome')
-})
-router.get('/pageNotFound',(req,res)=>{
-    res.render('user/page-404')
-})
-router.get('/signup',isLoggedout,(req,res)=>{
-    res.render('user/signup')
-})
-router.get('/otp',isLoggedout,(req,res)=>{
-    res.render('user/OTP')
-})
-router.get('/login',isLoggedout,(req,res)=>{
-    res.render('user/login')
-})
-router.get('/forgetPassword',isLoggedout,(req,res)=>{
-    res.render('user/forgetPassword')
-})
-router.get('/changePassword',nocache,isUserAuthenticated,(req,res)=>{
-    res.render('user/changePassword')
-})
+router.get('/home',userController.loadHome)
+router.get('/pagenotfound',userController.loadpage404)
+router.get('/signup',userController.loadSignup)
+router.get('/verify-otp',userController.loadOTP)
+router.get('/login',userController.loadLogin)
+router.get('/forget-password',userController.loadforgetPassword)
+router.get('/change-password',userController.loadchangePassword)
+router.get('/logout',nocache, isUserAuthenticated, userController.logout)
+
 router.get('/auth/google',
   passport.authenticate('google', { scope: ['profile', 'email'] })
 )
@@ -37,19 +25,19 @@ router.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login', session: true }),
   (req, res) => {
 
-    res.redirect('/user/landingHome'); 
+    res.redirect('/user/Home'); 
   }
 )
 
 
 router.post('/signup',userController.signup)
 router.post('/login',userController.login)
-router.post('/verifyOTP',userController.verifyOTP)
-router.post('/resendOtp',userController.resendOtp)
-router.post('/forgetPassword',userController.forgetPassword)
-router.post('/changePassword',isUserAuthenticated,userController.changePassword)
+router.post('/verify-otp',userController.verifyOTP)
+router.post('/resend-otp',userController.resendOtp)
+router.post('/forget-password',userController.forgetPassword)
+router.post('/change-password',userController.changePassword)
 
-router.get('/logout',nocache, isUserAuthenticated, userController.logout);
+
 
 
 

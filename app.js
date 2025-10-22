@@ -25,8 +25,12 @@ app.use(session({
  } 
 }));
 
-app.use(passport.initialize())
-app.use(passport.session())
+
+
+app.use((req, res, next) => {
+  res.locals.user = req.session.user;  
+  next();
+});
 
 app.set("view engine","ejs")
 app.set("views",path.join(__dirname,"views"))
@@ -34,6 +38,10 @@ app.use(express.static(path.join(__dirname,"public")))
 
 app.use('/user',userRouter)
 app.use('/admin',adminRouter)
+
+
+app.use(passport.initialize())
+app.use(passport.session())
 
 app.listen(process.env.PORT,()=>{
     console.log("Server is running");

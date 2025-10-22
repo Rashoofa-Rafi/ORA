@@ -3,6 +3,48 @@ const Admin=require('../models/userSchema.js')
 const bcrypt=require('bcrypt')
 const { generateOTP, sendVerificationEmail } = require('../helpers/generateotp')
 
+const loadLogin=async(req,res)=>{
+    try {
+        res.render('admin/login')
+    } catch (error) {
+        res.status(500).send('server error')
+    }
+}
+
+const loadDashboard=async(req,res)=>{
+    try {
+        res.render('admin/dashboard')
+    } catch (error) {
+        res.status(500).send('server error')
+    }
+}
+
+const loadOTP=async(req,res)=>{
+    try {
+        res.render('admin/otp')
+    } catch (error) {
+        res.status(500).send('server error')
+    }
+}
+
+const loadchangePassword=async(req,res)=>{
+    try {
+        res.render('admin/change-password')
+    } catch (error) {
+        res.status(500).send('server error')
+    }
+}
+const loadforgetPassword=async(req,res)=>{
+    try {
+        res.render('admin/forget-password')
+    } catch (error) {
+        res.status(500).send('server error')
+    }
+}
+
+
+
+
 const login= async (req,res)=>{
     try {
         const{email,password}=req.body
@@ -60,11 +102,11 @@ const forgetPassword=async(req,res)=>{
             })
         }
         req.session.otp=OTP
-        req.session.data={email}
+        req.session.frgtPasswordemail=email
         return res.status(200).json({
             success:true,
             message:'OTP sent succesfully',
-            redirectUrl:'/admin/OTP'
+            redirectUrl:'/admin/otp'
         })
         
     } catch (error) {
@@ -80,7 +122,7 @@ const verifyOTP=async(req,res)=>{
     try {
         const{OTP}=req.body
         const sessionOTP=req.session.otp
-        const sessionData=req.session.data
+        const sessionData=req.session.frgtPasswordemail
         console.log(sessionOTP)
         console.log(sessionData)
 
@@ -96,15 +138,15 @@ const verifyOTP=async(req,res)=>{
                 message:'Incorrect OTP'
             })
         }
-        req.session.verifiedEmail = sessionData.email
+        req.session.verifiedEmail = req.session.frgtPasswordemail
 
         delete req.session.otp
-        delete req.session.data
+        delete req.session.frgtPasswordemail
         
         return res.status(200).json({
             success:true,
             message:'OTP verified, you can now change your password',
-            redirectUrl:'/admin/changePassword'
+            redirectUrl:'/admin/change-password'
         })
 
     } catch (error) {
@@ -143,7 +185,7 @@ const resendOTP=async(req,res)=>{
         return res.status(200).json({
             success:true,
             message:'OTP again sent successfully',
-            redirectUrl:'/admin/OTP'
+            redirectUrl:'/admin/otp'
         })
 
         
@@ -197,7 +239,14 @@ const changePassword=async(req,res)=>{
 }
 
 
-
-
-
-module.exports={login,forgetPassword,verifyOTP,resendOTP,changePassword}
+module.exports={
+    loadLogin,
+    loadOTP,
+    loadDashboard,
+    loadchangePassword,
+    loadforgetPassword,
+    login,
+    forgetPassword,
+    verifyOTP,
+    resendOTP,
+    changePassword}

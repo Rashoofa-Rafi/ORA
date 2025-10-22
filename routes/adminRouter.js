@@ -11,47 +11,39 @@ const subcategoryController=require('../controller/subcategoryController')
 
 //for admin authentication
 
-router.get('/login',(req,res)=>{
-    res.render('admin/login')
-})
-router.get('/dashboard',isAdminAuthenticated,(req,res)=>{
-    res.render('admin/dashboard')
-})
-router.get('/forgetPassword',(req,res)=>{
-    res.render('admin/forgetPassword')
-})
-router.get('/OTP',(req,res)=>{
-    res.render('admin/OTP')
-})
-router.get('/changePassword',nocache,(req,res)=>{
-    res.render('admin/changePassword')
-})
+router.get('/login',adminController.loadLogin)
+router.get('/dashboard',adminController.loadDashboard)
+router.get('/forget-password',adminController.loadforgetPassword)
+router.get('/otp',adminController.loadOTP)
+router.get('/change-password',adminController.loadchangePassword)
 
-router.post('/forgetPassword',adminController.forgetPassword)
-router.post('/OTP',adminController.verifyOTP)
-router.post('/resendOTP',adminController.resendOTP)
-router.post('/changePassword',adminController.changePassword)
+router.post('/forget-password',adminController.forgetPassword)
+router.post('/otp',adminController.verifyOTP)
+router.post('/resend-otp',adminController.resendOTP)
+router.post('/change-password',adminController.changePassword)
 router.post('/login',adminController.login)
+
+
 
 
 
 //for customer managemnent
 
-router.get('/customers',nocache,isAdminAuthenticated,customerController.customerInfo)
-router.patch('/customers/block',isAdminAuthenticated,customerController.blockStatus)
+router.get('/customers',customerController.customerInfo)
+router.patch('/customers/block',customerController.blockStatus)
 
 //for category management
-router.get('/category',nocache,isAdminAuthenticated,categoryController.categoryInfo)
-router.post('/category/add',nocache,isAdminAuthenticated,upload.single('image'),categoryController.addCategory)
-router.patch('/category/edit/:id',nocache,isAdminAuthenticated,upload.single('image'),categoryController.editCategory)
-router.patch('/category/delete/:id',nocache,isAdminAuthenticated,categoryController.deleteCategory)
+router.get('/category',categoryController.categoryInfo)
+router.post('/category/add',upload.single('image'),categoryController.addCategory)
+router.patch('/category/edit/:id',upload.single('image'),categoryController.editCategory)
+router.patch('/category/delete/:id',categoryController.deleteCategory)
 
 
 //for subcategory management
-router.get('/subCategory',nocache,isAdminAuthenticated,subcategoryController.subcategoryInfo)
-router.post('/subcategory/add',nocache,isAdminAuthenticated,upload.single('image'),subcategoryController.addSubcategory)
-router.patch('/subcategory/edit/:id',nocache,isAdminAuthenticated,upload.single('image'),subcategoryController.editSubcategory)
-router.patch('/subcategory/delete/:id',nocache,isAdminAuthenticated,subcategoryController.deleteSubcategory)
+router.get('/subcategory',subcategoryController.subcategoryInfo)
+router.post('/subcategory/add',upload.single('image'),subcategoryController.addSubcategory)
+router.patch('/subcategory/edit/:id',upload.single('image'),subcategoryController.editSubcategory)
+router.patch('/subcategory/delete/:id',subcategoryController.deleteSubcategory)
 
 
 

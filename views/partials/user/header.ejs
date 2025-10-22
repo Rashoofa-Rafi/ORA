@@ -33,6 +33,12 @@
 
             <!-- Right Section: Search + Icons -->
             <div class="flex items-center space-x-4">
+                <% if (user) { %>
+    <span class="text-yellow-300 font-semibold">
+      Welcome, <%= user.name %>
+      
+    </span>
+  <% } %>
                 <!-- Search -->
                 <input type="text" placeholder="Search..." class="px-2 py-1 rounded hidden md:block text-black">
 

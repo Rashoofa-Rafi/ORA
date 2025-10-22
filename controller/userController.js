@@ -2,6 +2,72 @@ const bcrypt = require('bcrypt')
 const User = require('../models/userSchema.js')
 const { generateOTP, sendVerificationEmail } = require('../helpers/generateotp')
 
+
+const loadLogin=async(req,res)=>{
+    try {
+        res.render('user/login')
+    } catch (error) {
+       res.status(500).send('server error')
+    }
+}
+const loadOTP=async(req,res)=>{
+    try {
+        res.render('user/verify-otp')
+    } catch (error) {
+       res.status(500).send('server error')
+        
+    }
+}
+
+
+
+const loadforgetPassword=async(req,res)=>{
+    try {
+        res.render('user/forget-password')
+    } catch (error) {
+       res.status(500).send('server error')
+        
+    }
+}
+
+const loadchangePassword=async(req,res)=>{
+    try {
+        res.render('user/change-password')
+    } catch (error) {
+       res.status(500).send('server error')
+        
+    }
+}
+
+const loadSignup=async(req,res)=>{
+    try {
+        res.render('user/signup')
+    } catch (error) {
+       res.status(500).send('server error')
+        
+    }
+}
+
+
+const loadHome=async(req,res)=>{
+    try {
+        res.render('user/home')
+    } catch (error) {
+       res.status(500).send('server error')
+        
+    }
+}
+
+const loadpage404=async(req,res)=>{
+    try {
+        res.render('user/page404')
+    } catch (error) {
+       res.status(500).send('server error')
+        
+    }
+}
+
+
 const signup = async (req, res) => {
     try {
         const { fullName, email, mobile, password } = req.body
@@ -16,6 +82,7 @@ const signup = async (req, res) => {
         //generate OTP for signup
 
         const OTP = generateOTP()
+        console.log(OTP)
         const emailsent = await sendVerificationEmail(email, OTP)
 
         if (!emailsent) {
@@ -31,7 +98,7 @@ const signup = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: `OTP sent successfully to ${email}`,
-            redirectUrl: '/user/OTP'
+            redirectUrl: '/user/verify-otp'
         })
 
     } catch (error) {
@@ -55,6 +122,7 @@ const forgetPassword = async (req, res) => {
             })
         }
         const OTP = generateOTP()
+
         const emailsent = await sendVerificationEmail(email, OTP)
         if (!emailsent) {
             return res.status(400).json({
@@ -69,7 +137,7 @@ const forgetPassword = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: 'Reset OTP send ',
-            redirectUrl: '/user/OTP'
+            redirectUrl: '/user/verify-otp'
         })
     } catch (error) {
         console.error('resetOTP error', error)
@@ -80,11 +148,6 @@ const forgetPassword = async (req, res) => {
 
     }
 }
-
-
-
-//    //verify the OTP with session otp
-
 const verifyOTP = async (req, res) => {
     try {
         const { OTP } = req.body
@@ -134,14 +197,11 @@ const verifyOTP = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 message: 'OTP verified,You can change your password',
-                redirectUrl: '/user/changePassword'
+                redirectUrl: '/user/change-password'
             })
 
         }
-
-
-
-    } catch (error) {
+        } catch (error) {
         console.error("signup failed,error")
         res.status(500).json({
             success: false,
@@ -169,7 +229,7 @@ const resendOtp = async (req, res) => {
 
 
         const OTP = generateOTP()
-        const emailsent = await sendVerificationEmail(sessionData.email, OTP)
+        const emailsent = await sendVerificationEmail(email, OTP)
         if (!emailsent) {
             return res.status(400).json({
                 success: false,
@@ -184,7 +244,7 @@ const resendOtp = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "OTP again send successfully",
-            redirectUrl: '/user/OTP'
+            redirectUrl: '/user/verify-otp'
         })
     } catch (error) {
         console.error(error)
@@ -260,13 +320,14 @@ const login = async (req, res) => {
         }
         req.session.user = {
             id: user._id,
+            name:user.fullName,
             email: user.email
         }
 
         return res.status(200).json({
             success: true,
             message: "Login successfully",
-            redirectUrl: '/user/landingHome'
+            redirectUrl: '/user/home'
         })
     } catch (error) {
         console.log('login failed')
@@ -299,12 +360,20 @@ const logout = async (req, res) => {
     return res.status(500).send("Something went wrong during logout");
   }
 }
-
-
-
-
-
 module.exports = {
-    signup,forgetPassword , verifyOTP, resendOtp,changePassword ,login,logout
+    loadLogin,
+    loadOTP,
+    loadforgetPassword,
+    loadchangePassword,
+    loadpage404,
+    loadHome,
+    loadSignup,
+    signup,
+    forgetPassword,
+    verifyOTP,
+    resendOtp,
+    changePassword,
+    login,
+    logout,
 
 }

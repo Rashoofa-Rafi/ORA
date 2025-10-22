@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OTP-forgetPassword</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body class="bg-[#F5F5F5] flex items-center justify-center min-h-screen">
@@ -35,10 +36,10 @@
           class="bg-gray-800 text-white font-semibold py-2 rounded-md hover:bg-black transition duration-200">
           Verify OTP
         </button>
-        <div id="errMsg" class="text-red-500 text-sm"></div>
-        <div id="successMsg" class="text-green-600 text-sm"></div>
+        
+        
 
-        <a href="/user/forgetPassword" class="text-gray-500 text-sm hover:underline">Go back </a>
+        <a href="/user/forget-password" class="text-gray-500 text-sm hover:underline">Go back </a>
       </form>
     </div>
 
@@ -89,12 +90,17 @@
       
 
     if (OTP.length !== 4) {
-      document.getElementById("errMsg").textContent = "Please enter all 4 digits.";
+      Swal.fire({
+        icon:'error',
+        text:'Please enter all digits',
+        timer:2000,
+        showConfirmButton:false
+      })
       return;
     }
 
     try {
-      const res = await fetch("/user/verifyOTP", {
+      const res = await fetch("/user/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
@@ -105,36 +111,66 @@
       const result = await res.json();
 
       if (result.success) {
-        document.getElementById("successMsg").textContent = result.message;
+        await Swal.fire({
+        icon:'success',
+        text:result.message,
+        timer:2000,
+        showConfirmButton:false
+      })
         window.location.href = result.redirectUrl;
        
       } else {
-        document.getElementById("errMsg").textContent = result.message;
+        Swal.fire({
+        icon:'error',
+        text:result.message,
+        timer:2000,
+        showConfirmButton:false
+      })
       }
     } catch (error) {
-      console.error("Error verifying OTP:", error);
-      document.getElementById("errMsg").textContent = "Server error";
+      Swal.fire({
+        icon:'error',
+        text:'Internal server error',
+        timer:2000,
+        showConfirmButton:false
+      })
     }
   });
   //for resend OTP
    document.getElementById("resendOtp").addEventListener("click", async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("/user/resendOtp", {
+      const res = await fetch("/user/resend-otp", {
         method: "POST",
         credentials: "same-origin" 
       });
       const result = await res.json();
 
       if (result.success) {
-        alert(result.message)
+        await Swal.fire({
+        icon:'success',
+        text:result.message,
+        timer:2000,
+        showConfirmButton:false
+      })
         window.location.href=result.redirectUrl
         time= 60; // Reset timer
       } else {
-        alert(result.message);
+        Swal.fire({
+        icon:'error',
+        text:result.message,
+        timer:2000,
+        showConfirmButton:false
+      })
       }
     } catch (error) {
-      console.error("Resend error:", error);
+      console.error("Resend error:", error)
+      Swal.fire({
+        icon:'error',
+        text:'Internal server error',
+        timer:2000,
+        showConfirmButton:false
+      })
     }
   });
 

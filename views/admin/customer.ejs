@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin-Customers</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 
 <body class="bg-gray-100">
@@ -76,8 +79,7 @@
                         <button id="cancelBtn"class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
                     </div>
                 </div>
-                <div id="errMsg" class="text-red-500 text-sm"></div>
-                <div id="successMsg" class="text-green-500 text-sm"></div>
+                
             </div>        
         <!-- pagination -->
                     <div class="mt-4 flex justify-center items-center space-x-2">
@@ -137,14 +139,29 @@
 
       const result = await response.json();
       if (result.success) {
-        document.getElementById('successMsg').textContent=result.message
+        await Swal.fire({
+        icon:'success',
+        text:result.message,
+        timer:2000,
+        showConfirmationButton:false
+      })
         location.reload();
       } else {
-        document.getElementById('errMsg').textContent=result.message 
+       Swal.fire({
+        icon:'error',
+        text:result.message,
+        timer:2000,
+        showConfirmationButton:false
+      })
       }
     } catch (err) {
       console.error(err)
-      document.getElementById('errMsg').textContent='Server error'
+      Swal.fire({
+        icon:'error',
+        text:'Internal server error',
+        timer:2000,
+        showConfirmationButton:false
+      })
     }
   };
 </script>

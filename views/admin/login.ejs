@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - ORA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
@@ -22,28 +25,27 @@
                 <input type="email" name="email" placeholder="Email Address" id="email"
                     class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-300"
                     >
-                    <div id="err1" class="text-red-500 text-sm"></div>
+                    
 
             </div>
             <div class="relative">
 
                 <input type="password" name="password" placeholder="Password" id="password" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-300" >
                    <!-- Eye icon for show/hide -->
-                <div id="err2" class="text-red-500 text-sm"></div>
+                
                 
                    <button type="button" class="absolute right-3 top-2.5 text-gray-500">
                     👁️
                 </button>
             </div>
             <div class="text-right">
-                <a href="/admin/forgetPassword" class="text-sm text-gray-500 hover:text-yellow-400">Forget Password?</a>
+                <a href="/admin/forget-password" class="text-sm text-gray-500 hover:text-yellow-400">Forget Password?</a>
             </div>
             <button type="submit"
                 class="w-full bg-black text-white font-semibold py-2 rounded-lg hover:bg-gray-800 transition-colors">
                 Login
             </button>
-            <div id="successMsg" class="text-green-500 text-sm"></div>
-            <div id="errMsg" class="text-red-500 text-sm"></div>
+            
         </form>
     </div>
 
@@ -53,10 +55,7 @@
 <script>
     document.getElementById("myform").addEventListener("submit",async(e)=>{
         e.preventDefault()
-
-        document.getElementById("err1").textContent=''
-         document.getElementById("err2").textContent=''
-        document.getElementById("successMsg").textContent=''
+       
 
         let email=document.getElementById('email').value.trim()
         let password=document.getElementById('password').value.trim()
@@ -65,22 +64,42 @@
 
         let emailRegex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/
         if(email===""){
-            document.getElementById("err1").textContent='Email required'
+            Swal.fire({icon:'error',
+                text:'Email required',
+                timer:2000,
+                showConfirmButton:false
+               })
             isvalid =false
         }else if(!emailRegex.test(email)){
-            document.getElementById('err1').textContent='Invalid email'
-            iavalid=false
+            Swal.fire({icon:'error',
+                text:'Invalid email',
+                timer:2000,
+                showConfirmButton:false
+               })
+            isvalid=false
         }
 
         let passwordRegex=/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/
         if(password===''){
-            document.getElementById('err2').textContent='password required'
+            Swal.fire({icon:'error',
+                text:'password required',
+                timer:2000,
+                showConfirmButton:false
+               })
             isvalid=false
         }else if(password.length<8){
-            document.getElementById('err2').textContent='password should contain atleast 8 characters'
+            Swal.fire({icon:'error',
+                text:'Password should contain atleast 8 characters',
+                timer:2000,
+                showConfirmButton:false
+               })
             isvalid=false
         }else if(!passwordRegex.test(password)){
-            document.getElementById('err2').textContent='password should contain alphabets,numbers and special characters'
+            Swal.fire({icon:'error',
+                text:'Password shoul contain alphabets,numbers and special characters',
+                timer:2000,
+                showConfirmButton:false
+               })
             isvalid=false
         }
         if(!isvalid) return
@@ -88,21 +107,36 @@
         try {
             const res=await fetch('/admin/login',{
                 method:'POST',
-                headers:{'content-Type':'application/json'},
-                credentials:'same-origin',
+                headers:{'Content-Type':'application/json'},
+                credentials:'include',
                 body:JSON.stringify({email,password})
             })
             const result=await res.json()
             if(result.success){
-                document.getElementById('successMsg').textContent=result.message
-                window.location.href=result.redirectUrl
-                document.getElementById('myform').reset()
+                 await Swal.fire({icon:'success',
+                text:result.message,
+                showConfirmButton:true,
+                allowOutsideClick: false
+            })
+            
+            window.location.href=result.redirectUrl
+            document.getElementById('myform').reset()
+           
+                
             }else{
-                document.getElementById("errMsg").textContent=result.message
+               Swal.fire({icon:'error',
+                text:result.message,
+                timer:2000,
+                showConfirmButton:false
+               })
             }
         } catch (error) {
             console.error(error)
-            document.getElementById('errMsg').textContent='server error'
+            Swal.fire({icon:'error',
+                text:'Internal server error',
+                timer:2000,
+                showConfirmButton:false
+               })
         }
     })
 </script>

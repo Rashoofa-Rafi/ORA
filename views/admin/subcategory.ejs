@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin-Subcategory</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
 </head>
 
@@ -33,10 +36,12 @@
                 <main class="p-6 flex-1">
                     <div class="bg-white shadow rounded-lg p-4 overflow-x-auto">
                         <div class="flex gap-2 justify-end mb-3">
-                        <button type="button" onclick="openModal('add')" class="bg-gray-900 text-white px-3 py-1.5 rounded hover:bg-gray-900 text-sm transition">
+                            <button type="button" onclick="openModal('add')"
+                                class="bg-gray-900 text-white px-3 py-1.5 rounded hover:bg-gray-900 text-sm transition">
                                 + Add New
                             </button>
-                            <button class="bg-gray-900 text-white px-3 py-1.5 rounded hover:bg-gray-900 text-sm transition">
+                            <button
+                                class="bg-gray-900 text-white px-3 py-1.5 rounded hover:bg-gray-900 text-sm transition">
                                 + Add Offer
                             </button>
                         </div>
@@ -51,54 +56,71 @@
                             </thead>
                             <tbody>
                                 <%subcategories.forEach(subcategory=>{%>
-                                <tr class="border-b hover:bg-gray-50 transition">
-                                    <td class="px-4 py-2"><%=subcategory.name%></td>
-                                    <td class="px-4 py-2 text-center">
-                                        <button onclick='openModal("edit", JSON.parse(decodeURIComponent("<%= encodeURIComponent(JSON.stringify(subcategory)) %>")))'
-                                            class="text-red-500 hover:text-red-700 mx-1">✏️</button>
+                                    <tr class="border-b hover:bg-gray-50 transition">
+                                        <td class="px-4 py-2">
+                                            <%=subcategory.name%>
+                                        </td>
+                                        <td class="px-4 py-2 text-center">
+                                            <button
+                                                onclick='openModal("edit", JSON.parse(decodeURIComponent("<%= encodeURIComponent(JSON.stringify(subcategory)) %>")))'
+                                                class="text-red-500 hover:text-red-700 mx-1">✏️</button>
 
-                                        <button onclick='openModal("delete", JSON.parse(decodeURIComponent("<%= encodeURIComponent(JSON.stringify(subcategory)) %>")))'
-                                            class="text-blue-500 hover:text-blue-700 mx-1">🗑</button>
+                                            <button
+                                                onclick='openModal("delete", JSON.parse(decodeURIComponent("<%= encodeURIComponent(JSON.stringify(subcategory)) %>")))'
+                                                class="text-blue-500 hover:text-blue-700 mx-1">🗑</button>
 
-                                    </td>
-                                </tr>
-                                
-                                
-                                <%})%>
+                                        </td>
+                                    </tr>
+
+
+                                    <%})%>
                             </tbody>
                         </table>
                     </div>
 
                     <!-- modal -->
-                    <div id="categoryModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                       <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
-                        <h2 id="modalTitle"class="text-xl font-semibold text-center bg-black text-white py-2 rounded">Add Subcategory</h2>
-                        <form id="modalForm" class="mt-4 space-y-4" enctype="multipart/form-data">
-                            <div>
-                            <label for="category" class="block text-sm font-medium text-gray-700">Select Category</label>
-                            <select id="category" name="category_Id"
-                               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
-                                 <option value="">Select Category</option>
-                                 <% categories.forEach(category => { %>
-                                 <option value="<%= category._id %>"><%= category.name %></option>
-                                 <% }) %>
-                            </select>
-                         </div>
-                        <div>
+                    <div id="categoryModal"
+                        class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                        <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+                            <h2 id="modalTitle"
+                                class="text-xl font-semibold text-center bg-black text-white py-2 rounded">Add
+                                Subcategory</h2>
+                            <form id="modalForm" class="mt-4 space-y-4" enctype="multipart/form-data">
                                 <div>
-                                    <label for="name" class="block text-sm font-medium text-gray-700">Subcategory Name</label>
-                                    <input type="text" id="name" name="name"class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" placeholder="Enter Subcategory name" >
+                                    <label for="category" class="block text-sm font-medium text-gray-700">Select
+                                        Category</label>
+                                    <select id="category" name="category_Id"
+                                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                                        <option value="">Select Category</option>
+                                        <% categories.forEach(category=> { %>
+                                            <option value="<%= category._id %>">
+                                                <%= category.name %>
+                                            </option>
+                                            <% }) %>
+                                    </select>
+                                </div>
+                                <div>
+                                    <div>
+                                        <label for="name" class="block text-sm font-medium text-gray-700">Subcategory
+                                            Name</label>
+                                        <input type="text" id="name" name="name"
+                                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                                            placeholder="Enter Subcategory name">
                                     </div>
-                                <div>
-                                    <label for="image" class="block text-sm font-medium text-gray-700">Image</label>
-                                    <input type="file" id="image" name="image" class="w-full border border-gray-300 rounded px-3 py-2 file:mr-3 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:bg-gray-900 file:text-white hover:file:bg-gray-700" />
+                                    <div>
+                                        <label for="image" class="block text-sm font-medium text-gray-700">Image</label>
+                                        <input type="file" id="image" name="image"
+                                            class="w-full border border-gray-300 rounded px-3 py-2 file:mr-3 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:bg-gray-900 file:text-white hover:file:bg-gray-700" />
+                                    </div>
                                 </div>
-                            </div>
                                 <div>
-                                    <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                                    <textarea id="description" name="description"class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"rows="3" placeholder="Enter Subcategory description"></textarea>
+                                    <label for="description"
+                                        class="block text-sm font-medium text-gray-700">Description</label>
+                                    <textarea id="description" name="description"
+                                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                                        rows="3" placeholder="Enter Subcategory description"></textarea>
                                 </div>
-                               <p id="formError" class="text-red-600 text-sm hidden">All fields are required.</p>
+
                                 <div class="flex justify-center space-x-3 mt-4">
                                     <button type="submit" id="submitBtn"
                                         class="bg-black text-white px-5 py-2 rounded hover:bg-gray-800 transition">Save</button>
@@ -115,135 +137,158 @@
                             Prev
                         </a>
                         <% for (let i=1; i <=totalPages; i++) { %>
-                        <a href="/admin/subcategory?page=<%= i %>&search=<%= search %>"
+                            <a href="/admin/subcategory?page=<%= i %>&search=<%= search %>"
                                 class="px-3 py-1 border rounded <%= page === i ? 'bg-yellow-500 text-white' : 'hover:bg-gray-200' %>">
                                 <%= i %>
-                        </a>
+                            </a>
                             <% } %>
-                        <a href="/admin/subcategory?page=<%= page + 1 %>&search=<%= search %>"
+                                <a href="/admin/subcategory?page=<%= page + 1 %>&search=<%= search %>"
                                     class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === totalPages ? 'pointer-events-none opacity-50' : '' %>">
                                     Next
-                        </a>
+                                </a>
                     </div>
                 </main>
-    <%- include("../partials/admin/footer") %>
+                <%- include("../partials/admin/footer") %>
 </body>
 <script>
 
-const modal = document.getElementById('categoryModal')
-const title = document.getElementById('modalTitle')
-const form = document.getElementById('modalForm')
-const nameInput = document.getElementById('name')
-const imageInput = document.getElementById('image')
-const descriptionInput = document.getElementById('description')
-const categorySelect = document.getElementById('category')
-const errorMsg = document.getElementById('formError')
-const submitBtn = document.getElementById('submitBtn')
+    const modal = document.getElementById('categoryModal')
+    const title = document.getElementById('modalTitle')
+    const form = document.getElementById('modalForm')
+    const nameInput = document.getElementById('name')
+    const imageInput = document.getElementById('image')
+    const descriptionInput = document.getElementById('description')
+    const categorySelect = document.getElementById('category')
 
-let actionType = "add"
-let subcategoryId = null
+    const submitBtn = document.getElementById('submitBtn')
 
-function openModal(type, subcategory = null) {
-    actionType = type
+    let actionType = "add"
+    let subcategoryId = null
 
-    nameInput.disabled = false
-    descriptionInput.disabled = false
-    categorySelect.disabled = false
+    function openModal(type, subcategory = null) {
+        actionType = type
 
-    
-    form.reset()
-    errorMsg.classList.add("hidden")
+        nameInput.disabled = false
+        descriptionInput.disabled = false
+        categorySelect.disabled = false
 
-     if (subcategory) {
-        subcategoryId = subcategory._id
-    }
 
-    if (type === 'add') {
-        title.textContent = "Add Subcategory"
-        submitBtn.textContent = "Add"
+        form.reset()
         
-    } else if (type === 'edit') {
-        title.textContent = "Edit Subcategory"
-        submitBtn.textContent = "Edit"
+
         if (subcategory) {
-            nameInput.value = subcategory.name
-            descriptionInput.value = subcategory.description
-            categorySelect.value = subcategory.category_Id?._id || subcategory.category_Id || ""
+            subcategoryId = subcategory._id
         }
-        
-    } else if (type === 'delete') {
-        title.textContent = "Delete Subcategory"
-        submitBtn.textContent = "Delete"
-        if (subcategory) {
-            nameInput.value = subcategory.name
-            descriptionInput.value = subcategory.description
-            categorySelect.value = subcategory.category_Id?._id || subcategory.category_Id || ""
+
+        if (type === 'add') {
+            title.textContent = "Add Subcategory"
+            submitBtn.textContent = "Add"
+
+        } else if (type === 'edit') {
+            title.textContent = "Edit Subcategory"
+            submitBtn.textContent = "Edit"
+            if (subcategory) {
+                nameInput.value = subcategory.name
+                descriptionInput.value = subcategory.description
+                categorySelect.value = subcategory.category_Id?._id || subcategory.category_Id || ""
+            }
+
+        } else if (type === 'delete') {
+            title.textContent = "Delete Subcategory"
+            submitBtn.textContent = "Delete"
+            if (subcategory) {
+                nameInput.value = subcategory.name
+                descriptionInput.value = subcategory.description
+                categorySelect.value = subcategory.category_Id?._id || subcategory.category_Id || ""
+            }
+            // Disable inputs for delete
+            nameInput.disabled = true
+            descriptionInput.disabled = true
+            categorySelect.disabled = true
+
         }
-        // Disable inputs for delete
-        nameInput.disabled = true
-        descriptionInput.disabled = true
-        categorySelect.disabled = true
-        
+
+        modal.classList.remove('hidden')
     }
 
-    modal.classList.remove('hidden')
-}
-
-function closeModal() {
-    modal.classList.add('hidden')
-    currentId = null
-}
-
-form.addEventListener('submit', async (e) => {
-    e.preventDefault()
-
-    const name = nameInput.value.trim()
-    const description = descriptionInput.value.trim()
-    const category = categorySelect.value
-    const image = imageInput.files[0]
-
-    if ((actionType === 'add' || actionType === 'edit') && (!name || !description || !category)) {
-        errorMsg.textContent = "All fields are required."
-        errorMsg.classList.remove('hidden')
-        return
+    function closeModal() {
+        modal.classList.add('hidden')
+        currentId = null
     }
 
-    const formData = new FormData()
-    formData.append("name", name)
-    formData.append("description", description)
-    formData.append("category_Id", category)
-    if (image) formData.append("image", image)
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault()
 
-    let url = `/admin/subcategory/add`
-    let method = "POST"
+        const name = nameInput.value.trim()
+        const description = descriptionInput.value.trim()
+        const category = categorySelect.value
+        const image = imageInput.files[0]
 
-    if (actionType === 'edit') {
-        url = `/admin/subcategory/edit/${subcategoryId}`
-        method = "PATCH"
-    } else if (actionType === 'delete') {
-        url = `/admin/subcategory/delete/${subcategoryId}`
-        method = "PATCH"
-    }
-
-    try {
-        const res = await fetch(url, { method, body: formData })
-        const result = await res.json()
-
-        if (result.success) {
-            closeModal()
-            location.reload()
-        } else {
-            errorMsg.textContent = result.message
-            errorMsg.classList.remove('hidden')
+        if ((actionType === 'add' || actionType === 'edit') && (!name || !description || !category)) {
+            Swal.fire({
+                icon:'error',
+                text:'All field are required',
+                timer:2000,
+                showConfirmButton:false
+            })
+            return
         }
-    } catch (err) {
-        console.error(err)
-        errorMsg.textContent = "Server error"
-        errorMsg.classList.remove('hidden')
-    }
-})
+
+        const formData = new FormData()
+        formData.append("name", name)
+        formData.append("description", description)
+        formData.append("category_Id", category)
+        if (image) formData.append("image", image)
+
+        let url = `/admin/subcategory/add`
+        let method = "POST"
+
+        if (actionType === 'edit') {
+            url = `/admin/subcategory/edit/${subcategoryId}`
+            method = "PATCH"
+        } else if (actionType === 'delete') {
+            url = `/admin/subcategory/delete/${subcategoryId}`
+            method = "PATCH"
+        }
+
+        try {
+            const res = await fetch(url, { method, body: formData })
+            const result = await res.json()
+
+            if (result.success) {
+                await Swal.fire({
+                    icon: 'success',
+                    text: result.message,
+                    showConfirmButton: true,
+                    allowOutsideClick: false
+                })
+
+                closeModal()
+                location.reload()
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    text: result.message,
+                    timer:2000,
+                    showConfirmButton: false,
+                    
+                })
+
+            }
+        } catch (err) {
+            console.error(err)
+             Swal.fire({
+                icon: 'error',
+                text: 'Internal server error',
+                timer:2000,
+                showConfirmButton: false,
+                
+            })
+
+        }
+    })
 
 </script>
 
 
-</html> 
+</html>
