@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex min-h-screen">
+        <%- include("../partials/admin/sidebar") %>
+            <div class="flex flex-col flex-1 ml-64">
+                <main class="p-6 flex-1">
+                    <h2 class="text-xl font-semibold mb-6">Add Product</h2>
+                    <form class="bg-white shadow rounded-lg p-6 space-y-6" id="add-form" enctype="multipart/form-data">
+
+                        <!-- Product Name -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Product Name</label>
+                            <input type="text" placeholder="Enter product name" id="productname" name="productname"
+                                class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                        </div>
+
+                        <!-- Product Description -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Product Description</label>
+                            <textarea placeholder="Enter detailed product description..." id="description"
+                                name="description"
+                                class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 h-24"></textarea>
+                        </div>
+
+                        <!-- Category / Sub Category / Brand -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Category</label>
+                                <select id="category" name="category_Id"
+                                    class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                                    <option value="">Select Category</option>
+                                    <% categories.forEach(category=> { %>
+                                        <option value="<%= category._id %>"><%= category.name %></option>
+
+                                        <% }) %>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">SubCategory</label>
+                                <select id="subcategory" name="subcategory_Id"
+                                    class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+
+                                    <option value="">Select Type</option>
+                                    <% subcategories.forEach(subcategory=> { %>
+                                        <option value="<%= subcategory._id %>"><%= subcategory.name %></option>
+
+                                        <% }) %>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Brand</label>
+                                <select name="brand" id="brand"
+                                    class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                                    <% brands.forEach(brand=> { %>
+                                        <option value="<%= brand %>">
+                                            <%= brand %>
+                                        </option>
+                                        <% }) %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Price / Material / Dial Type -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Price</label>
+                                <input type="number" placeholder="0.00" id="price" name="price"
+                                    class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Material</label>
+                                <select name="material" id="material"
+                                    class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                                    <% materials.forEach(material=> { %>
+                                        <option value="<%= material %>">
+                                            <%= material%>
+                                        </option>
+                                        <% }) %>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Dial Type</label>
+                                <select id="dialType" name="dialType"
+                                    class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                                    <% dials.forEach(dial=> { %>
+                                        <option value="<%= dial %>">
+                                            <%= dial %>
+                                        </option>
+                                        <% }) %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Product Images -->
+                        <div>
+  <label class="block text-gray-700 font-medium mb-2">Product Images</label>
+    <div id="productDropZone"
+       class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center cursor-pointer hover:border-yellow-400 transition">
+    <p class="text-gray-500 mb-2">Drop images here, (PNG, JPG )</p>
+    <input type="file" multiple class="hidden" id="productImages" name="productImages" accept="image/png, image/jpeg">
+    <button type="button" onclick="document.getElementById('productImages').click()"
+        class="bg-black text-white px-4 py-2 rounded">Choose Files</button>    
+    </div>
+   <div id="productImagePreview" class="flex gap-4 mt-4 flex-wrap">
+   
+  </div>
+</div>
+
+
+                        <!-- Checkbox for variant -->
+                        <div class="flex items-center gap-2 mt-4">
+                            <input type="checkbox" id="hasVariant" name="hasVariant" class="w-4 h-4">
+                            <label for="hasVariant" class="text-sm text-gray-700">This product has variants</label>
+                        </div>
+
+                        <!-- Add Variant Button -->
+                        <button type="button" id="openVariantModal"
+                            class="mt-4 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 hidden">
+                            + Add Variant
+                        </button>
+
+                        <!-- Variant Modal -->
+                        <div id="variantModal"
+                            class="fixed inset-0 bg-black/40 flex items-center justify-center hidden z-50">
+                            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden">
+                                <div class="bg-black text-white text-center py-3 font-semibold text-lg">
+                                    Add Variant
+                                </div>
+
+                                <div class="p-6 space-y-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                                            <input type="number" id="variantPrice" name="price"
+                                                class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring focus:ring-gray-400">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                                            <input type="number" id="variantStock" name="stock"
+                                                class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring focus:ring-gray-400">
+                                        </div>
+                                    </div>
+
+                                    <!-- Select Color -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Colour</label>
+                                            
+                                        <div class="flex gap-3">
+                                            <button type="button" data-color="RoseGold"
+                                                class="color-btn border-2 border-transparent rounded-lg px-4 py-2 bg-pink-200 hover:border-black">RoseGold</button>
+                                            <button type="button" data-color="Gold"
+                                                class="color-btn border-2 border-transparent rounded-lg px-4 py-2 bg-yellow-200 hover:border-black">Gold</button>
+                                            <button type="button" data-color="Silver"
+                                                class="color-btn border-2 border-transparent rounded-lg px-4 py-2 bg-gray-200 hover:border-black">Silver</button>
+                                            <button type="button" data-color="Black"
+                                                class="color-btn border-2 border-transparent rounded-lg px-4 py-2 bg-black text-white hover:border-black">Black</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Product Images Upload -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Product
+                                            Images</label>
+                                        <div id="dropZone"
+                                            class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer">
+                                            <p class="text-sm text-gray-500">Drop images here, </p>
+                                            <p class="text-xs text-gray-400 mt-1">PNG, JPG </p>
+                                            <input type="file" id="variantImages" name="variantImages" class="hidden" multiple
+                                                accept="image/png, image/jpeg">
+                                            <button type="button"
+                                                class="mt-3 bg-black text-white text-sm px-4 py-2 rounded-lg hover:bg-gray-800">Choose
+                                                Files</button>
+                                        </div>
+
+                                        <!-- Image Preview -->
+                                        <div id="imagePreview" class="flex gap-3 mt-4 flex-wrap"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Modal Footer -->
+                                <div class="flex justify-end gap-3 border-t border-gray-200 px-6 py-3">
+                                    <button type="button" onclick="closeModal()"
+                                        class="border border-gray-400 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-100">
+                                        Cancel
+                                    </button>
+                                    <button type="button" id="addVariantBtn"
+                                        class="bg-black text-white px-5 py-2 rounded-lg hover:bg-gray-800 transition">Add</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                            <button type="reset"
+                                class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100">Cancel</button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">Save</button>
+                        </div>
+                    </form>
+
+
+                </main>
+            </div>
+
+    </div>
+    <%- include("../partials/admin/footer") %>
+</body>
+
+<script>
+  // product images preview & multi-select handling
+  const productImagesInput = document.getElementById("productImages");
+  const productPreview = document.getElementById("productImagePreview");
+  let allFiles = [];
+
+  productImagesInput.addEventListener("change", () => {
+    const newFiles = Array.from(productImagesInput.files);
+    newFiles.forEach(file => {
+      if (!allFiles.some(f => f.name === file.name && f.size === file.size)) {
+        allFiles.push(file);
+      }
+    });
+
+    productPreview.innerHTML = "";
+    allFiles.forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const imgContainer = document.createElement("div");
+        imgContainer.classList.add("relative");
+        const img = document.createElement("img");
+        img.src = e.target.result;
+        img.alt = `Image ${index + 1}`;
+        img.classList.add("w-24", "h-24", "object-cover", "rounded", "border");
+        imgContainer.appendChild(img);
+        productPreview.appendChild(imgContainer);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // rebuild FileList so the form picks up all files
+    const dataTransfer = new DataTransfer();
+    allFiles.forEach(f => dataTransfer.items.add(f));
+    productImagesInput.files = dataTransfer.files;
+  });
+
+  // Variant UI
+  const hasVariantCheckbox = document.getElementById("hasVariant");
+  const openVariantModalBtn = document.getElementById("openVariantModal");
+  const variantModal = document.getElementById("variantModal");
+
+  hasVariantCheckbox.addEventListener("change", () => {
+    if (hasVariantCheckbox.checked) {
+      openVariantModalBtn.classList.remove("hidden");
+    } else {
+      openVariantModalBtn.classList.add("hidden");
+      document.getElementById("variantPrice").value = "";
+      document.getElementById("variantStock").value = "";
+      document.getElementById("variantColor").value = "";
+      document.getElementById("variantImages").value = "";
+      document.getElementById("imagePreview").innerHTML = "";
+    }
+  });
+
+  openVariantModalBtn.addEventListener("click", () => variantModal.classList.remove("hidden"));
+  function closeModal() { variantModal.classList.add("hidden"); }
+
+  // color buttons
+  document.querySelectorAll(".color-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("ring-2", "ring-black"));
+      btn.classList.add("ring-2", "ring-black");
+      document.getElementById("variantColor").value = btn.dataset.color;
+    });
+  });
+
+  // variant image preview
+  const variantImagesInput = document.getElementById("variantImages");
+  const imagePreview = document.getElementById("imagePreview");
+  variantImagesInput.addEventListener("change", () => {
+    imagePreview.innerHTML = "";
+    Array.from(variantImagesInput.files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.createElement("img");
+        img.src = e.target.result;
+        img.classList.add("w-16", "h-16", "object-cover", "rounded");
+        imagePreview.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  // addVariantBtn simple client-side validate and close modal (optional)
+  document.getElementById("addVariantBtn").addEventListener("click", () => {
+    const price = document.getElementById("variantPrice").value.trim();
+    const stock = document.getElementById("variantStock").value.trim();
+    const color = document.getElementById("variantColor").value;
+    const images = document.getElementById("variantImages").files;
+
+    if (!price || Number(price) <= 0) return Swal.fire({ icon: 'error', text: 'Please enter a valid variant price.' });
+    if (!stock || Number(stock) < 0) return Swal.fire({ icon: 'error', text: 'Please enter a valid variant stock.' });
+    if (!color) return Swal.fire({ icon: 'error', text: 'Please select a colour' });
+    if (images.length < 3) return Swal.fire({ icon: 'error', text: 'Please select at least three images.' });
+
+    Swal.fire({ icon: 'success', text: 'Variant added successfully!', timer: 1500, showConfirmButton: false });
+    closeModal();
+  });
+
+  // MAIN: submit handler
+  document.getElementById("add-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const productname = document.getElementById('productname').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const category = document.getElementById('category').value;
+    const subcategory = document.getElementById('subcategory').value;
+    const brand = document.getElementById('brand').value;
+    const material = document.getElementById('material').value;
+    const dialType = document.getElementById('dialType').value;
+    const price = document.getElementById('price').value;
+    const productImages = document.getElementById('productImages').files;
+    const hasVariant = document.getElementById("hasVariant").checked;
+
+    if (!productname || !description || !category || !subcategory || !brand || !material || !dialType || !price) {
+      return Swal.fire({ icon: 'error', text: 'Please fill all required fields' });
+    }
+    if (isNaN(price) || Number(price) <= 0) return Swal.fire({ icon: 'error', text: 'Price must be a valid positive number.' });
+    if (productImages.length < 3) return Swal.fire({ icon: 'error', text: 'Please upload at least 3 product images.' });
+
+    const formData = new FormData();
+    formData.append("productname", productname);
+    formData.append("description", description);
+    formData.append("category", category);
+    formData.append("subcategory", subcategory);
+    formData.append("brand", brand);
+    formData.append("material", material);
+    formData.append("dialType", dialType);
+    formData.append("price", price);
+    formData.append("hasVariant", hasVariant ? "true" : "false");
+
+    for (let i = 0; i < productImages.length; i++) formData.append("productImages", productImages[i]);
+
+    if (hasVariant) {
+      const variantPrice = document.getElementById("variantPrice").value;
+      const variantStock = document.getElementById("variantStock").value;
+      const variantColor = document.getElementById("variantColor").value;
+      const variantImages = document.getElementById("variantImages").files;
+
+      if (!variantPrice || !variantStock || !variantColor || !variantImages.length) {
+        return Swal.fire({ icon: 'error', text: 'Please fill all variant fields properly.' });
+      }
+      if (Number(variantPrice) <= 0 || Number(variantStock) < 0) {
+        return Swal.fire({ icon: 'error', text: 'Please enter valid numbers for variant price/stock' });
+      }
+      if (variantImages.length < 3) return Swal.fire({ icon: 'error', text: 'Please select at least three variant images' });
+
+      formData.append("variantPrice", variantPrice);
+      formData.append("variantStock", variantStock);
+      formData.append("variantColor", variantColor);
+      for (let i = 0; i < variantImages.length; i++) formData.append("variantImages", variantImages[i]);
+    }
+
+    try {
+      const response = await fetch("/admin/products/add-product", {
+        method: "POST",
+        body: formData,
+      });
+
+      // server may return HTML error page on multer error -> check status
+      if (!response.ok) {
+        const text = await response.text(); // show server HTML or error text
+        console.error("Server error:", text);
+        return Swal.fire({ icon: "error", text: "Server error (see console)" });
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        await Swal.fire({ icon: "success", text: result.message, timer: 1500, showConfirmButton: false });
+        window.location.href = result.redirect || "/admin/products";
+      } else {
+        Swal.fire({ icon: "error", text: result.message });
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire({ icon: "error", text: "Internal server error" });
+    }
+  });
+</script>
+
+
+</html>

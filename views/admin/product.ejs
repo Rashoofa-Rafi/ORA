@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin-Product</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex min-h-screen">
+
+        <%- include("../partials/admin/sidebar") %>
+            <div class="flex flex-col flex-1 ml-64">
+                <header
+                    class="sticky top-0 z-20 p-6 bg-white shadow flex flex-wrap justify-between items-center border-b border-gray-200">
+                    <h1 class="text-2xl font-bold text-gray-800">Products</h1>
+                    <form method="GET" action="/admin/products" class="flex items-center gap-2 mt-4 md:mt-0">
+                        <input type="text" name="search" value="<%=search%>" placeholder="Search here"
+                            class="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-yellow-400 focus:outline-none w-60">
+                        <button type="submit"
+                            class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-yellow-500 transition duration-200">
+                            Search
+                        </button>
+                        <a href="/admin/products"
+                            class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition duration-200">Clear</a>
+
+                    </form>
+                </header>
+                <main class="p-6 flex-1">
+                    <div class="bg-white shadow rounded-lg p-4 overflow-x-auto">
+                        <div class="flex gap-2 justify-end mb-3">
+                            <a href="/admin/add-product"
+                                class="bg-gray-900 text-white px-3 py-1.5 rounded hover:bg-gray-900 text-sm transition">
+                                + Add New
+                            </a>
+                        </div>
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="border-b bg-gray-200">
+                                    <th class="text-left px-4 py-2 font-semibold text-gray-700">ProductID</th>
+                                    <th class="text-center px-4 py-2 font-semibold text-gray-700">Product</th>
+                                    <th class="text-left px-4 py-2 font-semibold text-gray-700">Price</th>
+                                    <th class="text-left px-4 py-2 font-semibold text-gray-700">Category</th>
+                                    <th class="text-left px-4 py-2 font-semibold text-gray-700">Stock</th>
+                                    <th class="text-left px-4 py-2 font-semibold text-gray-700">CreatedAt</th>
+                                    <th class="text-left px-4 py-2 font-semibold text-gray-700">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <%products.forEach(product=>{%>
+                                    <tr class="border-b hover:bg-gray-50 transition">
+                                        <td class="px-4 py-2">
+                                            <%=product._id%>
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <%=product.name%>
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <%=product.price%>
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <%=product.category_Id.name%>
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <%=product.totalStock%>
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <%=product.createdAt%>
+                                        </td>
+                                        <td class="px-4 py-2 text-center">
+                                            <button
+                                                onclick='openModal("edit", JSON.parse(decodeURIComponent("<%= encodeURIComponent(JSON.stringify(subcategories)) %>")))'
+                                                class="text-red-500 hover:text-red-700 mx-1">✏️</button>
+
+                                            <button onclick="openDeleteModal('<%= product._id %>')"class="text-blue-500 hover:text-blue-700 mx-1">🗑</button>
+                                                
+                                                
+
+                                        </td>
+                                    </tr>
+                                     <%})%>
+
+                                   
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="deleteModal"
+                        class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                        <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+                            <h2 class="text-xl font-semibold text-center text-white bg-red-600 py-2 rounded">
+                                Delete Product
+                            </h2>
+                            <p class="mt-4 text-center text-gray-700">
+                                Are you sure you want to delete this product?
+
+                            </p>
+
+                            <div class="flex justify-center space-x-3 mt-6">
+                                <button id="confirmDeleteBtn"
+                                    class="bg-red-600 text-white px-5 py-2 rounded hover:bg-red-700 transition">
+                                    Delete
+                                </button>
+                                <button onclick="closeDeleteModal()"
+                                    class="border border-gray-500 text-gray-700 px-5 py-2 rounded hover:bg-gray-100 transition">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- pagination -->
+                    <div class="mt-4 flex justify-center items-center space-x-2">
+                        <a href="/admin/products?page=<%= page - 1 %>&search=<%= search %>"
+                            class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                            Prev
+                        </a>
+                        <% for (let i=1; i <=totalPages; i++) { %>
+                            <a href="/admin/products?page=<%= i %>&search=<%= search %>"
+                                class="px-3 py-1 border rounded <%= page === i ? 'bg-yellow-500 text-white' : 'hover:bg-gray-200' %>">
+                                <%= i %>
+                            </a>
+                            <% } %>
+                                <a href="/admin/products?page=<%= page + 1 %>&search=<%= search %>"
+                                    class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                                    Next
+                                </a>
+                    </div>
+                </main>
+                <%- include("../partials/admin/footer") %>
+</body>
+<script>
+    let deleteProductId = null;
+
+    function openDeleteModal(productId) {
+        deleteProductId = productId;
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+        deleteProductId = null;
+        document.getElementById('deleteModal').classList.add('hidden');
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('submit', async (e) => {
+        e.preventDefault()
+
+
+        if (!deleteProductId) return;
+
+        try {
+            const response = await fetch(`/admin/product/delete/${deleteProductId}`, {
+                method: 'PATCH',
+                headers:{'Content-Type':'application/json'},
+                credentials:'include'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                 await Swal.fire({
+                    icon: "success",
+                    title: "Deleted!",
+                    text: result.message
+                })
+                 location.reload()
+            } else {
+                Swal.fire({ 
+                    icon: "error", 
+                    text: result.message 
+                });
+            }
+
+        } catch (error) {
+            Swal.fire({ 
+                icon: "error", 
+                text: "Internal sevrer error!" });
+        }
+
+        // closeDeleteModal();
+    })
+</script>
+
+</html>

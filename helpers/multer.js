@@ -7,6 +7,9 @@ const storage = multer.diskStorage({
     let folder = 'public/uploads/other'
     if (req.originalUrl.startsWith("/admin/category")) folder = 'public/uploads/category'
     else if (req.originalUrl.startsWith("/admin/subcategory")) folder = 'public/uploads/subcategory'
+    else if (req.originalUrl.startsWith("/admin/products")) folder = 'public/uploads/products'
+    else if (req.originalUrl.startsWith("/admin/variants")) folder='public/uploads/variants'
+      
     cb(null, folder)
   },
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
@@ -23,5 +26,10 @@ const imageFilter = (req, file, cb) => {
 
 const upload = multer({ storage:storage ,fileFilter:imageFilter })
 
+const multiUpload = upload.fields([
+  { name: 'productImages', maxCount: 6 },          
+  { name: 'variantImages', maxCount: 6}    
+])
 
-module.exports={upload,imageFilter}
+
+module.exports={upload,imageFilter,multiUpload}

@@ -1,12 +1,13 @@
 const express=require('express')
 const router=express.Router()
-const {upload}=require('../helpers/multer')
+const {upload, multiUpload}=require('../helpers/multer')
+const {isAdminAuthenticated} = require('../middleware/adminAuth')
+const nocache=require('../middleware/cache')
 const adminController=require("../controller/adminController")
 const customerController=require('../controller/customerController')
 const categoryController=require('../controller/categoryController')
-const {isAdminAuthenticated} = require('../middleware/adminAuth')
-const nocache=require('../middleware/cache')
 const subcategoryController=require('../controller/subcategoryController')
+const productController=require('../controller/productController')
 
 
 //for admin authentication
@@ -46,7 +47,13 @@ router.patch('/subcategory/edit/:id',upload.single('image'),subcategoryControlle
 router.patch('/subcategory/delete/:id',subcategoryController.deleteSubcategory)
 
 
+//for product management
 
+router.get('/products',productController.productInfo)
+router.get('/add-product',productController.getaddProduct)
+router.post('/products/add-product',multiUpload,productController.addProduct)
+router.post('/products/edit/:id',productController.editProduct)
+router.post('/products/delete/:id',productController.deleteProduct)
 
 
 
