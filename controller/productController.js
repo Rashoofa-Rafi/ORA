@@ -1,6 +1,9 @@
 const Product=require('../models/productSchema')
+const Variant=require('../models/varientSchema')
 const Category=require('../models/categorySchema')
 const Subcategory=require('../models/subcategorySchema')
+const cloudinary = require("../config/cloudinary");
+const fs = require("fs");
 
 const productInfo=async(req,res)=>{
     try {
@@ -61,7 +64,6 @@ const getaddProduct= async(req,res)=>{
         res.status(500).send('internal server error')
     }
 }
-
 const addProduct = async (req, res) => {
   try {
     const {
@@ -72,29 +74,24 @@ const addProduct = async (req, res) => {
       brand,
       material,
       dialType,
-      price,
-      variantPrice,
-      variantStock,
-      variantColor
-    } = req.body
-const hasVariant = req.body.hasVariant === "true"
-
-    if (!productname || !description || !category || !subcategory || !brand || !material || !dialType || !price) {
-      return res.status(400).json({
-        success: false,
-        message: 'All fields are required'
-      });
+      variants
+    } = req.body;
+    if (!productname || !description || !category_Id || !subcategory_Id || !brand || !material || !dialType) {
+      return res.status(400).json({ success: false, message: 'All product fields are required' });
     }
 
-    
-    
-    if (!req.files || !req.files.productImages || (req.files.productImages.length < 3)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please upload at least 3 product images'
-      });
+    // parse variants JSON
+    let variantArray = [];
+    try {
+      variantArray = JSON.parse(variants || "[]");
+    } catch (err) {
+      return res.status(400).json({ success: false, message: "Invalid variants payload" });
     }
-    const productImages = req.files?.productImages?.map(file => `/uploads/products/${file.filename}`) || []
+
+    if (!Array.isArray(variantArray) || variantArray.length === 0) {
+      return res.status(400).json({ success: false, message: "At least one variant required" });
+    }
+
     const product = await Product.create({
       productname,
       description,
@@ -102,48 +99,85 @@ const hasVariant = req.body.hasVariant === "true"
       subcategory_Id,
       brand,
       material,
-      dialType,
-      price,
-      productImages
-    })
+      dialType
+    });
 
-    if (hasVariant ) {
-      const variantImages = req.files?.variantImages?.map(file => `/uploads/variants/${file.filename}`) || [];
-console.log('!variantPrice', !variantPrice);
-    console.log('!variantStock ', !(variantStock ));
-    console.log('!variantColor', !(variantColor));
-    console.log('variantImages.length < 3)', (variantImages.length < 3));
-      if (!variantPrice || !variantStock || !variantColor || variantImages.length < 3) {
-        return res.status(400).json({
-          success: false,
-          message: 'Please provide all variant details correctly.'
-        });
+    // Group Cloudinary files by fieldnames
+    // req.files is array when using upload.any()
+    const filesByField = {};
+    (req.files || []).forEach(f => {
+      if (!filesByField[f.fieldname]) filesByField[f.fieldname] = [];
+      filesByField[f.fieldname].push(f);
+    });
+
+    const createdVariantIds = [];
+
+    // ----- create variants -----
+    for (let i = 0; i < variantArray.length; i++) {
+      const v = variantArray[i];
+
+      // validate
+      if (!v.price || isNaN(v.price) || Number(v.price) <= 0) {
+        return res.status(400).json({ success: false, message: `Invalid price for variant ${i+1}` });
+      }
+      if (v.stock == null || isNaN(v.stock) || Number(v.stock) < 0) {
+        return res.status(400).json({ success: false, message: `Invalid stock for variant ${i+1}` });
+      }
+      if (!v.color) {
+        return res.status(400).json({ success: false, message: `Missing color for variant ${i+1}` });
       }
 
+      const fieldName = `variantImages_${i}`;
+      const uploadedFiles = filesByField[fieldName] || [];
 
-      await Variant.create({
-        product_id: product._id, 
-        price: variantPrice,
-        stock: variantStock,
-        color: variantColor,
-        image: variantImages,
-        sku: `SKU-${Date.now()}`
+      if (uploadedFiles.length < 3) {
+        return res.status(400).json({ success: false, message: `Variant ${i+1} requires at least 3 images` });
+      }
+
+      // Cloudinary returns file.path = secure_url
+      const imageURLs = uploadedFiles.map(img => img.path);
+
+      // generate SKU
+      const sku = `SKU-${product._id.toString().slice(-6)}-${i+1}-${Date.now().toString().slice(-4)}`;
+
+      const created = await Variant.create({
+        product_id: product._id,
+        price: Number(v.price),
+        stock: Number(v.stock),
+        color: v.color,
+        images: imageURLs,
+        sku
       });
+
+      createdVariantIds.push(created._id);
     }
-    return res.status(200).json({
+
+    // attach variants
+    product.variants = createdVariantIds;
+    // calculate total stock
+const totalStock = await Variant.aggregate([
+  { $match: { product_id: product._id } },
+  { $group: { _id: null, total: { $sum: "$stock" } } }
+]);
+
+product.totalStock = totalStock[0]?.total || 0;
+
+    await product.save();
+
+
+    return res.json({
       success: true,
-      message: 'Product added successfully',
-      redirect: '/admin/products'
-    })
+      message: "Product added successfully",
+      redirect1: "/admin/products"
+    });
 
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    console.error("addProduct error:", error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
+  
 
 const editProduct=async(req,res)=>{
     try {
@@ -173,7 +207,8 @@ const deleteProduct=async(req,res)=>{
 
         
     } catch (error) {
-        console.error(error)
+        //console.error(error)
+        console.error('deleteProduct error:', error);
         return res.status(500).json({
             success:false,
             message:'Internal server error'

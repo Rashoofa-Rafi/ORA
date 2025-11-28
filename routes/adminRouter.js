@@ -1,6 +1,6 @@
 const express=require('express')
 const router=express.Router()
-const {upload, multiUpload}=require('../helpers/multer')
+const {upload}=require('../helpers/multer')
 const {isAdminAuthenticated} = require('../middleware/adminAuth')
 const nocache=require('../middleware/cache')
 const adminController=require("../controller/adminController")
@@ -51,9 +51,23 @@ router.patch('/subcategory/delete/:id',subcategoryController.deleteSubcategory)
 
 router.get('/products',productController.productInfo)
 router.get('/add-product',productController.getaddProduct)
-router.post('/products/add-product',multiUpload,productController.addProduct)
-router.post('/products/edit/:id',productController.editProduct)
-router.post('/products/delete/:id',productController.deleteProduct)
+router.post('/products/add-product',upload.any(),productController.addProduct)
+// router.post(
+//   "/products/add-product",
+//   (req, res, next) => {
+//     upload.any()(req, res, function (err) {
+//       if (err) {
+//         console.error(">>> MULTER ERROR <<<", err);
+//         return res.status(400).json({ success: false, message: "Upload failed", error: err.message });
+//       }
+//       next();
+//     });
+//   },
+//   productController.addProduct
+// );
+
+router.patch('/products/edit/:id',productController.editProduct)
+router.patch('/products/delete/:id',productController.deleteProduct)
 
 
 

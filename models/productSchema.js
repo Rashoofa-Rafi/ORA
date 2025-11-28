@@ -17,10 +17,6 @@ const productSchema=new mongoose.Schema({
         required:true,
         trim:true
     },
-    price:{
-       type:Number,
-       required:false
-    },
     description:{
       type:String,
       required:false,
@@ -38,12 +34,17 @@ const productSchema=new mongoose.Schema({
         type:String,
         required:false
     },
-    productImages:{
-      type:[String],
-      required:false
+    thumbnail: {
+    type: String,
+    required: false
+  },
+  variants: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Variant"
+  }],
 
-    },
-    rating:{
+
+  rating:{
       type:Number,
       required:false,
       default:0

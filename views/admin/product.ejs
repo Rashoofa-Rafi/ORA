@@ -45,7 +45,7 @@
                                 <tr class="border-b bg-gray-200">
                                     <th class="text-left px-4 py-2 font-semibold text-gray-700">ProductID</th>
                                     <th class="text-center px-4 py-2 font-semibold text-gray-700">Product</th>
-                                    <th class="text-left px-4 py-2 font-semibold text-gray-700">Price</th>
+                                    
                                     <th class="text-left px-4 py-2 font-semibold text-gray-700">Category</th>
                                     <th class="text-left px-4 py-2 font-semibold text-gray-700">Stock</th>
                                     <th class="text-left px-4 py-2 font-semibold text-gray-700">CreatedAt</th>
@@ -59,11 +59,9 @@
                                             <%=product._id%>
                                         </td>
                                         <td class="px-4 py-2">
-                                            <%=product.name%>
+                                            <%=product.productname%>
                                         </td>
-                                        <td class="px-4 py-2">
-                                            <%=product.price%>
-                                        </td>
+                                        
                                         <td class="px-4 py-2">
                                             <%=product.category_Id.name%>
                                         </td>
@@ -71,7 +69,7 @@
                                             <%=product.totalStock%>
                                         </td>
                                         <td class="px-4 py-2">
-                                            <%=product.createdAt%>
+                                            <%=product.createdAt.toLocaleDateString("en-IN")%>
                                         </td>
                                         <td class="px-4 py-2 text-center">
                                             <button
@@ -146,43 +144,40 @@
         document.getElementById('deleteModal').classList.add('hidden');
     }
 
-    document.getElementById('confirmDeleteBtn').addEventListener('submit', async (e) => {
-        e.preventDefault()
-
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
 
         if (!deleteProductId) return;
 
         try {
-            const response = await fetch(`/admin/product/delete/${deleteProductId}`, {
+            const response = await fetch(`/admin/products/delete/${deleteProductId}`, {
                 method: 'PATCH',
-                headers:{'Content-Type':'application/json'},
-                credentials:'include'
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
             });
 
             const result = await response.json();
 
             if (result.success) {
-                 await Swal.fire({
+                await Swal.fire({
                     icon: "success",
                     title: "Deleted!",
                     text: result.message
-                })
-                 location.reload()
+                });
+                location.reload();
             } else {
-                Swal.fire({ 
-                    icon: "error", 
-                    text: result.message 
+                Swal.fire({
+                    icon: "error",
+                    text: result.message
                 });
             }
 
         } catch (error) {
-            Swal.fire({ 
-                icon: "error", 
-                text: "Internal sevrer error!" });
+            Swal.fire({
+                icon: "error",
+                text: "Internal server error!"
+            });
         }
-
-        // closeDeleteModal();
-    })
+    });
 </script>
 
 </html>
