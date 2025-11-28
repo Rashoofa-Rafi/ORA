@@ -51,22 +51,11 @@ router.patch('/subcategory/delete/:id',subcategoryController.deleteSubcategory)
 
 router.get('/products',productController.productInfo)
 router.get('/add-product',productController.getaddProduct)
+router.get('/edit-product/:id',productController.geteditProduct)
 router.post('/products/add-product',upload.any(),productController.addProduct)
-// router.post(
-//   "/products/add-product",
-//   (req, res, next) => {
-//     upload.any()(req, res, function (err) {
-//       if (err) {
-//         console.error(">>> MULTER ERROR <<<", err);
-//         return res.status(400).json({ success: false, message: "Upload failed", error: err.message });
-//       }
-//       next();
-//     });
-//   },
-//   productController.addProduct
-// );
 
-router.patch('/products/edit/:id',productController.editProduct)
+
+router.patch('/products/edit-product/:id',upload.any(),productController.editProduct)
 router.patch('/products/delete/:id',productController.deleteProduct)
 
 

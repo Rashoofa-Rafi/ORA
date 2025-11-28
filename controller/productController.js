@@ -77,7 +77,9 @@ const addProduct = async (req, res) => {
       variants
     } = req.body;
     if (!productname || !description || !category_Id || !subcategory_Id || !brand || !material || !dialType) {
-      return res.status(400).json({ success: false, message: 'All product fields are required' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'All product fields are required' })
     }
 
     // parse variants JSON
@@ -100,7 +102,7 @@ const addProduct = async (req, res) => {
       brand,
       material,
       dialType
-    });
+    })
 
     // Group Cloudinary files by fieldnames
     // req.files is array when using upload.any()
@@ -118,20 +120,20 @@ const addProduct = async (req, res) => {
 
       // validate
       if (!v.price || isNaN(v.price) || Number(v.price) <= 0) {
-        return res.status(400).json({ success: false, message: `Invalid price for variant ${i+1}` });
+        return res.status(400).json({ success: false, message: `Invalid price for variant ` });
       }
       if (v.stock == null || isNaN(v.stock) || Number(v.stock) < 0) {
-        return res.status(400).json({ success: false, message: `Invalid stock for variant ${i+1}` });
+        return res.status(400).json({ success: false, message: `Invalid stock for variant ` });
       }
       if (!v.color) {
-        return res.status(400).json({ success: false, message: `Missing color for variant ${i+1}` });
+        return res.status(400).json({ success: false, message: `please select a color for variant ` });
       }
 
       const fieldName = `variantImages_${i}`;
       const uploadedFiles = filesByField[fieldName] || [];
 
       if (uploadedFiles.length < 3) {
-        return res.status(400).json({ success: false, message: `Variant ${i+1} requires at least 3 images` });
+        return res.status(400).json({ success: false, message: `Variant requires at least 3 images` });
       }
 
       // Cloudinary returns file.path = secure_url
@@ -163,8 +165,6 @@ const totalStock = await Variant.aggregate([
 product.totalStock = totalStock[0]?.total || 0;
 
     await product.save();
-
-
     return res.json({
       success: true,
       message: "Product added successfully",
@@ -172,19 +172,91 @@ product.totalStock = totalStock[0]?.total || 0;
     });
 
   } catch (error) {
-    console.error("addProduct error:", error);
+    console.error( error);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
-  
+ const geteditProduct=async(req,res) =>{
+  try {
+    const productId = req.params.id;
+    const product = await Product.findById(productId)
+            .populate("variants")
+            .populate("category_Id")
+            .populate("subcategory_Id")
+            
+    if (!product) {
+            return res.status(400).json({
+              success:false,
+              message:"Product not found"});
+        }
 
-const editProduct=async(req,res)=>{
-    try {
-        
-    } catch (error) {
-        
+        // Fetch dropdown lists
+        const categories = await Category.find()
+        const subcategories = await Subcategory.find()
+        const brands=['CASIO','TITAN','FOSSIL','FASTRACK','ROLEX','NAVIFORCE','OTHERS']
+        const materials=['Metal','Rubber','Leather']
+        const dials=['Analogue','Digital']
+
+        return res.render("admin/edit-product", {
+            product,
+            categories,
+            subcategories,
+            brands,
+            materials,
+            dials,
+        })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({
+      success:false,
+      message:'Internal server error'
+    })
+  }
+ }
+
+
+const editProduct = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const variants = JSON.parse(req.body.variants)
+     
+    await Product.findByIdAndUpdate(productId, {
+      productname: req.body.productname,
+      description: req.body.description,
+      category_Id: req.body.category_Id,
+      subcategory_Id: req.body.subcategory_Id,
+      brand: req.body.brand,
+      material: req.body.material,
+      dialType: req.body.dialType
+    });
+
+    // Update each existing variant individually
+    for (const v of variants) {
+      await Variant.findByIdAndUpdate(
+        v._id,
+        {
+          color: v.color,
+          price: v.price,
+          stock: v.stock,
+          status: v.stock > 0 ? "available" : "out of stock"
+        },
+        { new: true }
+      );
     }
+
+    return res.status(200).json({ 
+      success: true,
+      message:'Updated successfully' 
+    })
+
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ 
+      success:false,
+      message: "Server error"
+     })
+  }
 }
 
 const deleteProduct=async(req,res)=>{
@@ -207,8 +279,7 @@ const deleteProduct=async(req,res)=>{
 
         
     } catch (error) {
-        //console.error(error)
-        console.error('deleteProduct error:', error);
+        console.error(error)
         return res.status(500).json({
             success:false,
             message:'Internal server error'
@@ -222,6 +293,7 @@ module.exports={
     productInfo,
     getaddProduct,
     addProduct,
+    geteditProduct,
     editProduct,
     deleteProduct
 }

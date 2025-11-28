@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edit Product</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100">
+  <div class="flex min-h-screen">
+    <%- include("../partials/admin/sidebar") %>
+
+    <div class="flex flex-col flex-1 ml-64">
+      <main class="p-6 flex-1">
+        <h2 class="text-xl font-semibold mb-6">Edit Product</h2>
+
+        <form id="edit-form" class="bg-white shadow rounded-lg p-6 space-y-6" enctype="multipart/form-data" onsubmit="submitEditForm(event)">
+          <!-- Product name & description -->
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">Product Name</label>
+            <input id="productname" name="productname" type="text" value="<%= product.productname %>"
+              class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+          </div>
+
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">Product Description</label>
+            <textarea id="description" name="description" rows="4"
+              class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"><%= product.description %></textarea>
+          </div>
+
+          <!-- Category / SubCategory / Brand -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-gray-700 font-medium mb-2">Category</label>
+              <select id="category" name="category_Id" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <option value="">-- Select category --</option>
+                <% categories.forEach(cat => { %>
+                  <option value="<%= cat._id %>" <%= product.category_Id && String(product.category_Id._id || product.category_Id) === String(cat._id) ? "selected" : "" %>>
+                    <%= cat.name %>
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-gray-700 font-medium mb-2">SubCategory</label>
+              <select id="subcategory" name="subcategory_Id" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <option value="">-- Select subcategory --</option>
+                <% subcategories.forEach(sub => { %>
+                  <option value="<%= sub._id %>" <%= product.subcategory_Id && String(product.subcategory_Id._id || product.subcategory_Id) === String(sub._id) ? "selected" : "" %>>
+                    <%= sub.name %>
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-gray-700 font-medium mb-2">Brand</label>
+              <select id="brand" name="brand" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <option value="">-- Select brand --</option>
+                <% brands.forEach(b => { %>
+                  <option value="<%= b %>" <%= product.brand === b ? "selected" : "" %>><%= b %></option>
+                <% }) %>
+              </select>
+            </div>
+          </div>
+
+          <!-- Material / Dial Type -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-gray-700 font-medium mb-2">Material</label>
+              <select id="material" name="material" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <option value="">-- Select material --</option>
+                <% materials.forEach(m => { %>
+                  <option value="<%= m %>" <%= product.material === m ? "selected" : "" %>><%= m %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-gray-700 font-medium mb-2">Dial Type</label>
+              <select id="dialType" name="dialType" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <option value="">-- Select dial type --</option>
+                <% dials.forEach(d => { %>
+                  <option value="<%= d %>" <%= product.dialType === d ? "selected" : "" %>><%= d %></option>
+                <% }) %>
+              </select>
+            </div>
+          </div>
+
+          <!-- Variants table -->
+          <div>
+            <h3 class="text-lg font-semibold mb-3">Variants</h3>
+
+            <table class="w-full text-sm border rounded overflow-hidden">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="px-3 py-2 text-left">Colour</th>
+                  <th class="px-3 py-2 text-left">Stock</th>
+                  <th class="px-3 py-2 text-left">Price (₹)</th>
+                  <th class="px-3 py-2 text-left">Status</th>
+                  <th class="px-3 py-2 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="variantTableList">
+                <!-- rows are rendered by client JS for easy editing -->
+              </tbody>
+            </table>
+
+            <div class="mt-3">
+              <button type="button" id="openVariantModal" class="mt-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800">+ Add Variant</button>
+            </div>
+          </div>
+
+          <!-- Variant modal (add/edit) -->
+          <div id="variantModal" class="fixed inset-0 bg-black/40 flex items-center justify-center hidden z-50">
+            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden">
+              <div class="bg-black text-white text-center py-3 font-semibold text-lg">Add / Edit Variant</div>
+              <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                    <input id="variantPrice" type="number" class="w-full border rounded-lg p-2" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                    <input id="variantStock" type="number" class="w-full border rounded-lg p-2" />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Select Colour</label>
+                  <input type="hidden" id="variantColor" />
+                  <div id="colorButtons" class="flex gap-3">
+                    <!-- color buttons -->
+                    <button type="button" data-color="RoseGold" class="color-btn px-4 py-2 rounded-lg border">RoseGold</button>
+                    <button type="button" data-color="Gold" class="color-btn px-4 py-2 rounded-lg border">Gold</button>
+                    <button type="button" data-color="Silver" class="color-btn px-4 py-2 rounded-lg border">Silver</button>
+                    <button type="button" data-color="Black" class="color-btn px-4 py-2 rounded-lg border">Black</button>
+                    <button type="button" data-color="Brown" class="color-btn px-4 py-2 rounded-lg border">Brown</button>
+                  </div>
+                </div>
+
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Variant images</label>
+                  <div class="border-2 border-dashed rounded-lg p-4 text-center text-sm text-gray-600">Image upload UI here</div>
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-3 border-t border-gray-200 px-6 py-3">
+                <button id="closeVariantModal" type="button" class="border px-4 py-2 rounded-lg">Cancel</button>
+                <button id="saveVariantBtn" type="button" class="bg-black text-white px-5 py-2 rounded-lg">Save</button>
+              </div>
+            </div>
+          </div>
+
+          <input type="hidden" id="variantsHidden" name="variants" />
+
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button type="reset" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100">Cancel</button>
+            <button id="saveProductBtn" type="submit" class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">Edit</button>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <%- include("../partials/admin/footer") %>
+
+  <script>
+  (function () {
+    const productId = "<%= product._id %>";
+
+    // safe injection of server-side variants into client
+    const variants = <%- JSON.stringify(product.variants || []) %>;
+
+    
+
+   
+    const variantTableTbody = document.getElementById("variantTableList");
+    const variantsHidden = document.getElementById("variantsHidden");
+
+    const variantModal = document.getElementById("variantModal");
+    const openVariantModalBtn = document.getElementById("openVariantModal");
+    const closeVariantModalBtn = document.getElementById("closeVariantModal");
+    const saveVariantBtn = document.getElementById("saveVariantBtn");
+
+    const variantPriceEl = document.getElementById("variantPrice");
+    const variantStockEl = document.getElementById("variantStock");
+    const variantColorInput = document.getElementById("variantColor");
+    const colorButtons = Array.from(document.querySelectorAll(".color-btn"));
+
+    let editIndex = undefined; // when editing a variant, index is set
+
+    function renderVariantRows() {
+      variantTableTbody.innerHTML = "";
+      variants.forEach((v, i) => {
+        
+        const tr = document.createElement("tr");
+        tr.className = "border-b";
+        tr.innerHTML = `
+  <td class="px-3 py-2">${v.color}</td>
+  <td class="px-3 py-2">${v.stock}</td>
+  <td class="px-3 py-2">₹${v.price}</td>
+  <td class="px-3 py-2">
+    ${(Number(v.stock) > 0)
+      ? '<span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-medium">Available</span>'
+      : '<span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-medium">Out of Stock</span>'}
+  </td>
+  <td class="px-3 py-2 flex items-center gap-3">
+    <button type="button" data-index="${i}" data-id="${v._id}" class="edit-variant text-blue-600 hover:underline text-sm">✏️</button>
+    <button type="button" data-index="${i}" data-id="${v._id}" class="delete-variant text-red-600 hover:underline text-sm">🗑</button>
+  </td>
+`;
+
+        variantTableTbody.appendChild(tr);
+      });
+
+      // update hidden input for server submission
+      variantsHidden.value = JSON.stringify(variants);
+      attachRowButtons();
+    }
+
+    function attachRowButtons() {
+      document.querySelectorAll(".delete-variant").forEach(btn => {
+        btn.onclick = () => {
+          const index = Number(btn.dataset.index);
+          variants.splice(index, 1);
+          renderVariantRows();
+        };
+      });
+
+      document.querySelectorAll(".edit-variant").forEach(btn => {
+        btn.onclick = () => {
+          const index = Number(btn.dataset.index);
+          openVariantForEdit(index);
+        };
+      });
+    }
+
+    function openModal() {
+      variantModal.classList.remove("hidden");
+    }
+
+    function closeModal() {
+      variantModal.classList.add("hidden");
+      clearVariantForm();
+      editIndex = undefined;
+    }
+
+    function clearVariantForm() {
+      variantPriceEl.value = "";
+      variantStockEl.value = "";
+      variantColorInput.value = "";
+      colorButtons.forEach(b => b.classList.remove("ring-2", "ring-black"));
+    }
+
+    function openVariantForEdit(index) {
+      const v = variants[index];
+      editIndex = index;
+      variantPriceEl.value = v.price;
+      variantStockEl.value = v.stock;
+      variantColorInput.value = v.color;
+      colorButtons.forEach(b => b.classList.toggle("ring-2", b.dataset.color === v.color));
+      openModal();
+    }
+
+    function saveVariantFromModal() {
+  const price = variantPriceEl.value.trim();
+  const stock = variantStockEl.value.trim();
+  const color = variantColorInput.value.trim();
+
+  if (!price || !stock || !color) {
+    Swal.fire({ icon: "error", text: "Please fill price, stock and color." });
+    return;
+  }
+
+  const obj = {
+    _id: editIndex !== undefined ? variants[editIndex]._id : undefined,
+    color,
+    price: Number(price),
+    stock: Number(stock)
+  };
+
+  if (typeof editIndex === "number") {
+    variants[editIndex] = obj;
+  } else {
+    variants.push(obj);
+  }
+
+  renderVariantRows();
+  closeModal();
+}
+
+    // ---------- color button selection ----------
+    colorButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        colorButtons.forEach(b => b.classList.remove("ring-2", "ring-black"));
+        btn.classList.add("ring-2", "ring-black");
+        variantColorInput.value = btn.dataset.color;
+      });
+    });
+
+    // ---------- form submit (fetch) ----------
+    async function submitEditForm(e) {
+      e.preventDefault();
+
+      // build FormData
+      const formdata = new FormData();
+      formdata.append("productname", document.getElementById("productname").value);
+      formdata.append("description", document.getElementById("description").value);
+      formdata.append("category_Id", document.getElementById("category").value);
+      formdata.append("subcategory_Id", document.getElementById("subcategory").value);
+      formdata.append("brand", document.getElementById("brand").value);
+      formdata.append("material", document.getElementById("material").value);
+      formdata.append("dialType", document.getElementById("dialType").value);
+      formdata.append("variants", JSON.stringify(variants)); 
+
+      try {
+        const res = await fetch(`/admin/products/edit-product/${productId}`, {
+          method: "PATCH",
+          body: formdata
+        });
+
+        const result = await res.json();
+        if (!result.success) {
+          Swal.fire({ icon: "error", text: result.message || "Update failed" });
+          return;
+        }
+
+        Swal.fire({ icon: "success", text: "Product updated" }).then(() => {
+          window.location.href = "/admin/products";
+        });
+
+      } catch (err) {
+        console.error(err);
+        Swal.fire({ icon: "error", text: "Server error — check console" });
+      }
+    }
+
+    // ---------- init ----------
+    document.addEventListener("DOMContentLoaded", () => {
+      // initial render of variants
+      renderVariantRows();
+
+      // modal buttons
+      openVariantModalBtn.addEventListener("click", () => {
+        editIndex = undefined;
+        clearVariantForm();
+        openModal();
+      });
+      closeVariantModalBtn.addEventListener("click", closeModal);
+      saveVariantBtn.addEventListener("click", saveVariantFromModal);
+
+      // submit
+      document.getElementById("edit-form").addEventListener("submit", submitEditForm);
+
+      
+      document.getElementById("saveProductBtn")?.addEventListener("click", (e) => {
+        document.getElementById("edit-form").dispatchEvent(new Event('submit', { cancelable: true }));
+      });
+    });
+  })();
+  </script>
+</body>
+</html>

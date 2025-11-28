@@ -72,14 +72,8 @@
                                             <%=product.createdAt.toLocaleDateString("en-IN")%>
                                         </td>
                                         <td class="px-4 py-2 text-center">
-                                            <button
-                                                onclick='openModal("edit", JSON.parse(decodeURIComponent("<%= encodeURIComponent(JSON.stringify(subcategories)) %>")))'
-                                                class="text-red-500 hover:text-red-700 mx-1">✏️</button>
-
+                                            <a href="/admin/edit-product/<%= product._id %>"class="text-red-500 hover:text-red-700 mx-1">✏️</a>
                                             <button onclick="openDeleteModal('<%= product._id %>')"class="text-blue-500 hover:text-blue-700 mx-1">🗑</button>
-                                                
-                                                
-
                                         </td>
                                     </tr>
                                      <%})%>
