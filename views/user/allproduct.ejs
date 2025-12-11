@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User All Products</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50">
+<%- include("../partials/user/header")%>
+    
+    <div class="container mx-auto px-4 py-8">
+        <p class="text-center text-gray-600 mt-2">Stock Up Your Fashion Wardrobe With A Perfect Style. .</p>
+
+        <!-- Category Filter Buttons -->
+        <div class="flex justify-center gap-3 mt-6">
+            <button onclick="window.location.href='/user/allproduct' "  class="px-6 py-2 border border-gray-800 hover:bg-gray-800 hover:text-white transition rounded-full">ALL</button>
+            <button  onclick="window.location.href='/user/allproduct?subcategory=Casual'" class="px-6 py-2 border border-gray-800 hover:bg-gray-800 hover:text-white transition rounded-full">Casual</button>
+            <button  onclick="window.location.href='/user/allproduct?subcategory=Formal'" class="px-6 py-2 border border-gray-800 hover:bg-gray-800 hover:text-white transition rounded-full">Formal</button>
+            <button  onclick="window.location.href='/user/allproduct?subcategory=Luxury'" class="px-6 py-2 border border-gray-800 hover:bg-gray-800 hover:text-white transition rounded-full">Luxury</button>
+        </div>
+    </div>
+
+    <!-- Main Section -->
+    <div class="container mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-4 gap-8"> 
+       
+<!-- Filters Form -->
+<div class="hidden md:block col-span-1 bg-white p-5 rounded-lg shadow-md">
+    <h3 class="text-lg font-semibold mb-4 text-gray-800">FILTERS & SORT</h3>
+
+    <form action="/user/allproduct" method="GET" class="space-y-4">
+
+        <!-- Sort -->
+        <div class="pb-3 border-b border-gray-200 space-y-1">
+            <label class="font-medium text-gray-700">Sort By</label>
+            <select name="sort" class="w-full filterSelect text-gray-800">
+                <option value="" hidden></option>
+                <option value="low-high" <%= query.sort === "low-high" ? 'selected' : '' %>>Price: Low → High</option>
+                <option value="high-low" <%= query.sort === "high-low" ? 'selected' : '' %>>Price: High → Low</option>
+                <option value="a-z" <%= query.sort === "a-z" ? 'selected' : '' %>>A → Z</option>
+                <option value="z-a" <%= query.sort === "z-a" ? 'selected' : '' %>>Z → A</option>
+            </select>
+            <% if(query.sort){ %>
+            <p class="text-green-600 text-sm font-medium">Selected: <%= query.sort %></p>
+            <% } %>
+        </div>
+
+        <!-- Brand -->
+        <div class="py-3 border-b border-gray-200 space-y-1">
+            <label class="font-medium text-gray-700">Brand</label>
+            <select name="brand" class="w-full filterSelect text-gray-800">
+                <option value="" hidden></option>
+                <% brandOptions.forEach(b => { %>
+                <option value="<%= b %>" <%= query.brand === b ? 'selected' : '' %>><%= b %></option>
+                <% }) %>
+            </select>
+            <% if(query.brand){ %>
+            <p class="text-green-600 text-sm font-medium">Selected: <%= query.brand %></p>
+            <% } %>
+        </div>
+
+        <!-- Material -->
+        <div class="py-3 border-b border-gray-200 space-y-1">
+            <label class="font-medium text-gray-700">Material</label>
+            <select name="material" class="w-full filterSelect text-gray-800">
+                <option value="" hidden></option>
+                <% materialOptions.forEach(m => { %>
+                <option value="<%= m %>" <%= query.material === m ? 'selected' : '' %>><%= m %></option>
+                <% }) %>
+            </select>
+            <% if(query.material){ %>
+            <p class="text-green-600 text-sm font-medium">Selected: <%= query.material %></p>
+            <% } %>
+        </div>
+
+        <!-- Dial Type -->
+        <div class="py-3 border-b border-gray-200 space-y-1">
+            <label class="font-medium text-gray-700">Dial Type</label>
+            <select name="dialType" class="w-full filterSelect text-gray-800">
+                <option value="" hidden></option>
+                <% dialTypeOptions.forEach(d => { %>
+                <option value="<%= d %>" <%= query.dialType === d ? 'selected' : '' %>><%= d %></option>
+                <% }) %>
+            </select>
+            <% if(query.dialType){ %>
+            <p class="text-green-600 text-sm font-medium">Selected: <%= query.dialType %></p>
+            <% } %>
+        </div>
+
+        <!-- Price -->
+        <div class="pt-3 space-y-1">
+            <label class="font-medium text-gray-700">Price Range</label>
+            <select name="price" class="w-full filterSelect text-gray-800">
+                <option value="" hidden></option>
+                <option value="0-999" <%= query.priceRange === "0-999" ? 'selected' : '' %>>Below ₹1000</option>
+                <option value="1000-1999" <%= query.priceRange === "1000-1999" ? 'selected' : '' %>>₹1000 - ₹2000</option>
+                <option value="2000-4999" <%= query.priceRange === "2000-4999" ? 'selected' : '' %>>₹2000 - ₹5000</option>
+                <option value="5000+" <%= query.priceRange === "5000+" ? 'selected' : '' %>>Above ₹5000</option>
+            </select>
+            <% if(query.priceRange){ %>
+            <p class="text-green-600 text-sm font-medium">Selected: <%= query.priceRange %></p>
+            <% } %>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-between mt-4">
+            <button type="submit"
+                    class="px-4 py-2 bg-lime-900 text-white rounded hover:bg-lime-700 transition">
+                Apply
+            </button>
+            <a href="/user/allproduct"
+               class="px-4 py-2 border border-gray-400 rounded hover:bg-gray-200 transition">
+                Reset
+            </a>
+        </div>
+
+    </form>
+</div>
+
+
+<!-- Products Listing -->
+      <div class="col-span-3">
+  <div class="container mx-auto p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <% products.forEach(product => { %>
+
+      <div onclick="goToProduct('<%= product._id %>')"
+           class="bg-white rounded shadow hover:shadow-lg transition cursor-pointer flex flex-col overflow-hidden relative">
+
+        <img src="<%= product.mainImage ? product.mainImage : '/images/no-image.png' %>" 
+     alt="<%= product.name %>" 
+     class="w-full h-48 object-cover">
+
+
+        <div class="absolute top-2 right-2 flex flex-col gap-2">
+
+          <button onclick="event.stopPropagation(); addToWishlist('<%= product._id %>')"
+                  class="bg-white p-2 rounded-full shadow hover:bg-red-100 transition text-red-500"
+                  title="Add to Wishlist">❤️</button>
+
+          <button onclick="event.stopPropagation(); addToCart('<%= product._id %>')"
+                  class="bg-white p-2 rounded-full shadow hover:bg-green-100 transition text-green-500"
+                  title="Add to Cart">🛒</button>
+        </div>
+
+        <div class="p-4 flex-1 flex flex-col">
+          <h2 class="font-semibold text-lg mb-1"><%= product.name %></h2>
+          <p class="font-bold text-yellow-600">₹<%= product.price %></p>
+        </div>
+      </div>
+
+    <% }) %>
+  </div>
+</div>
+
+<!-- Pagination -->
+  <div class="mt-8 flex justify-center items-center space-x-2">
+    <% let queryString = `search=${query.search || ''}&brand=${query.brand || ''}&material=${query.material || ''}&dialType=${query.dialType || ''}&priceRange=${query.priceRange || ''}&sort=${query.sort || ''}` %>
+
+    <!-- Prev -->
+    <a href="/user/allproduct?page=<%= currentPage - 1 %>&<%= queryString %>"
+        class="px-3 py-1 border rounded hover:bg-gray-200 <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">
+        Prev
+    </a>
+
+    <% for (let i = 1; i <= totalPages; i++) { %>
+        <a href="/user/allproduct?page=<%= i %>&<%= queryString %>"
+            class="px-3 py-1 border rounded <%= currentPage === i ? 'bg-yellow-500 text-white' : 'hover:bg-gray-200' %>">
+            <%= i %>
+        </a>
+    <% } %>
+
+    <!-- Next -->
+    <a href="/user/allproduct?page=<%= currentPage + 1 %>&<%= queryString %>"
+        class="px-3 py-1 border rounded hover:bg-gray-200 <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+        Next
+    </a>
+</div>
+
+
+
+    </div>
+<%- include("../partials/user/footer") %>
+</body>
+
+<script>
+  function goToProduct(id) {
+    window.location.href = `/user/product-details/${id}`;
+  }
+  
+ 
+
+
+</script>
+
+</html>

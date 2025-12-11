@@ -47,9 +47,9 @@ const getaddProduct= async(req,res)=>{
     try {
         const categories=await Category.find({isListed:true})
         const subcategories= await Subcategory.find({isListed:true})
-        const brands=['CASIO','TITAN','FOSSIL','FASTRACK','ROLEX','NAVIFORCE','OTHERS']
+        const brands=['CASIO','TITAN','FOSSIL','FASTRACK','ROLEX','NAVIFORCE','DANIEL KLEIN','OTHERS']
         const materials=['Metal','Rubber','Leather']
-        const dials=['Analogue','Digital']
+        const dials=['Analogue','Digital',"Smart"]
 
         res.render('admin/add-product',{
             categories,

@@ -6,7 +6,7 @@ const subcategoryInfo= async(req,res)=>{
     try {
         const search=req.query.search ||""
         const page=parseInt(req.query.page) || 1
-        const limit=2
+        const limit=6
 
         let filter = {}
           if (search) {
@@ -43,8 +43,8 @@ let addSubcategory = async (req, res) => {
     const {category_Id}=req.body
     const name = req.body?.name?.trim()
     const description = req.body?.description?.trim()
-    let image = req.file ? req.file.filename : ""
-    console.log(name,description,image)
+    let image = req.file ? req.file.path : null
+    
 
     if (!category_Id || !name || !description) {
             return res.json({ 

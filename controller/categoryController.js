@@ -41,7 +41,7 @@ let addCategory = async (req, res) => {
     
     const name = req.body?.name?.trim()
     const description = req.body?.description?.trim()
-    let image = req.file ? req.file.filename : ""
+    let image = req.file ? req.file.path: null
 console.log(name,description,image)
     
 

@@ -57,7 +57,7 @@ const productSchema=new mongoose.Schema({
     },
     isListed:{
        type:Boolean,
-       required:false
+       default:true
     }
  },
  {timestamps:true}

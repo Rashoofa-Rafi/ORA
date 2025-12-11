@@ -49,14 +49,7 @@ const loadSignup=async(req,res)=>{
 }
 
 
-const loadHome=async(req,res)=>{
-    try {
-        res.render('user/home')
-    } catch (error) {
-       res.status(500).send('server error')
-        
-    }
-}
+
 
 const loadpage404=async(req,res)=>{
     try {
@@ -366,7 +359,7 @@ module.exports = {
     loadforgetPassword,
     loadchangePassword,
     loadpage404,
-    loadHome,
+    
     loadSignup,
     signup,
     forgetPassword,
