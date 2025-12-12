@@ -23,8 +23,13 @@ const categoryInfo= async(req,res)=>{
 
         console.log(categories)
         res.render('admin/category',{
-            categories,search,page,totalPages
+            categories,
+            search,
+            page,
+            totalPages,
+            currentPath: req.path
         })
+        
 } catch (error) {
     console.error(error)
     res.status(500).json({

@@ -26,9 +26,9 @@
             <!-- Nav Links -->
             <nav class="hidden md:flex space-x-6">
                 <a href="/user/home" class="hover:text-yellow-400">Home</a>
-                <a href="/user/allproduct?category=men" class="hover:text-yellow-400">Men</a>
+                <a href="/user/allproduct?category=Men" class="hover:text-yellow-400">Men</a>
                 <a href="/user/allproduct?category=Women" class="hover:text-yellow-400">Women</a>
-                <a href="/user/allproduct?" class="hover:text-yellow-400">New Arrivals</a>
+                <a href="/user/allproduct?newArrival=recent" class="hover:text-yellow-400">New Arrivals</a>
             </nav>
 
         <!-- Right Section: Search + Icons -->
@@ -36,7 +36,7 @@
 
   <% if (user) { %>
     <span class="text-yellow-300 font-semibold">
-      Welcome, <%= user.name %>
+      Welcome, <%= user.fullName %>
     </span>
   <% } %>
 
@@ -78,7 +78,7 @@
     </svg>
   </a>
 
-  <!-- User Menu -->
+  <div class="relative z-50 inline-block">
   <button id="userMenuButton" class="hover:text-yellow-400 focus:outline-none">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none"
          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -99,7 +99,7 @@
         <a href="/user/logout" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</a>
       <% } %>
   </div>
-
+</div>
 </div>
 
 

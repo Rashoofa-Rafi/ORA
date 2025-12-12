@@ -31,6 +31,7 @@ const customerInfo = async (req, res) => {
       search,
       page,
       totalPages,
+      currentPath: req.path
     });
   } catch (error) {
     console.error(error);

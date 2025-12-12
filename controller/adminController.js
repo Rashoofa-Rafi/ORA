@@ -62,11 +62,11 @@ const login= async (req,res)=>{
                 message:'Invalid Password'
             })
         }
-        req.session.admin={
-            id:admin._id,
-            email:admin.email
+        req.session.admin=admin._id.toString()
             
-        }
+            
+            
+        
         return res.status(200).json({
             success:true,
             message:'Login successfully',
@@ -161,18 +161,19 @@ const verifyOTP=async(req,res)=>{
 
 const resendOTP=async(req,res)=>{
     try {
-        //const{email}=req.body
+        
 
-        const verifiedEmail=req.session.verifiedEmail 
+        const email = req.session.frgtPasswordemail 
 
-        if(!verifiedEmail){
+        if(!email){
             return res.status(400).json({
                 success:false,
                 message:'session expired,Try again'
             })
         }
         const OTP=generateOTP()
-        const emailsent= await sendVerificationEmail(verifiedEmail,OTP)
+        console.log(OTP)
+        const emailsent= await sendVerificationEmail(email,OTP)
         if(!emailsent){
             return res.status(400).json({
                 success:false,
@@ -180,7 +181,7 @@ const resendOTP=async(req,res)=>{
             })
         }
         req.session.otp=OTP
-        req.session.verifiedEmail=verifiedEmail
+        
 
         return res.status(200).json({
             success:true,

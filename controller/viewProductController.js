@@ -16,6 +16,7 @@ const listProducts = async (req, res) => {
       dialType,
       sort,
       page,
+      
     } = req.query;
 
     page = parseInt(page) || 1;
@@ -44,33 +45,47 @@ const listProducts = async (req, res) => {
     if (brand) filter.brand = brand;
     if (material) filter.material = material;
     if (dialType) filter.dialType = dialType;
-    let priceFilter = {};
+    
+    let priceProductIds = null;
+
 if (req.query.priceRange) {
-  const [min, max] = req.query.priceRange.split("-");
-  priceFilter = max 
-      ? { $gte: Number(min), $lte: Number(max) } 
-      : { $gte: Number(min) };
+  const [min, max] = req.query.priceRange.split("-").map(Number);
+
+  const variantQuery = {};
+
+  if (!isNaN(min)) variantQuery.price = { $gte: min };
+  if (!isNaN(max)) variantQuery.price = { ...(variantQuery.price || {}), $lte: max };
+
+  const matchedVariants = await Variant.find(variantQuery, "product_id");
+
+  priceProductIds = matchedVariants.map(v => v.product_id);
 }
+
 
 
     let sortQuery = {};
     switch (sort) {
-      case "low-high": sortQuery.price = 1; break;
-      case "high-low": sortQuery.price = -1; break;
+      case "low-high": sortQuery['variant.price']= 1; break;
+      case "high-low": sortQuery["variants.price"]= -1; break;
       case "a-z": sortQuery.productname = 1; break;
       case "z-a": sortQuery.productname = -1; break;
     }
+    const finalFilter = { ...filter };
+
+if (priceProductIds) {
+  finalFilter._id = { $in: priceProductIds };
+}
 
 
 
-    const totalProducts = await Product.countDocuments(filter);
+    const totalProducts = await Product.countDocuments(finalFilter);
 
-    const productsData = await Product.find(filter)
+    const productsData = await Product.find(finalFilter)
     .populate("category_Id")
-  .populate("subcategory_Id")
+    .populate("subcategory_Id")
     .populate({
       path: "variants",
-      match: Object.keys(priceFilter).length > 0 ? { price: priceFilter } : {}
+       match:  priceProductIds ? {} : {}
   })
       .sort(sortQuery)
       .skip(skip)

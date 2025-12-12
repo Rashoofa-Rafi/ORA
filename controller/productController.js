@@ -30,7 +30,7 @@ const productInfo=async(req,res)=>{
         const subcategories=await Subcategory.find({isListed:true})
 
         res.render('admin/product',{
-           products,search,totalPages,page,categories,subcategories
+           products,search,totalPages,page,categories,subcategories,currentPath: req.path
         })
             
         
@@ -105,7 +105,7 @@ const addProduct = async (req, res) => {
     })
 
     // Group Cloudinary files by fieldnames
-    // req.files is array when using upload.any()
+   
     const filesByField = {};
     (req.files || []).forEach(f => {
       if (!filesByField[f.fieldname]) filesByField[f.fieldname] = [];

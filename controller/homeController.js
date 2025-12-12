@@ -44,6 +44,7 @@ const loadHome=async(req,res)=>{
     })
 
     return res.render('user/home', {
+      
       categories,
       latestProducts,
       topLaunches,
@@ -55,8 +56,20 @@ const loadHome=async(req,res)=>{
     return res.status(500).send('Server Error');
   }
 };
+const logout = (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error destroying session:", err);
+      return res.redirect("/user/home");
+    }
+
+    res.clearCookie("connect.sid");
+    res.setHeader('Cache-Control', 'no-store')
+    return res.redirect("/user/login");
+  });
+};
 
     
 
 
-module.exports={loadHome}
+module.exports={loadHome,logout}

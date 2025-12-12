@@ -16,8 +16,8 @@
         <!-- Category Filter Buttons -->
         <div class="flex justify-center gap-3 mt-6">
             <button onclick="window.location.href='/user/allproduct' "  class="px-6 py-2 border border-gray-800 hover:bg-gray-800 hover:text-white transition rounded-full">ALL</button>
-            <button  onclick="window.location.href='/user/allproduct?subcategory=Casual'" class="px-6 py-2 border border-gray-800 hover:bg-gray-800 hover:text-white transition rounded-full">Casual</button>
-            <button  onclick="window.location.href='/user/allproduct?subcategory=Formal'" class="px-6 py-2 border border-gray-800 hover:bg-gray-800 hover:text-white transition rounded-full">Formal</button>
+            <button  onclick="window.location.href='/user/allproduct?subcategory=Casuals'" class="px-6 py-2 border border-gray-800 hover:bg-gray-800 hover:text-white transition rounded-full">Casual</button>
+            <button  onclick="window.location.href='/user/allproduct?subcategory=Formals'" class="px-6 py-2 border border-gray-800 hover:bg-gray-800 hover:text-white transition rounded-full">Formal</button>
             <button  onclick="window.location.href='/user/allproduct?subcategory=Luxury'" class="px-6 py-2 border border-gray-800 hover:bg-gray-800 hover:text-white transition rounded-full">Luxury</button>
         </div>
     </div>
@@ -91,7 +91,7 @@
         <!-- Price -->
         <div class="pt-3 space-y-1">
             <label class="font-medium text-gray-700">Price Range</label>
-            <select name="price" class="w-full filterSelect text-gray-800">
+            <select name="priceRange" class="w-full filterSelect text-gray-800">
                 <option value="" hidden></option>
                 <option value="0-999" <%= query.priceRange === "0-999" ? 'selected' : '' %>>Below ₹1000</option>
                 <option value="1000-1999" <%= query.priceRange === "1000-1999" ? 'selected' : '' %>>₹1000 - ₹2000</option>

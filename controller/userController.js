@@ -64,7 +64,7 @@ const loadpage404=async(req,res)=>{
 const signup = async (req, res) => {
     try {
         const { fullName, email, mobile, password } = req.body
-        console.log(req.body)
+        
         const existUser = await User.findOne({ email })
         if (existUser)
             return res.status(400).json({
@@ -115,6 +115,7 @@ const forgetPassword = async (req, res) => {
             })
         }
         const OTP = generateOTP()
+        console.log(OTP)
 
         const emailsent = await sendVerificationEmail(email, OTP)
         if (!emailsent) {
@@ -222,6 +223,7 @@ const resendOtp = async (req, res) => {
 
 
         const OTP = generateOTP()
+        console.log(OTP)
         const emailsent = await sendVerificationEmail(email, OTP)
         if (!emailsent) {
             return res.status(400).json({
@@ -304,18 +306,16 @@ const login = async (req, res) => {
             });
         }
         const isMatch = await bcrypt.compare(password, user.password)
-        console.log(isMatch)
+       
         if (!isMatch) {
             return res.status(400).json({
                 success: false,
                 message: "Incorrect Password"
             })
         }
-        req.session.user = {
-            id: user._id,
-            name:user.fullName,
-            email: user.email
-        }
+        req.session.user = user._id.toString()
+        
+        
 
         return res.status(200).json({
             success: true,
@@ -331,28 +331,7 @@ const login = async (req, res) => {
     }
 }
 
-const logout = async (req, res) => {
-  try {
-    await new Promise((resolve, reject) => {
-      req.logout(err => {
-        if (err) reject(err);
-        else resolve();
-      })
-    })
 
-   req.session.destroy(err => {
-      if (err)
-        onsole.log("Session destroy error:", err);
-      
-      res.clearCookie('connect.sid')
-      return res.redirect('/user/login')
-    });
-
-  } catch (error) {
-    console.error( error)
-    return res.status(500).send("Something went wrong during logout");
-  }
-}
 module.exports = {
     loadLogin,
     loadOTP,
@@ -367,6 +346,6 @@ module.exports = {
     resendOtp,
     changePassword,
     login,
-    logout,
+    
 
 }
