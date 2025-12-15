@@ -4,8 +4,10 @@ const Category=require('../models/categorySchema')
 const Subcategory=require('../models/subcategorySchema')
 const cloudinary = require("../config/cloudinary");
 const fs = require("fs");
+const AppError = require('../config/AppError');
+const HTTP_STATUS = require('../middleware/statusCode');
 
-const productInfo=async(req,res)=>{
+const productInfo=async(req,res,next)=>{
     try {
         let search=req.query.search ||''
         let page=parseInt(req.query.page) || 1
@@ -13,7 +15,7 @@ const productInfo=async(req,res)=>{
 
         let filter={}
         if(search){
-            filter={name:{$regex:'.*' +search+'.*',$options:'i'}}
+            filter.productname={$regex:'.*' +search+'.*',$options:'i'}
         }
 
         const products=await Product.find(filter)
@@ -34,16 +36,11 @@ const productInfo=async(req,res)=>{
         })
             
         
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({
-            success:false,
-            message:'server error'
-        })
-        
+    } catch (err) {
+       next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }
-const getaddProduct= async(req,res)=>{
+const getaddProduct= async(req,res,next)=>{
     try {
         const categories=await Category.find({isListed:true})
         const subcategories= await Subcategory.find({isListed:true})
@@ -59,12 +56,11 @@ const getaddProduct= async(req,res)=>{
             dials
 
         })
-    } catch (error) {
-        console.error(error)
-        res.status(500).send('internal server error')
+    } catch (err) {
+       next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }
-const addProduct = async (req, res) => {
+const addProduct = async (req, res,next) => {
   try {
     const {
       productname,
@@ -77,9 +73,8 @@ const addProduct = async (req, res) => {
       variants
     } = req.body;
     if (!productname || !description || !category_Id || !subcategory_Id || !brand || !material || !dialType) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'All product fields are required' })
+      throw new AppError('All product fields are required',HTTP_STATUS.BAD_REQUEST)
+      
     }
 
     // parse variants JSON
@@ -87,11 +82,13 @@ const addProduct = async (req, res) => {
     try {
       variantArray = JSON.parse(variants || "[]");
     } catch (err) {
-      return res.status(400).json({ success: false, message: "Invalid variants payload" });
+      throw new AppError("Invalid variants payload",HTTP_STATUS.BAD_REQUEST)
+      
     }
 
     if (!Array.isArray(variantArray) || variantArray.length === 0) {
-      return res.status(400).json({ success: false, message: "At least one variant required" });
+      throw new AppError("At least one variant required",HTTP_STATUS.BAD_REQUEST)
+     
     }
 
     const product = await Product.create({
@@ -120,13 +117,16 @@ const addProduct = async (req, res) => {
 
       // validate
       if (!v.price || isNaN(v.price) || Number(v.price) <= 0) {
-        return res.status(400).json({ success: false, message: `Invalid price for variant ` });
+        throw new AppError(`Invalid price for variant `,HTTP_STATUS.BAD_REQUEST)
+       
       }
       if (v.stock == null || isNaN(v.stock) || Number(v.stock) < 0) {
-        return res.status(400).json({ success: false, message: `Invalid stock for variant ` });
+        throw new AppError(`Invalid stock for variant `,HTTP_STATUS.BAD_REQUEST)
+       
       }
       if (!v.color) {
-        return res.status(400).json({ success: false, message: `please select a color for variant ` });
+        throw new AppError(`please select a color for variant `,HTTP_STATUS.BAD_REQUEST)
+      
       }
 
       const fieldName = `variantImages_${i}`;
@@ -165,30 +165,29 @@ const totalStock = await Variant.aggregate([
 product.totalStock = totalStock[0]?.total || 0;
 
     await product.save();
-    return res.json({
+    return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       message: "Product added successfully",
       redirect1: "/admin/products"
     });
 
-  } catch (error) {
-    console.error( error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+  } catch (err) {
+   next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 };
 
  const geteditProduct=async(req,res) =>{
   try {
     const productId = req.params.id;
+    const variants = await Variant.find({ product_id: productId })
     const product = await Product.findById(productId)
             .populate("variants")
             .populate("category_Id")
             .populate("subcategory_Id")
             
     if (!product) {
-            return res.status(400).json({
-              success:false,
-              message:"Product not found"});
+      throw new AppError(" Product not found",HTTP_STATUS.BAD_REQUEST)
+            
         }
 
         // Fetch dropdown lists
@@ -205,86 +204,92 @@ product.totalStock = totalStock[0]?.total || 0;
             brands,
             materials,
             dials,
+            variants
         })
-  } catch (error) {
-    console.error(error)
-    return res.status(500).json({
-      success:false,
-      message:'Internal server error'
-    })
+  } catch (err) {
+    next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
  }
 
 
-const editProduct = async (req, res) => {
+const editProduct = async (req, res,next) => {
   try {
     const productId = req.params.id;
-    const variants = JSON.parse(req.body.variants)
-     
+
+    const {
+      productname,
+      description,
+      category_Id,
+      subcategory_Id,
+      brand,
+      material,
+      dialType,
+      isListed
+    } = req.body;
+
     await Product.findByIdAndUpdate(productId, {
-      productname: req.body.productname,
-      description: req.body.description,
-      category_Id: req.body.category_Id,
-      subcategory_Id: req.body.subcategory_Id,
-      brand: req.body.brand,
-      material: req.body.material,
-      dialType: req.body.dialType
+      productname,
+      description,
+      category_Id,
+      subcategory_Id,
+      brand,
+      material,
+      dialType,
+      isListed: isListed === "true"
     });
 
-    // Update each existing variant individually
-    for (const v of variants) {
-      await Variant.findByIdAndUpdate(
-        v._id,
-        {
-          color: v.color,
-          price: v.price,
-          stock: v.stock,
-          status: v.stock > 0 ? "available" : "out of stock"
-        },
-        { new: true }
-      );
-    }
+    const variants = JSON.parse(req.body.variants || "[]");
 
-    return res.status(200).json({ 
+for (const v of variants) {
+  const variant = await Variant.findById(v._id);
+  if (!variant) continue;
+
+  variant.color = v.color;
+  variant.price = v.price;
+  variant.stock = v.stock;
+
+  let removeImages = Array.isArray(v.removeImages) ? v.removeImages : [];
+  variant.images = variant.images.filter(img => !removeImages.includes(img));
+
+  const newFiles = (req.files || []).filter(
+    f => f.fieldname === `variantImages_${v._id}[]`
+  );
+
+  for (const file of newFiles) {
+    variant.images.push(file.path);
+  }
+
+  await variant.save();
+}
+    
+
+    return res.status(HTTP_STATUS.CREATED).json({
       success: true,
-      message:'Updated successfully' 
-    })
+      message: "Product successfully updated",
+      redirect: "/admin/products"
+    });
 
   } catch (err) {
-    console.log(err)
-    return res.status(500).json({ 
-      success:false,
-      message: "Server error"
-     })
+    next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
-}
+};
 
-const deleteProduct=async(req,res)=>{
+const deleteProduct=async(req,res,next)=>{
     try {
         const productId=req.params.id
         const updated = await Product.findByIdAndUpdate(productId,{ isListed: false })
 
     if (!updated) {
-      return res.status(400).json({
-        success: false,
-        message: "Failed to delete product",
-      });
+      throw new AppError("Failed to delete product",HTTP_STATUS.BAD_REQUEST)
+      
     }
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       message: "Product deleted successfully",
     });
-        
-
-        
-    } catch (error) {
-        console.error(error)
-        return res.status(500).json({
-            success:false,
-            message:'Internal server error'
-        })
-        
+} catch (err) {
+        next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }
 

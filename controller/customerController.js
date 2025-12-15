@@ -1,6 +1,8 @@
+const HTTP_STATUS = require('../middleware/statusCode.js');
+const AppError=require('../config/AppError')
 const Customer = require('../models/userSchema.js');
 
-const customerInfo = async (req, res) => {
+const customerInfo = async (req, res,next) => {
   try {
     let search = req.query.search || ''
     let page = parseInt(req.query.page) || 1
@@ -33,33 +35,24 @@ const customerInfo = async (req, res) => {
       totalPages,
       currentPath: req.path
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
+  } catch (err) {
+      next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 };
 
-const blockStatus= async(req,res)=>{
+const blockStatus= async(req,res,next)=>{
     try {
         const { id, action } = req.body
 
     const isBlocked = action === 'block'
     await Customer.findByIdAndUpdate(id, { isBlocked });
-        res.status(200).json({
+        res.status(HTTP_STATUS.CREATED).json({
             success:true,
             message: `Customer ${isBlocked ? 'blocked' : 'unblocked'} successfully`,
         })
         
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({
-            success:false,
-            message:'internal server error'
-        })
-        
+    } catch (err) {
+         next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }
 

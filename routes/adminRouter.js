@@ -1,7 +1,7 @@
 const express=require('express')
 const router=express.Router()
 const {upload}=require('../helpers/multer')
-const {adminIsAuthenticated,adminIsLoggedOut} = require("../middleware/auth");
+const {IsAdminAuthenticated,IsAdminLoggedOut} = require("../middleware/auth");
 const nocache=require('../middleware/cache')
 const adminController=require("../controller/adminController")
 const customerController=require('../controller/customerController')
@@ -12,8 +12,8 @@ const productController=require('../controller/productController')
 
 //for admin authentication
 
-router.get('/login',adminIsLoggedOut,nocache,adminController.loadLogin)
-router.get('/dashboard',adminIsAuthenticated,nocache,adminController.loadDashboard)
+router.get('/login',IsAdminLoggedOut,nocache,adminController.loadLogin)
+router.get('/dashboard',IsAdminAuthenticated,nocache,adminController.loadDashboard)
 router.get('/forget-password',adminController.loadforgetPassword)
 router.get('/otp',adminController.loadOTP)
 router.get('/change-password',adminController.loadchangePassword)
@@ -30,33 +30,33 @@ router.post('/login',adminController.login)
 
 //for customer managemnent
 
-router.get('/customers',adminIsAuthenticated,nocache,customerController.customerInfo)
-router.patch('/customers/block',adminIsAuthenticated,nocache,customerController.blockStatus)
+router.get('/customers',IsAdminAuthenticated,nocache,customerController.customerInfo)
+router.patch('/customers/block',IsAdminAuthenticated,nocache,customerController.blockStatus)
 
 //for category management
-router.get('/category',adminIsAuthenticated,nocache,categoryController.categoryInfo)
-router.post('/category/add',adminIsAuthenticated,nocache,upload.single('image'),categoryController.addCategory)
-router.patch('/category/edit/:id',adminIsAuthenticated,nocache,upload.single('image'),categoryController.editCategory)
-router.patch('/category/delete/:id',adminIsAuthenticated,nocache,categoryController.deleteCategory)
+router.get('/category',IsAdminAuthenticated,nocache,categoryController.categoryInfo)
+router.post('/category/add',IsAdminAuthenticated,nocache,upload.single('image'),categoryController.addCategory)
+router.patch('/category/edit/:id',IsAdminAuthenticated,nocache,upload.single('image'),categoryController.editCategory)
+router.patch('/category/delete/:id',IsAdminAuthenticated,nocache,categoryController.deleteCategory)
 
 
 //for subcategory management
-router.get('/subcategory',adminIsAuthenticated,nocache,subcategoryController.subcategoryInfo)
-router.post('/subcategory/add',adminIsAuthenticated,nocache,upload.single('image'),subcategoryController.addSubcategory)
-router.patch('/subcategory/edit/:id',adminIsAuthenticated,nocache,upload.single('image'),subcategoryController.editSubcategory)
-router.patch('/subcategory/delete/:id',adminIsAuthenticated,nocache,subcategoryController.deleteSubcategory)
+router.get('/subcategory',IsAdminAuthenticated,nocache,subcategoryController.subcategoryInfo)
+router.post('/subcategory/add',IsAdminAuthenticated,nocache,upload.single('image'),subcategoryController.addSubcategory)
+router.patch('/subcategory/edit/:id',IsAdminAuthenticated,nocache,upload.single('image'),subcategoryController.editSubcategory)
+router.patch('/subcategory/delete/:id',IsAdminAuthenticated,nocache,subcategoryController.deleteSubcategory)
 
 
 //for product management
 
-router.get('/products',adminIsAuthenticated,nocache,productController.productInfo)
-router.get('/add-product',adminIsAuthenticated,nocache,productController.getaddProduct)
-router.get('/edit-product/:id',adminIsAuthenticated,nocache,productController.geteditProduct)
-router.post('/products/add-product',adminIsAuthenticated,nocache,upload.any(),productController.addProduct)
+router.get('/products',IsAdminAuthenticated,nocache,productController.productInfo)
+router.get('/add-product',IsAdminAuthenticated,nocache,productController.getaddProduct)
+router.get('/edit-product/:id',IsAdminAuthenticated,nocache,productController.geteditProduct)
+router.post('/products/add-product',IsAdminAuthenticated,nocache,upload.any(),productController.addProduct)
 
 
-router.patch('/products/edit-product/:id',adminIsAuthenticated,nocache,upload.any(),productController.editProduct)
-router.patch('/products/delete/:id',adminIsAuthenticated,nocache,productController.deleteProduct)
+router.patch('/products/edit-product/:id',IsAdminAuthenticated,nocache,upload.any(),productController.editProduct)
+router.patch('/products/delete/:id',IsAdminAuthenticated,nocache,productController.deleteProduct)
 
 
 

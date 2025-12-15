@@ -2,7 +2,7 @@ const express=require("express")
 const router=express.Router()
 const userController=require('../controller/userController')
 const viewProductController=require('../controller/viewProductController')
-const {userIsAuthenticated,userIsLoggedOut} = require("../middleware/auth");
+const {IsUserAuthenticated,IsUserLoggedOut} = require("../middleware/auth");
 const homeController=require('../controller/homeController')
 
 const nocache=require('../middleware/cache')
@@ -13,9 +13,9 @@ const passport = require('passport')
 
 router.get('/home',homeController.loadHome)
 router.get('/pagenotfound',userController.loadpage404)
-router.get('/signup',userIsLoggedOut,nocache,userController.loadSignup)
+router.get('/signup',IsUserLoggedOut,nocache,userController.loadSignup)
 router.get('/verify-otp',userController.loadOTP)
-router.get('/login',userIsLoggedOut,nocache,userController.loadLogin)
+router.get('/login',IsUserLoggedOut,nocache,userController.loadLogin)
 router.get('/forget-password',userController.loadforgetPassword)
 router.get('/change-password',userController.loadchangePassword)
 router.get('/logout',  homeController.logout)
@@ -43,7 +43,7 @@ router.post('/change-password',userController.changePassword)
 //---All Products
 
 router.get('/allproduct',viewProductController.listProducts)
-router.get('/product-details/:id',userIsAuthenticated,nocache,viewProductController.getProductDetails)
+router.get('/product-details/:id',IsUserAuthenticated,nocache,viewProductController.getProductDetails)
 
 
 

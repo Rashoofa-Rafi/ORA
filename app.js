@@ -8,6 +8,8 @@ const userRouter=require('./routes/userRouter')
 const adminRouter=require('./routes/adminRouter')
 const session=require('express-session')
 const passport=require('./config/passport')
+const notFound =require('./middleware/notFound')
+const errorHandler =require('./middleware/errorHandler')
 DB()
 
 
@@ -65,7 +67,8 @@ app.use('/admin', (req, res, next) => {
 app.use('/user',userRouter)
 app.use('/admin',adminRouter)
 
-
+app.use(notFound)
+app.use(errorHandler)
 
 app.listen(process.env.PORT,()=>{
     console.log("Server is running");

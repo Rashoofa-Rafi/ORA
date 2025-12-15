@@ -1,7 +1,7 @@
 const User = require("../models/userSchema");
 
 // For non-logged-in users to access login/signup pages
-const userIsLoggedOut = async (req, res, next) => {
+const IsUserLoggedOut = async (req, res, next) => {
   try {
     if (req.session.user) {
       const user = await User.findById(req.session.user);
@@ -25,7 +25,7 @@ const userIsLoggedOut = async (req, res, next) => {
 };
 
 // Protect all user-only pages
-const userIsAuthenticated = async (req, res, next) => {
+const IsUserAuthenticated = async (req, res, next) => {
   try {
     
     if (!req.session.user) {
@@ -61,7 +61,7 @@ const userIsAuthenticated = async (req, res, next) => {
 
 
 // Prevent logged-in admin from accessing login page again
-const adminIsLoggedOut = async (req, res, next) => {
+const IsAdminLoggedOut = async (req, res, next) => {
   try {
     if (req.session.admin) {
       return res.redirect("/admin/dashboard");
@@ -74,7 +74,7 @@ const adminIsLoggedOut = async (req, res, next) => {
 };
 
 // Protect all admin routes
-const adminIsAuthenticated = async (req, res, next) => {
+const IsAdminAuthenticated = async (req, res, next) => {
   try {
     if (!req.session.admin) {
       return res.redirect("/admin/login");
@@ -104,8 +104,8 @@ const adminIsAuthenticated = async (req, res, next) => {
 };
 
 module.exports = {
-  userIsLoggedOut,
-  userIsAuthenticated,
-  adminIsLoggedOut,
-  adminIsAuthenticated,
+  IsUserLoggedOut,
+  IsUserAuthenticated,
+  IsAdminLoggedOut,
+  IsAdminAuthenticated,
 };

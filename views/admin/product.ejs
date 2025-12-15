@@ -45,7 +45,7 @@
                                 <tr class="border-b bg-gray-200">
                                     <th class="text-left px-4 py-2 font-semibold text-gray-700">ProductID</th>
                                     <th class="text-center px-4 py-2 font-semibold text-gray-700">Product</th>
-                                    
+
                                     <th class="text-left px-4 py-2 font-semibold text-gray-700">Category</th>
                                     <th class="text-left px-4 py-2 font-semibold text-gray-700">Stock</th>
                                     <th class="text-left px-4 py-2 font-semibold text-gray-700">CreatedAt</th>
@@ -61,7 +61,7 @@
                                         <td class="px-4 py-2">
                                             <%=product.productname%>
                                         </td>
-                                        
+
                                         <td class="px-4 py-2">
                                             <%=product.category_Id.name%>
                                         </td>
@@ -72,13 +72,25 @@
                                             <%=product.createdAt.toLocaleDateString("en-IN")%>
                                         </td>
                                         <td class="px-4 py-2 text-center">
-                                            <a href="/admin/edit-product/<%= product._id %>"class="text-red-500 hover:text-red-700 mx-1">✏️</a>
-                                            <button onclick="openDeleteModal('<%= product._id %>')"class="text-blue-500 hover:text-blue-700 mx-1">🗑</button>
-                                        </td>
-                                    </tr>
-                                     <%})%>
 
-                                   
+                                            <a href="/admin/edit-product/<%= product._id %>"
+                                                class="text-red-500 hover:text-red-700 mx-1">✏️</a>
+
+                                            <% if (product.isListed) { %>
+
+                                                <button onclick="openDeleteModal('<%= product._id %>')"
+                                                    class="text-blue-500 hover:text-blue-700 mx-1">🗑</button>
+                                                <% } else { %>
+
+                                                    <span class="text-red-600 mx-1 cursor-not-allowed">❌</span>
+                                                    <% } %>
+
+                                        </td>
+
+                                    </tr>
+                                    <%})%>
+
+
                             </tbody>
                         </table>
                     </div>

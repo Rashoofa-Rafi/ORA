@@ -1,8 +1,9 @@
 const Subcategory=require('../models/subcategorySchema')
 const Category=require('../models/categorySchema')
+const HTTP_STATUS = require('../middleware/statusCode.js');
+const AppError=require('../config/AppError')
 
-
-const subcategoryInfo= async(req,res)=>{
+const subcategoryInfo= async(req,res,next)=>{
     try {
         const search=req.query.search ||""
         const page=parseInt(req.query.page) || 1
@@ -28,16 +29,11 @@ const subcategoryInfo= async(req,res)=>{
             subcategories,categories,search,page,totalPages
         })
 } catch (error) {
-    console.error(error)
-    res.status(500).json({
-        success:false,
-        message:'internal server error'
-    })
-        
+    next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR)) 
     }
 }
 
-let addSubcategory = async (req, res) => {
+let addSubcategory = async (req, res,next) => {
     
   try {
     const {category_Id}=req.body
@@ -47,19 +43,15 @@ let addSubcategory = async (req, res) => {
     
 
     if (!category_Id || !name || !description) {
-            return res.json({ 
-              success: false, 
-              message: "All fields are required." 
-            })
+      throw new AppError("All fields are required." ,HTTP_STATUS.BAD_REQUEST)
+           
         }
     
 
     const existing = await Subcategory.findOne({name:{ $regex: `^${name}$`, $options: "i" }},category_Id)
     if (existing) {
-        
-      return res.status(400).json({ 
-        success: false, 
-        message: "Subcategory already exists!"})
+      throw new AppError("Subcategory already exists!",HTTP_STATUS.BAD_REQUEST)
+      
     }
 
     let newsubcategory = new Subcategory({
@@ -72,33 +64,24 @@ let addSubcategory = async (req, res) => {
 
     await newsubcategory.save()
     
-
-    console.log(newsubcategory)
-    res.status(200).json({ 
+   res.status(HTTP_STATUS.CREATED).json({ 
         success: true, 
         message: "Subcategory added successfully!" 
     })
 
   } catch (err) {
-    console.error(err);
-    
-    res.status(500).json({ 
-        success: false, 
-        message: 'internal server error' 
-    })
+   next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 }
 
-let editSubcategory = async (req, res) => {
+let editSubcategory = async (req, res,next) => {
   try {
     const { category_Id, name, description } = req.body
 
    
     if (!category_Id || !name || !description) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required."
-      })
+      throw new AppError("All fields are required.",HTTP_STATUS.BAD_REQUEST)
+      
     }
 
     
@@ -109,10 +92,7 @@ let editSubcategory = async (req, res) => {
     })
 
     if (exist) {
-      return res.status(400).json({
-        success: false,
-        message: "Subcategory already exists in this category."
-      })
+      throw new AppError("Subcategory already exists in this category.",HTTP_STATUS.BAD_REQUEST)
     }
 
     
@@ -130,47 +110,35 @@ let editSubcategory = async (req, res) => {
     const updated = await Subcategory.findByIdAndUpdate(req.params.id, updateData, { new: true })
 
     if (!updated) {
-      return res.status(400).json({
-        success: false,
-        message: "Failed to update subcategory."
-      })
+      throw new AppError('Failed to update',HTTP_STATUS.BAD_REQUEST)
+      
     }
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       message: "Subcategory updated successfully!"
     })
 
   } catch (err) {
-    console.error(err)
-    res.status(500).json({
-      success: false,
-      message: "Internal server error"
-    })
+   next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 }
 
 
-const deleteSubcategory = async (req, res) => {
+const deleteSubcategory = async (req, res,next) => {
   try {
    const subcategory= await Subcategory.findByIdAndUpdate(req.params.id, { isListed: false })
    if(!subcategory){
-    return res.status(400).json({
-        success:false,
-        message:'Failed to delete'
-    })
+    throw new AppError('Failed to delete',HTTP_STATUS.BAD_REQUEST)
+    
    }
-     return res.status(200).json({ 
+     return res.status(HTTP_STATUS.CREATED).json({ 
         success: true, 
         message: "Subcategory removed from list" 
     })
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ 
-        success: false, 
-        message: "Internal server error" 
-    })
+   next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 }
 

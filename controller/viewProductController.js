@@ -2,10 +2,12 @@ const Product = require('../models/productSchema')
 const Variant = require('../models/varientSchema')
 const Category=require('../models/categorySchema')
 const Subcategory=require('../models/subcategorySchema')
+const HTTP_STATUS = require('../middleware/statusCode.js');
+const AppError=require('../config/AppError')
 const BRAND_OPTIONS = ['CASIO','TITAN','FOSSIL','FASTRACK','ROLEX','NAVIFORCE','OTHERS']
 const MATERIAL_OPTIONS = ['Metal','Rubber','Leather']
 const DIALTYPE_OPTIONS = ['Analogue','Digital']
-const listProducts = async (req, res) => {
+const listProducts = async (req, res,next) => {
   try {
     let {
       search,
@@ -121,11 +123,7 @@ if (priceProductIds) {
     });
 
   } catch (err) {
-    console.error( err);
-    return res.status(500).json({
-      success:false,
-      message:"Server Error"
-    })
+    next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 }
 
@@ -193,16 +191,27 @@ const getProductDetails = async (req, res) => {
   { name: product.productname, url: null }
 ].filter(Boolean);
 
+// RELATED PRODUCTS - same subcategory, exclude current product
+const relatedProducts = await Product.find({
+    subcategory_Id: product.subcategory_Id,
+    _id: { $ne: product._id },
+    isListed: true
+})
+.populate({
+    path: "variants",
+      
+})
+.limit(4); 
 
     return res.render("user/product-details", 
       { product:productData ,
         query:req.query,
-        breadcrumb
+        breadcrumb,
+        relatedProducts
       });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Internal Server Error");
+     next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 };
 

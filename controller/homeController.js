@@ -1,17 +1,18 @@
 const Product = require('../models/productSchema')
 const Category=require('../models/categorySchema')
 const Variants=require('../models/varientSchema')
-const loadHome=async(req,res)=>{
+
+const loadHome=async(req,res,next)=>{
  try {
     
-    // Fetch top categories (Men, Women)
+    
     const categories = await Category.find({
       name: { $in: ['Men', 'Women'] }
     }).select('name image');
 
     // --- Latest Trends (newly added products) ---
     const latestProductsData = await Product.find({ isListed: true })
-      .sort({ createdAt: -1 }) // newest products first
+      .sort({ createdAt: -1 })
       .limit(4)
       .populate('variants');
 
@@ -52,11 +53,10 @@ const loadHome=async(req,res)=>{
     });
 
   } catch (err) {
-    console.error(err);
-    return res.status(500).send('Server Error');
+   next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 };
-const logout = (req, res) => {
+const logout = (req, res,next) => {
   req.session.destroy((err) => {
     if (err) {
       console.error("Error destroying session:", err);

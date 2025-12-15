@@ -7,6 +7,8 @@
   <title>Add Product</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css" />
+  <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
 
 </head>
 
@@ -16,7 +18,8 @@
       <div class="flex flex-col flex-1 ml-64">
         <main class="p-6 flex-1">
           <h2 class="text-xl font-semibold mb-6">Add Product</h2>
-          <form class="bg-white shadow rounded-lg p-6 space-y-6" id="add-form" enctype="multipart/form-data"onsubmit="return false;">
+          <form class="bg-white shadow rounded-lg p-6 space-y-6" id="add-form" enctype="multipart/form-data"
+            onsubmit="return false;">
             <div>
               <label class="block text-gray-700 font-medium mb-2">Product Name</label>
               <input type="text" placeholder="Enter product name" id="productname" name="productname"
@@ -186,121 +189,183 @@
               <button type="submit" class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">Save</button>
             </div>
           </form>
-
-
         </main>
       </div>
-
   </div>
+  <!-- Cropper Modal -->
+  <div id="cropperModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+    <div class="bg-white p-4 rounded-lg max-w-lg w-full">
+      <div class="w-full max-h-[400px] overflow-hidden">
+        <img id="cropperImage" class="max-w-full">
+      </div>
+
+      <div class="flex justify-end gap-3 mt-4">
+        <button onclick="closeCropper()" class="px-4 py-2 border rounded">Cancel</button>
+        <button onclick="confirmCrop()" class="px-4 py-2 bg-black text-white rounded">Crop & Use</button>
+      </div>
+    </div>
+  </div>
+
   <%- include("../partials/admin/footer") %>
 </body>
 
 <script>
-  
-/* ---------- Modal open/close ---------- */
-function openModal() { document.getElementById('variantModal').classList.remove('hidden') }
-function closeModal() { document.getElementById('variantModal').classList.add('hidden') }
+  function openModal() {
+    document.getElementById('variantModal').classList.remove('hidden')
+  }
+  function closeModal() {
+    document.getElementById('variantModal').classList.add('hidden')
+  }
 
-/* ---------- Color buttons ---------- */
-document.querySelectorAll(".color-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("ring-2","ring-black"));
-    btn.classList.add("ring-2","ring-black");
-    document.getElementById("variantColor").value = btn.dataset.color;
-  });
-});
-
-/* ---------- Image selection & preview (modal-level) ---------- */
-const variantImagesInput = document.getElementById("variantImages");
-const dropZone = document.getElementById("dropZone");
-const imagePreview = document.getElementById("imagePreview");
-
-// files selected in the modal before adding the variant
-let variantSelectedFiles = [];
-
-dropZone.addEventListener("click", () => variantImagesInput.click());
-
-// when user selects files in modal, append to variantSelectedFiles and preview them
-variantImagesInput.addEventListener("change", () => {
-  const newFiles = Array.from(variantImagesInput.files || []);
-  if (newFiles.length === 0) return;
-
-  // append new files (so selecting multiple times accumulates)
-  variantSelectedFiles.push(...newFiles);
-
-  // update preview: show all selected so far for this modal session
-  imagePreview.innerHTML = "";
-  variantSelectedFiles.forEach((file, idx) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "relative w-24 h-24 rounded overflow-hidden border shadow-sm";
-      wrapper.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover" alt="preview-${idx}" />`;
-      imagePreview.appendChild(wrapper);
-    };
-    reader.readAsDataURL(file);
+  /* ---------- Color buttons ---------- */
+  document.querySelectorAll(".color-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("ring-2", "ring-black"));
+      btn.classList.add("ring-2", "ring-black");
+      document.getElementById("variantColor").value = btn.dataset.color;
+    });
   });
 
-  // reset input to allow re-selecting same file later if needed
-  variantImagesInput.value = "";
-});
+  /* ---------- Image selection & preview (modal-level) ---------- */
+  const variantImagesInput = document.getElementById("variantImages");
+  const dropZone = document.getElementById("dropZone");
+  const imagePreview = document.getElementById("imagePreview");
 
-/* ---------- Variant storage structures ---------- */
-// variants: array of variant metadata (price, stock, color)
-// variantImagesMap: key = variant index, value = array of File objects
-let variants = [];
-let variantImagesMap = {}; // { 0: [File,...], 1: [...], ... }
+  // files selected in the modal before adding the variant
+  let variantSelectedFiles = [];
 
-/* ---------- Add Variant button inside modal ---------- */
-document.getElementById("addVariantBtn").addEventListener("click", () => {
-  const price = document.getElementById("variantPrice").value.trim();
-  const stock = document.getElementById("variantStock").value.trim();
-  const color = document.getElementById("variantColor").value.trim();
+  dropZone.addEventListener("click", () => variantImagesInput.click());
+  let cropper;
+  let currentFile;
+  let cropResolve;
 
-  // use the files selected in the modal session
-  const images = Array.from(variantSelectedFiles || []);
+  function openCropper(file) {
+    return new Promise(resolve => {
+      cropResolve = resolve;
+      currentFile = file;
 
-  // validations
-  if (!price || isNaN(price) || Number(price) <= 0) {
-    return Swal.fire({ icon: "error", text: "Enter a valid price" });
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.getElementById("cropperImage");
+        img.src = e.target.result;
+
+        document.getElementById("cropperModal").classList.remove("hidden");
+
+        cropper = new Cropper(img, {
+          aspectRatio: 1,
+          viewMode: 1,
+          autoCropArea: 1
+        });
+      };
+      reader.readAsDataURL(file);
+    });
   }
-  if (!stock || isNaN(stock) || Number(stock) < 0) {
-    return Swal.fire({ icon: "error", text: "Enter a valid stock number" });
-  }
-  if (!color) {
-    return Swal.fire({ icon: "error", text: "Select a color" });
-  }
-  if (images.length < 3) {
-    return Swal.fire({ icon: "error", text: "Select at least 3 images for this variant" });
+
+  function closeCropper() {
+    cropper?.destroy();
+    cropper = null;
+    document.getElementById("cropperModal").classList.add("hidden");
   }
 
-  // push variant metadata and map its images to the variant index
-  const variantIndex = variants.length; // next index
-  variants.push({ price: Number(price), stock: Number(stock), color });
-  variantImagesMap[variantIndex] = images.slice(); // clone array
+  variantImagesInput.addEventListener("change", async () => {
+    const files = Array.from(variantImagesInput.files || []);
+    if (!files.length) return;
 
-  // update hidden JSON field (no SKU here; controller will create SKU)
-  document.getElementById("variantData").value = JSON.stringify(variants);
+    for (const file of files) {
+      // open cropper for EACH file
+      const croppedFile = await openCropper(file);
 
-  // reset modal fields & preview for next variant
-  document.getElementById("variantPrice").value = "";
-  document.getElementById("variantStock").value = "";
-  document.getElementById("variantColor").value = "";
-  document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("ring-2","ring-black"));
-  variantSelectedFiles = [];
-  imagePreview.innerHTML = "";
-  closeModal();
+      // store cropped file for this variant session
+      variantSelectedFiles.push(croppedFile);
 
-  // show list
-  showVariants();
-});
+      // preview cropped image
+      const reader = new FileReader();
+      reader.onload = e => {
+        const wrapper = document.createElement("div");
+        wrapper.className =
+          "relative w-24 h-24 rounded overflow-hidden border shadow-sm";
 
-/* ---------- Show variants list under form ---------- */
-function showVariants() {
-  const wrapper = document.getElementById("variantList");
+        wrapper.innerHTML = `
+        <img src="${e.target.result}"
+             class="w-full h-full object-cover">
+      `;
 
-  // create the table ONLY once
-  wrapper.innerHTML = `
+        imagePreview.appendChild(wrapper);
+      };
+      reader.readAsDataURL(croppedFile);
+    }
+
+    // reset input so same file can be reselected
+    variantImagesInput.value = "";
+  });
+
+  function confirmCrop() {
+    cropper.getCroppedCanvas({
+      width: 600,
+      height: 600
+    }).toBlob(blob => {
+      const croppedFile = new File(
+        [blob],
+        currentFile.name,
+        { type: blob.type }
+      );
+
+      closeCropper();
+      cropResolve(croppedFile);
+    }, "image/jpeg", 0.9);
+  }
+  let variants = [];
+  let variantImagesMap = {};
+
+
+  document.getElementById("addVariantBtn").addEventListener("click", () => {
+    const price = document.getElementById("variantPrice").value.trim();
+    const stock = document.getElementById("variantStock").value.trim();
+    const color = document.getElementById("variantColor").value.trim();
+
+    // use the files selected in the modal session
+    const images = Array.from(variantSelectedFiles || []);
+
+    // validations
+    if (!price || isNaN(price) || Number(price) <= 0) {
+      return Swal.fire({ icon: "error", text: "Enter a valid price" });
+    }
+    if (!stock || isNaN(stock) || Number(stock) < 0) {
+      return Swal.fire({ icon: "error", text: "Enter a valid stock number" });
+    }
+    if (!color) {
+      return Swal.fire({ icon: "error", text: "Select a color" });
+    }
+    if (images.length < 3) {
+      return Swal.fire({ icon: "error", text: "Select at least 3 images for this variant" });
+    }
+
+    // push variant metadata and map its images to the variant index
+    const variantIndex = variants.length; // next index
+    variants.push({ price: Number(price), stock: Number(stock), color });
+    variantImagesMap[variantIndex] = images.slice();
+
+
+    document.getElementById("variantData").value = JSON.stringify(variants);
+
+    document.getElementById("variantPrice").value = "";
+    document.getElementById("variantStock").value = "";
+    document.getElementById("variantColor").value = "";
+    document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("ring-2", "ring-black"));
+    variantSelectedFiles = [];
+    imagePreview.innerHTML = "";
+    closeModal();
+
+    // show list
+    showVariants();
+  });
+
+
+  function showVariants() {
+    const wrapper = document.getElementById("variantList");
+
+    // create the table ONLY once
+    wrapper.innerHTML = `
     <table class="w-full text-sm border rounded overflow-hidden mt-4">
       <thead class="bg-gray-100">
         <tr>
@@ -314,15 +379,15 @@ function showVariants() {
     </table>
   `;
 
-  const tableBody = document.getElementById("variantTableBody");
-  tableBody.innerHTML = "";
+    const tableBody = document.getElementById("variantTableBody");
+    tableBody.innerHTML = "";
 
-  variants.forEach((v, i) => {
-    const imagesCount = (variantImagesMap[i] || []).length;
+    variants.forEach((v, i) => {
+      const imagesCount = (variantImagesMap[i] || []).length;
 
-    tableBody.insertAdjacentHTML(
-      "beforeend",
-      `
+      tableBody.insertAdjacentHTML(
+        "beforeend",
+        `
         <tr class="border-b">
           <td class="px-3 py-2">${v.color}</td>
           <td class="px-3 py-2">₹${v.price}</td>
@@ -330,67 +395,59 @@ function showVariants() {
           <td class="px-3 py-2">${imagesCount} files</td>
         </tr>
       `
-    );
-  });
-}
-
-
- 
- 
-     
-      
-
-/* ---------- Final form submit ---------- */
-document.getElementById("add-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  // basic product fields
-  const productname = document.getElementById('productname').value.trim();
-  const description = document.getElementById('description').value.trim();
-  const category_Id = document.getElementById('category').value;
-  const subcategory_Id = document.getElementById('subcategory').value;
-  const brand = document.getElementById('brand').value;
-  const material = document.getElementById('material').value;
-  const dialType = document.getElementById('dialType').value;
-
-  if (!productname || !description || !category_Id || !subcategory_Id || !brand || !material || !dialType) {
-    return Swal.fire({ icon: 'error', text: 'Please fill all required fields' });
+      );
+    });
   }
-  if (variants.length === 0) {
-    return Swal.fire({ icon: 'error', text: 'Add at least one variant' });
-  }
+  document.getElementById("add-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  // build FormData
-  const formData = new FormData();
-  formData.append("productname", productname);
-  formData.append("description", description);
-  formData.append("category_Id", category_Id);
-  formData.append("subcategory_Id", subcategory_Id);
-  formData.append("brand", brand);
-  formData.append("material", material);
-  formData.append("dialType", dialType);
-  formData.append("variants", document.getElementById("variantData").value);
+    // basic product fields
+    const productname = document.getElementById('productname').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const category_Id = document.getElementById('category').value;
+    const subcategory_Id = document.getElementById('subcategory').value;
+    const brand = document.getElementById('brand').value;
+    const material = document.getElementById('material').value;
+    const dialType = document.getElementById('dialType').value;
 
-  // append files grouped by variant index: variantImages_0, variantImages_1, ...
-  variants.forEach((_, index) => {
-    const files = variantImagesMap[index] || [];
-    files.forEach(file => formData.append(`variantImages_${index}`, file));
-  });
-
-  try {
-    const res = await fetch("/admin/products/add-product", { method: "POST", body: formData });
-    const json = await res.json();
-    if (json.success) {
-      await Swal.fire({ icon: "success", text: json.message, timer: 1500, showConfirmButton: false });
-      window.location.href = json.redirect1 || "/admin/products";
-    } else {
-      Swal.fire({ icon: "error", text: json.message || "Something went wrong" });
+    if (!productname || !description || !category_Id || !subcategory_Id || !brand || !material || !dialType) {
+      return Swal.fire({ icon: 'error', text: 'Please fill all required fields' });
     }
-  } catch (err) {
-    console.error(err);
-    Swal.fire({ icon: "error", text: "Internal server error" });
-  }
-});
+    if (variants.length === 0) {
+      return Swal.fire({ icon: 'error', text: 'Add at least one variant' });
+    }
+
+    // build FormData
+    const formData = new FormData();
+    formData.append("productname", productname);
+    formData.append("description", description);
+    formData.append("category_Id", category_Id);
+    formData.append("subcategory_Id", subcategory_Id);
+    formData.append("brand", brand);
+    formData.append("material", material);
+    formData.append("dialType", dialType);
+    formData.append("variants", document.getElementById("variantData").value);
+
+
+    variants.forEach((_, index) => {
+      const files = variantImagesMap[index] || [];
+      files.forEach(file => formData.append(`variantImages_${index}`, file));
+    });
+
+    try {
+      const res = await fetch("/admin/products/add-product", { method: "POST", body: formData });
+      const json = await res.json();
+      if (json.success) {
+        await Swal.fire({ icon: "success", text: json.message, timer: 1500, showConfirmButton: false });
+        window.location.href = json.redirect1 || "/admin/products";
+      } else {
+        Swal.fire({ icon: "error", text: json.message || "Something went wrong" });
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire({ icon: "error", text: "Internal server error" });
+    }
+  });
 </script>
 
 

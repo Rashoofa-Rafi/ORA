@@ -1,5 +1,7 @@
 const bcrypt = require('bcrypt')
 const User = require('../models/userSchema.js')
+const HTTP_STATUS = require('../middleware/statusCode.js');
+const AppError=require('../config/AppError')
 const { generateOTP, sendVerificationEmail } = require('../helpers/generateotp')
 
 
@@ -61,17 +63,15 @@ const loadpage404=async(req,res)=>{
 }
 
 
-const signup = async (req, res) => {
+const signup = async (req, res,next) => {
     try {
         const { fullName, email, mobile, password } = req.body
         
         const existUser = await User.findOne({ email })
-        if (existUser)
-            return res.status(400).json({
-                success: false,
-                message: "User already exist"
-            })
-
+        if (existUser){
+            throw new AppError("User already exist",HTTP_STATUS.BAD_REQUEST)
+        }
+          
         //generate OTP for signup
 
         const OTP = generateOTP()
@@ -79,70 +79,56 @@ const signup = async (req, res) => {
         const emailsent = await sendVerificationEmail(email, OTP)
 
         if (!emailsent) {
-            return res.status(400).json({
-                success: false,
-                message: 'Failed to sent email. Please try again'
-            })
+            throw new AppError('Failed to sent email. Please try again',HTTP_STATUS.BAD_REQUEST)
+           
         }
         req.session.otp = OTP
+        req.session.otpExpiresAt = Date.now() + 1 * 60 * 1000
         req.session.action = 'signup'
         req.session.userData = { fullName, email, mobile, password }
 
-        return res.status(200).json({
+        return res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: `OTP sent successfully to ${email}`,
             redirectUrl: '/user/verify-otp'
         })
 
-    } catch (error) {
-        console.error('SignUp error', error)
-        res.status(500).json({
-            success: false,
-            message: 'internal server error'
-
-        })
+    } catch (err) {
+       next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }
 
-const forgetPassword = async (req, res) => {
+const forgetPassword = async (req, res,next) => {
     try {
         const { email } = req.body
         const user = await User.findOne({ email })
         if (!user) {
-            return res.status(400).json({
-                success: false,
-                message: "Email not registered, Please signup"
-            })
+            throw new AppError("Email not registered, Please signup",HTTP_STATUS.BAD_REQUEST)
+           
         }
         const OTP = generateOTP()
         console.log(OTP)
 
         const emailsent = await sendVerificationEmail(email, OTP)
         if (!emailsent) {
-            return res.status(400).json({
-                success: false,
-                message: 'sending OTP failed, Try again'
-            })
+            throw new AppError( 'sending OTP failed, Try again',HTTP_STATUS.BAD_REQUEST)
+            
 
         }
         req.session.resetotp = OTP
+        req.session.resetotpExpiresAt = Date.now() + 1 * 60 * 1000
         req.session.action = 'reset'
         req.session.resetData = { email }
-        return res.status(200).json({
+        return res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Reset OTP send ',
             redirectUrl: '/user/verify-otp'
         })
-    } catch (error) {
-        console.error('resetOTP error', error)
-        res.status(500).json({
-            success: false,
-            message: 'internal server error'
-        })
-
+    } catch (err) {
+        next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }
-const verifyOTP = async (req, res) => {
+const verifyOTP = async (req, res,next) => {
     try {
         const { OTP } = req.body
         const action = req.session.action
@@ -152,16 +138,12 @@ const verifyOTP = async (req, res) => {
 
 
         if (!sessionOtp || !sessionData) {
-            return res.status(400).json({
-                success: false,
-                message: "OTP expired..Try again"
-            })
+            throw new AppError("OTP expired..Try again",HTTP_STATUS.BAD_REQUEST)
+            
         }
         if (sessionOtp !== OTP) {
-            return res.status(400).json({
-                success: false,
-                message: "Incorrect OTP"
-            })
+            throw new AppError("Incorrect OTP",HTTP_STATUS.BAD_REQUEST)
+            
         }
         if (action === 'signup') {
             const { fullName, mobile, email, password } = sessionData
@@ -176,7 +158,7 @@ const verifyOTP = async (req, res) => {
             await newUser.save()
             console.log(newUser)
             req.session.destroy()
-            return res.status(200).json({
+            return res.status(HTTP_STATUS.CREATED).json({
                 success: true,
                 message: 'User registered successfully!',
                 redirectUrl: '/user/login'
@@ -188,7 +170,7 @@ const verifyOTP = async (req, res) => {
             delete req.session.resetData
             delete req.session.action
 
-            return res.status(200).json({
+            return res.status(HTTP_STATUS.CREATED).json({
                 success: true,
                 message: 'OTP verified,You can change your password',
                 redirectUrl: '/user/change-password'
@@ -196,83 +178,75 @@ const verifyOTP = async (req, res) => {
 
         }
         } catch (error) {
-        console.error("signup failed,error")
-        res.status(500).json({
-            success: false,
-            message: 'server error'
-        })
-
+       next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }
 
-const resendOtp = async (req, res) => {
+const resendOtp = async (req, res, next) => {
     try {
         const action = req.session.action
 
-        let email;
+        let email
+        let otpExpiresAt
         if (action === 'signup' && req.session.userData) {
             email = req.session.userData.email;
+            otpExpiresAt = req.session.otpExpiresAt
         } else if (action === 'reset' && req.session.resetData) {
             email = req.session.resetData.email;
+            otpExpiresAt = req.session.resetOtpExpiresAt
         } else {
-            return res.status(400).json({
-                success: false,
-                message: 'Session expired. Please signup again.'
-            });
+            throw new AppError('Session expired. Please signup again.',HTTP_STATUS.BAD_REQUEST)
+            
         }
 
+        if (otpExpiresAt && Date.now() < otpExpiresAt) {
+            const remaining = Math.ceil((otpExpiresAt - Date.now()) / 1000);
+            throw new AppError(`Wait ${remaining}s before requesting another OTP`,HTTP_STATUS.BAD_REQUEST)
+            
+        }
 
         const OTP = generateOTP()
         console.log(OTP)
         const emailsent = await sendVerificationEmail(email, OTP)
         if (!emailsent) {
-            return res.status(400).json({
-                success: false,
-                message: 'Resent OTP failed'
-            })
+            throw new AppError('Resent OTP failed',HTTP_STATUS.BAD_REQUEST)
+            
         }
         if (action === 'signup') {
             req.session.otp = OTP
+            req.session.otpExpiresAt = Date.now() + 1 * 60 * 1000
         } else {
             req.session.resetotp = OTP
+            req.session.resetOtpExpiresAt = Date.now() + 1 * 60 * 1000
         }
-        return res.status(200).json({
+        return res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: "OTP again send successfully",
             redirectUrl: '/user/verify-otp'
         })
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({
-            success: false,
-            message: 'internal server error'
-        })
-
+    } catch (err) {
+       next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }
 
-const changePassword=async (req,res)=>{
+const changePassword=async (req,res,next)=>{
     try {
         const{password}=req.body
         const verifiedEmail=req.session.verifiedEmail
         if(!verifiedEmail){
-            return res.status(400).json({
-                success:false,
-                message:'session expires,Please verify OTP again'
-            })
+            throw new AppError('session expires,Please verify OTP again',HTTP_STATUS.BAD_REQUEST)
+            
         }
         const user=await User.findOne({email:verifiedEmail})
         if(!user){
-            return res.status(400).json({
-                success:false,
-                message:'User not registered,Please signup'
-            })
+            throw new AppError('User not registered,Please signup',HTTP_STATUS.BAD_REQUEST)
+            
         }
         const hashPassword=await bcrypt.hash(password,10)
         user.password=hashPassword
         await user.save()
         req.session.destroy()
-        return res.status(200).json({
+        return res.status(HTTP_STATUS.CREATED).json({
             success:true,
             message:'password changed successfully,Please login again',
             redirectUrl:'/user/login'
@@ -280,54 +254,40 @@ const changePassword=async (req,res)=>{
 
         
     } catch (error) {
-        console.error('error in password change')
-        res.status(500).json({
-            success:false,
-            message:'internal server error'
-        })
+        next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }
 
-const login = async (req, res) => {
+const login = async (req, res,next) => {
     try {
         const { email, password } = req.body
         console.log(req.body)
         const user = await User.findOne({ email })
         if (!user) {
-            return res.status(400).json({
-                success: false,
-                message: "User not found"
-            })
+            throw new AppError("User not found",HTTP_STATUS.BAD_REQUEST)
+            
         }
         if (!user.password) {
-            return res.status(400).json({ 
-                success: false,
-                message: "Please login with Google" 
-            });
+            throw new AppError("Please login with Google",HTTP_STATUS.BAD_REQUEST)
+            
         }
         const isMatch = await bcrypt.compare(password, user.password)
        
         if (!isMatch) {
-            return res.status(400).json({
-                success: false,
-                message: "Incorrect Password"
-            })
+            throw new AppError("Incorrect Password",HTTP_STATUS.BAD_REQUEST)
+            
         }
         req.session.user = user._id.toString()
         
         
 
-        return res.status(200).json({
+        return res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: "Login successfully",
             redirectUrl: '/user/home'
         })
-    } catch (error) {
-        console.log('login failed')
-        res.status(500).json({
-            success: false,
-            message: "internal Server error"
-        })
+    } catch (err) {
+       next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }
 
@@ -338,7 +298,6 @@ module.exports = {
     loadforgetPassword,
     loadchangePassword,
     loadpage404,
-    
     loadSignup,
     signup,
     forgetPassword,

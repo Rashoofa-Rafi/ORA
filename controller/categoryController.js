@@ -1,7 +1,7 @@
 const Category=require('../models/categorySchema')
-
-
-const categoryInfo= async(req,res)=>{
+const HTTP_STATUS=require('../middleware/statusCode')
+const AppError=require('../config/AppError')
+const categoryInfo= async(req,res,next)=>{
     try {
         const search=req.query.search ||""
         const page=parseInt(req.query.page) || 1
@@ -30,32 +30,23 @@ const categoryInfo= async(req,res)=>{
             currentPath: req.path
         })
         
-} catch (error) {
-    console.error(error)
-    res.status(500).json({
-        success:false,
-        message:'internal server error'
-    })
-        
-    }
+} catch (err) {
+    next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
+        }
 }
 
-let addCategory = async (req, res) => {
+let addCategory = async (req, res,next) => {
     
   try {
     
     const name = req.body?.name?.trim()
     const description = req.body?.description?.trim()
     let image = req.file ? req.file.path: null
-console.log(name,description,image)
-    
 
     const existing = await Category.findOne({name:{ $regex: `^${name}$`, $options: "i" }})
     if (existing) {
-        
-      return res.status(400).json({ 
-        success: false, 
-        message: "Category already exists!"})
+      throw new AppError('Category already exists',HTTP_STATUS.BAD_REQUEST)  
+      
     }
 
     let newCategory = new Category({
@@ -66,25 +57,17 @@ console.log(name,description,image)
     })
 
     await newCategory.save()
-    
-
-    console.log(newCategory)
-    res.status(200).json({ 
+    res.status(HTTP_STATUS.CREATED).json({ 
         success: true, 
         message: "Category added successfully!" 
     })
 
   } catch (err) {
-    console.error(err);
-    
-    res.status(500).json({ 
-        success: false, 
-        message: 'internal server error'
-    })
+    next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 }
 
-let editCategory = async (req, res) => {
+let editCategory = async (req, res,next) => {
   try {
     const { name, description } = req.body
     const updateData = { name, description }
@@ -95,45 +78,32 @@ let editCategory = async (req, res) => {
 
     const category=await Category.findByIdAndUpdate(req.params.id, updateData)
     if(!category){
-        return res.status(400).json({
-            success:false,
-            message:'Failed to Update category'
-        })
+      throw new AppError('Failed to Update category',HTTP_STATUS.BAD_REQUEST) 
+        
     }
-    return res.status(200).json({ 
+    return res.status(HTTP_STATUS.CREATED).json({ 
         success: true, 
         message: "Category updated successfully!"
      })
 
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ 
-        success: false, 
-        message: "Internal server error" 
-    })
+     next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 }
 
-const deleteCategory = async (req, res) => {
+const deleteCategory = async (req, res,next) => {
   try {
    const category= await Category.findByIdAndUpdate(req.params.id, { isListed: false })
    if(!category){
-    return res.status(400).json({
-        success:false,
-        message:'Failed to delete'
-    })
+    throw new AppError('Category not found',HTTP_STATUS.BAD_REQUEST)
    }
-     return res.status(200).json({ 
+     return res.status(HTTP_STATUS.CREATED).json({ 
         success: true, 
         message: "Category removed from list" 
     })
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ 
-        success: false, 
-        message: "Internal server error" 
-    })
+     next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 }
 
