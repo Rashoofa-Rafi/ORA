@@ -1,0 +1,162 @@
+<%- include("../../partials/user/header") %>
+
+<div class="max-w-6xl mx-auto py-10 flex gap-8">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="w-64 bg-lime-100 rounded-xl p-6 shadow">
+    <div class="flex items-center gap-4 mb-6">
+      <div class="w-12 h-12 rounded-full bg-black"></div>
+      <p class="font-semibold"><%= user.fullName %></p>
+    </div>
+
+    <ul class="space-y-4 text-sm font-medium">
+      <li><a href="/user/profile/profile" class="flex gap-2 items-center font-semibold"><i data-lucide="user"></i>My Profile</a></li>
+      <li><a href="/user/profile/address" class="flex gap-2 items-center"><i data-lucide="map-pin"></i>Address</a></li>
+      <li><a href="/user/profile/orders" class="flex gap-2 items-center"><i data-lucide="package"></i>My Order</a></li>
+      <li><a href="/user/wallet" class="flex gap-2 items-center"><i data-lucide="wallet"></i>My Wallet</a></li>
+      <li><a href="/user/coupons" class="flex gap-2 items-center"><i data-lucide="ticket-percent"></i>My Coupons</a></li>
+      <li><a href="/user/delete-account" class="flex gap-2 items-center text-red-600"><i data-lucide="trash-2"></i>Delete Account</a></li>
+      <li><a href="/user/referral" class="flex gap-2 items-center"><i data-lucide="share-2"></i>Referral Code</a></li>
+    </ul>
+  </aside>
+  <!-- RIGHT -->
+  <section class=" flex-1 bg-white rounded-xl shadow p-10">
+    <h2 class="text-xl font-bold text-center mb-6 border-b pb-3">EDIT PROFILE</h2>
+      
+    <form id="editProfileForm" enctype="multipart/form-data" class="space-y-5 max-w-md mx-auto">
+
+      <!-- PROFILE IMAGE -->
+      <div class="flex justify-center">
+        <div class="w-24 h-24 rounded-full bg-gray-200 overflow-hidden">
+          <% if (user.profileImage) { %>
+            <img src="<%= user.profileImage %>" class="w-full h-full object-cover">
+          <% } %>
+        </div>
+      </div>
+
+      <input type="file" name="profileImage" class="w-full text-sm">
+
+      <!-- NAME -->
+      <div>
+        <label class="text-sm font-medium">Name</label>
+        <input type="text" name="fullName" value="<%= user.fullName %>" required
+          class="w-full border rounded px-3 py-2">
+      </div>
+
+      <!-- EMAIL (readonly, verification later) -->
+      <div>
+        
+        <button type="button" id="changeEmailBtn" class="text-blue-600 text-xs underline">✏️</button>
+        <label class="text-sm font-medium">Email</label>
+        <input type="email" name ="email" value="<%= user.email %>" disabled
+          class="w-full bg-gray-100 border rounded px-3 py-2 cursor-not-allowed">
+        <p class="text-xs text-red-500 mt-1">
+          To change email, verification is required
+        </p>
+      </div>
+
+      <!-- PHONE -->
+      <div>
+        <label class="text-sm font-medium">Phone</label>
+        <input type="text" name="mobile" value="<%= user.mobile %>" required
+          class="w-full border rounded px-3 py-2">
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="flex justify-between pt-4">
+        <a href="/user/profile/profile" class="px-6 py-2 border rounded"> Cancel </a>
+         <button type="submit"
+          class="px-6 py-2 bg-black text-white rounded">
+          Save changes
+        </button>
+      </div>
+
+    </form>
+  </section>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    const changeEmailBtn = document.getElementById('changeEmailBtn');
+
+changeEmailBtn.addEventListener('click', async () => {
+  const { value: newEmail } = await Swal.fire({
+    title: 'Change Email',
+    input: 'email',
+    inputLabel: 'New email address',
+    inputValue: '',
+    showCancelButton: true,
+    confirmButtonText: 'Save',
+    inputValidator: (value) => {
+      if (!value) return 'Email is required';
+    }
+  });
+
+  if (!newEmail) return;
+
+  try {
+    const res = await fetch('/user/profile/email-change', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: newEmail })
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      await Swal.fire({
+        icon: 'success',
+        text: result.message,
+        timer: 1500
+      });
+      window.location.href = result.redirectUrl 
+    } else {
+      Swal.fire({ icon: 'error', text: result.message });
+    }
+  } catch (err) {
+    Swal.fire({ icon: 'error', text: 'Something went wrong' });
+  }
+});
+
+
+
+    const form = document.getElementById('editProfileForm')
+    form.addEventListener('submit',async(e)=>{
+        e.preventDefault()
+        const formData=new FormData(form)
+
+        try {
+            const res = await fetch('/user/profile/edit-profile',{
+                method:'POST',
+                credentials:'include',
+                body:formData
+            })
+
+            const result = await res.json()
+             if(result.success){
+                 await Swal.fire({
+                    icon:'success',
+                    text:result.message,
+                    
+                    timer:1500
+                }).then(() => {
+                   window.location.href = "/user/profile/profile";
+                    })
+                } else {
+                 Swal.fire({ 
+                    icon: "error", 
+                    text: result.message })
+               }
+
+           } catch (err) {
+             Swal.fire({ 
+                icon: "error",
+                 text: "Something went wrong" 
+                })
+  }
+})
+             
+</script>
+<%- include("../../partials/user/footer") %>

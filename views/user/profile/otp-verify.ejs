@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify OTP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body class="bg-[#F5F5F5] flex items-center justify-center min-h-screen">
+
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
+    <h1 class="text-2xl font-bold text-gray-900 mb-2 text-center">
+      Confirm with OTP
+    </h1>
+    <p class="text-gray-500 text-sm text-center mb-6">
+      Check your email for the OTP
+    </p>
+
+    <form class="flex flex-col gap-5" id="myform">
+
+      <!-- OTP Inputs + Timer -->
+      <div class="flex flex-col items-center gap-3">
+        <div class="flex space-x-3">
+          <input type="text" maxlength="1"
+            class="otp-input w-12 h-12 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-gray-400" />
+          <input type="text" maxlength="1"
+            class="otp-input w-12 h-12 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-gray-400" />
+          <input type="text" maxlength="1"
+            class="otp-input w-12 h-12 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-gray-400" />
+          <input type="text" maxlength="1"
+            class="otp-input w-12 h-12 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-gray-400" />
+        </div>
+
+        <span id="timer" class="text-gray-600 font-medium">
+          01:00
+        </span>
+      </div>
+
+      <!-- Resend -->
+      <div class="text-center">
+        <a href="#" id="resendOtp" class="text-blue-500 text-sm hover:underline">
+          Resend OTP
+        </a>
+      </div>
+
+      <button
+        type="submit"
+        class="bg-gray-800 text-white font-semibold py-2 rounded-md hover:bg-black transition duration-200">
+        Verify OTP
+      </button>
+
+      <div class="text-center">
+        <a href="/user/profile/forget-password" class="text-gray-500 text-sm hover:underline">
+          Go back
+        </a>
+      </div>
+    </form>
+  </div>
+
+</body>
+</html>
+<script>
+    // Auto-focus for OTP inputs
+    const inputs = document.querySelectorAll('.otp-input');
+    inputs.forEach((input, idx) => {
+      input.addEventListener('input', () => {
+        if (input.value.length === 1 && idx < inputs.length - 1) inputs[idx + 1].focus();
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && idx > 0 && input.value.length === 0) inputs[idx - 1].focus();
+      });
+    });
+
+    // Timer in mm:ss format
+    let time = 60;
+    const timerEl = document.getElementById('timer');
+
+    const countdown = setInterval(() => {
+      if (time > 0) {
+        time--;
+        const minutes = String(Math.floor(time / 60)).padStart(2, '0');
+        const seconds = String(time % 60).padStart(2, '0');
+        timerEl.textContent = `${minutes}:${seconds}`;
+      } else {
+        clearInterval(countdown);
+        timerEl.textContent = '00:00';
+        
+      }
+    }, 1000);
+
+    document.getElementById("myform").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const OTP = Array.from(inputs).map((input) => input.value).join("");
+      
+      
+
+    if (OTP.length !== 4) {
+      Swal.fire({
+        icon:'error',
+        text:'Please enter all digits',
+        timer:2000,
+        showConfirmButton:false
+      })
+      return;
+    }
+
+    try {
+      const res = await fetch("/user/profile/otp-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ OTP }),
+        
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        await Swal.fire({
+        icon:'success',
+        text:result.message,
+        timer:2000,
+        showConfirmButton:false
+      })
+        window.location.href = result.redirectUrl;
+       
+      } else {
+        Swal.fire({
+        icon:'error',
+        text:result.message,
+        timer:2000,
+        showConfirmButton:false
+      })
+      }
+    } catch (error) {
+      Swal.fire({
+        icon:'error',
+        text:'Internal server error',
+        timer:2000,
+        showConfirmButton:false
+      })
+    }
+  });
+  //for resend OTP
+   document.getElementById("resendOtp").addEventListener("click", async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/user/profile/resendOtp", {
+        method: "POST",
+        credentials: "same-origin" 
+      });
+      const result = await res.json();
+
+      if (result.success) {
+        await Swal.fire({
+        icon:'success',
+        text:result.message,
+        timer:2000,
+        showConfirmButton:false
+      })
+        window.location.href=result.redirectUrl
+        time= 60; // Reset timer
+      } else {
+        Swal.fire({
+        icon:'error',
+        text:result.message,
+        timer:2000,
+        showConfirmButton:false
+      })
+      }
+    } catch (error) {
+      console.error("Resend error:", error)
+      Swal.fire({
+        icon:'error',
+        text:'Internal server error',
+        timer:2000,
+        showConfirmButton:false
+      })
+    }
+  });
+
+  </script>

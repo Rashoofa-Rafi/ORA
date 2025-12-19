@@ -1,0 +1,77 @@
+<%- include("../../partials/user/header") %>
+
+<div class="max-w-6xl mx-auto py-10 flex gap-8">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="w-64 bg-lime-100 rounded-xl p-6 shadow">
+    <div class="flex items-center gap-4 mb-6">
+      <div class="w-12 h-12 rounded-full bg-black"></div>
+      <p class="font-semibold"><%= user.fullName %></p>
+    </div>
+
+    <ul class="space-y-4 text-sm font-medium">
+      <li><a href="/user/profile/profile" class="flex gap-2 items-center font-semibold"><i data-lucide="user"></i>My Profile</a></li>
+      <li><a href="/user/profile/address" class="flex gap-2 items-center"><i data-lucide="map-pin"></i>Address</a></li>
+      <li><a href="/user/profile/orders" class="flex gap-2 items-center"><i data-lucide="package"></i>My Order</a></li>
+      <li><a href="/user/wallet" class="flex gap-2 items-center"><i data-lucide="wallet"></i>My Wallet</a></li>
+      <li><a href="/user/coupons" class="flex gap-2 items-center"><i data-lucide="ticket-percent"></i>My Coupons</a></li>
+      <li><a href="/user/delete-account" class="flex gap-2 items-center text-red-600"><i data-lucide="trash-2"></i>Delete Account</a></li>
+      <li><a href="/user/referral" class="flex gap-2 items-center"><i data-lucide="share-2"></i>Referral Code</a></li>
+    </ul>
+  </aside>
+
+  <!-- RIGHT CONTENT -->
+  <section class=" relative flex-1 bg-white rounded-xl shadow p-10">
+
+    <a href="/user/profile/edit-profile"
+     class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100"
+     title="Edit Profile">
+    <i data-lucide="pencil"></i>
+  </a>
+    <h2 class="text-xl font-bold text-center mb-6 border-b pb-3">PROFILE</h2>
+
+    <!-- PROFILE IMAGE -->
+    <div class="flex justify-center mb-6">
+      <div class="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
+        <% if (user.profileImage) { %>
+          <img src="<%= user.profileImage %>" class="w-full h-full rounded-full object-cover">
+        <% } else { %>
+          <span class="text-gray-500">IMG</span>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- DETAILS -->
+    <div class="space-y-4 max-w-md mx-auto text-sm">
+
+      <div class="flex justify-between items-center">
+        <p><strong>Name:</strong> <%= user.fullName %></p>
+        
+      </div>
+
+      <div class="flex justify-between items-center">
+        <p><strong>Email:</strong> <%= user.email %></p>
+        
+      </div>
+
+      <div class="flex justify-between items-center">
+        <p><strong>Phone:</strong> <%= user.mobile %></p>
+        >
+      </div>
+
+      
+
+      <div class="mt-6">
+        <a href="/user/profile/new-password" class="inline-block bg-black text-white px-6 py-2 rounded">
+          Change password 🔒
+        </a>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<%- include("../../partials/user/footer") %>
+<script>
+  lucide.createIcons();
+</script>

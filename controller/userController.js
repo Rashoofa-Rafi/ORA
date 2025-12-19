@@ -253,7 +253,7 @@ const changePassword=async (req,res,next)=>{
         })
 
         
-    } catch (error) {
+    } catch (err) {
         next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }
