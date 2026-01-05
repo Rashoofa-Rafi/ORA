@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User All Products</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body class="bg-gray-50">
@@ -138,9 +139,13 @@
                   class="bg-white p-2 rounded-full shadow hover:bg-red-100 transition text-red-500"
                   title="Add to Wishlist">❤️</button>
 
-          <button onclick="event.stopPropagation(); addToCart('<%= product._id %>')"
-                  class="bg-white p-2 rounded-full shadow hover:bg-green-100 transition text-green-500"
-                  title="Add to Cart">🛒</button>
+          <button
+  type="button"
+  onclick="event.stopPropagation(); addToCart('<%= product._id %>')"
+  class="bg-white p-2 rounded-full shadow hover:bg-green-100 transition text-green-500"
+  title="Add to Cart">
+  🛒
+</button>
         </div>
 
         <div class="p-4 flex-1 flex flex-col">
@@ -181,16 +186,49 @@
 
     </div>
 <%- include("../partials/user/footer") %>
-</body>
+
 
 <script>
   function goToProduct(id) {
     window.location.href = `/user/product-details/${id}`;
   }
-  
+
+  async function addToCart(productId) {
+    
+  try {
+    const res = await fetch('/user/cart/add/${productId}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ productId })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+         await Swal.fire({
+            icon:'success',
+            title:data.message ,
+            timer:2000
+        })
+      return;
+    }
+    Swal.fire({
+        icon:'error',
+        title:data.message,
+        timer:2000
+    })
+
+  } catch (err) {
+    Swal.fire({
+        icon:'error',
+        title:'Something went wrong'
+    });
+  }
+}
+ 
  
 
 
 </script>
-
+</body>
 </html>

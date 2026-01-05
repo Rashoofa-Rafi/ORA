@@ -1,0 +1,131 @@
+<%- include("../../partials/user/header") %>
+
+<div class="max-w-6xl mx-auto py-10 flex gap-8">
+  <!-- LEFT SIDEBAR -->
+  <aside class="w-64 bg-lime-100 rounded-xl p-6 shadow">
+    <div class="flex items-center gap-4 mb-6">
+      <div class="w-12 h-12 rounded-full bg-black"></div>
+      <p class="font-semibold"><%= user.fullName %></p>
+    </div>
+
+    <ul class="space-y-4 text-sm font-medium">
+      <li><a href="/user/profile/profile" class="flex gap-2 items-center"><i data-lucide="user"></i>My Profile</a></li>
+      <li><a href="/user/profile/address" class="flex gap-2 items-center font-semibold"><i data-lucide="map-pin"></i>Address</a></li>
+      <li><a href="/user/profile/orders" class="flex gap-2 items-center"><i data-lucide="package"></i>My Order</a></li>
+      <li><a href="/user/wallet" class="flex gap-2 items-center"><i data-lucide="wallet"></i>My Wallet</a></li>
+      <li><a href="/user/coupons" class="flex gap-2 items-center"><i data-lucide="ticket-percent"></i>My Coupons</a></li>
+      <li><a href="/user/delete-account" class="flex gap-2 items-center text-red-600"><i data-lucide="trash-2"></i>Delete Account</a></li>
+      <li><a href="/user/referral" class="flex gap-2 items-center"><i data-lucide="share-2"></i>Referral Code</a></li>
+    </ul>
+  </aside>
+  <!-- RIGHT CONTENT -->
+  <section class="flex-1 bg-white rounded-xl shadow p-6">
+
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-semibold">YOUR ORDERS</h2>
+      <form method="GET" action="/user/profile/orders" class="flex gap-2 mb-6">
+        <input type="text" name="search" placeholder="Search by Order ID" value="<%= search %>" class="border px-3 py-2 rounded w-64 text-sm"/>
+        <select name="status" class="border px-3 py-2 rounded text-sm">
+    <option value="">All Status</option>
+    <option value="pending">Pending</option>
+    <option value="confirmed">Confirmed</option>
+    <option value="delivered">Delivered</option>
+    <option value="cancelled">Cancelled</option>
+  </select>
+        <button class="bg-black text-white px-4 py-2 rounded text-sm">Search</button>
+        <a  href="/user/profile/orders" class="bg-yellow-400 text-white px-4 py-2 rounded text-sm">Clear</a>
+
+    
+  
+</form>
+
+
+      
+  </div>
+<% if (orders &&  orders.length > 0) { %>
+    <% orders.forEach(order => { %>
+      <a href="/user/profile/orders/<%= order.orderId %>" class="block">
+        <div class="border rounded-lg p-4 mb-6 hover:bg-gray-50 cursor-pointer transition">
+          <div class="flex gap-4">
+              <h3 class="font-medium text-sm"><%= order.orderId %></h3>
+           
+        <!-- Order Info -->
+        <div class="flex-1">
+          
+          <p class="text-xs text-gray 500 mt-1">
+            TotalPrice:₹ <%= order.totalPrice %>
+          </p>
+
+          <p class="text-xs text-gray-500 mt-1">
+            TotalItems:<%= order.totalItems %>
+          </p>
+          <p class="text-xs text-gray-500 mt-1">
+            Order Date: <%= order.createdAt.toLocaleDateString("en-IN") %>
+          </p>
+
+          <p class="text-xs mt-1">Status:<span class="font-medium
+              <%= 
+              order.orderStatus === 'cancelled'||
+              order.orderStatus==='returned' 
+                ? 'text-red-600'
+              :order.orderStatus === 'delivered'||
+              order.orderStatus==='shipped'||
+              order.orderStatus==='return_requested'
+                ? 'text-green-600'
+              :order.orderStatus === 'pending'||
+               order.orderStatus==='confirmed'||
+               order.orderStatus==='returning'
+                  ? 'text-yellow-600'
+                  :order.orderStatus === 'partially_cancelled'||
+                    order.orderStatus==='partially_confirmed'||
+                    order.orderStatus==='partially_returned'
+                  ? 'text-blue-600'
+              : 'text-gray-600' %>">
+               <%= order.orderStatus %></span>
+          </p>
+
+          <div class="text-right text-sm space-y-2">
+            <a
+    href="/user/profile/orders/<%= order.orderId %>/invoice"
+    class="border px-3 py-1 rounded text-xs inline-block">
+    Invoice
+  </a>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+      </a>
+<% }) %>
+<% } else { %>
+  <p class="text-sm text-gray-500">No orders found.</p>
+<% } %>
+</div>
+</div>
+
+<div class="mt-4 flex justify-center items-center space-x-2">
+                        <a href="/user/orders?page=<%= page-1 %>&search=<%= search  %>&status=<%= status || '' %>"
+                            class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                            Prev
+                        </a>
+                        <% for (let i=1; i <=totalPages; i++) { %>
+                            <a href="/user/orders?page=<%= i %>&search=<%= search %>&status=<%= status || '' %>"
+                                class="px-3 py-1 border rounded <%= page === i ? 'bg-yellow-500 text-white' : 'hover:bg-gray-200' %>">
+                                <%= i %>
+                            </a>
+                            <% } %>
+                                <a href="/user/orders?page=<%= page+1 %>&search=<%= search %>&status=<%= status || '' %>"
+                                    class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                                    Next
+                                </a>
+                    </div>
+      
+
+  </section>
+</div>
+
+<%- include("../../partials/user/footer") %>
+<script>
+  lucide.createIcons()
+</script>

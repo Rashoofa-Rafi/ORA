@@ -54,22 +54,36 @@ const addUserAddress= async(req,res,next)=>{
       throw new AppError("Unauthorized", HTTP_STATUS.UNAUTHORIZED);
     }
 
-    const {
-      name,
-      addressLine,
-      city,
-      locality,
-      state,
-      pinCode,
-      phone,
-      altPhone,
-      addressType,
-      isDefault
-    } = req.body;
+    let {name,addressLine,city,locality,state,pinCode, phone,altPhone, addressType,isDefault} = req.body;
+      
+const isValidPincode = (pin) => /^[1-9][0-9]{5}$/.test(pin);
+const isValidPhone = (phone) => /^[6-9][0-9]{9}$/.test(phone);
 
-    if (!name || !phone || !addressLine || !city || !state || !pinCode ||!locality ||! altPhone) {
-      throw new AppError("All fields are required", HTTP_STATUS.BAD_REQUEST);
+    
+    name = name?.trim();
+    addressLine = addressLine?.trim();
+    locality = locality?.trim();
+    city = city?.trim();
+    state = state?.trim();
+    pinCode = pinCode?.trim();
+    phone = phone?.trim();
+    altPhone = altPhone?.trim();
+    if (!name || !addressLine || !locality || !city || !state || !pinCode || !phone) {
+      throw new AppError("Required fields are missing", HTTP_STATUS.BAD_REQUEST);
     }
+
+    if (!isValidPincode(pinCode)) {
+      throw new AppError("Invalid pincode", HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (!isValidPhone(phone)) {
+      throw new AppError("Invalid phone number", HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if(altPhone===phone){
+      throw new AppError("Alternative Number should be diffrent", HTTP_STATUS.BAD_REQUEST)
+    }
+    isDefault = isDefault === true || isDefault === "true"
 
     // If this should be default, unset existing default for this user
     if (isDefault) {
@@ -83,6 +97,7 @@ const addUserAddress= async(req,res,next)=>{
       user_Id: userId,
       name,
       addressLine,
+      locality,
       city,
       state,
       pinCode,
@@ -114,25 +129,40 @@ const editUserAddress=async(req,res,next)=>{
       throw new AppError("Address not found", HTTP_STATUS.BAD_REQUEST);
     }
 
-    const {
-      name,
-      phone,
-      addressLine,
-      city,
-      state,
-      locality,
-      pinCode,
-      altPhone,
-      addressType,
-      isDefault,
-    } = req.body;
-
-    // Find address that belongs to this user
+    let {name,phone,addressLine, city,state,locality,pinCode,altPhone,addressType,isDefault} = req.body;
+      
     const address = await Address.findOne({ _id: addressId, user_Id: userId });
     if (!address) {
       throw new AppError("Address not found for this User", HTTP_STATUS.NOT_FOUND);
     }
+const isValidPincode = (pin) => /^[1-9][0-9]{5}$/.test(pin);
+const isValidPhone = (phone) => /^[6-9][0-9]{9}$/.test(phone);
 
+    
+    name = name?.trim();
+    addressLine = addressLine?.trim();
+    locality = locality?.trim();
+    city = city?.trim();
+    state = state?.trim();
+    pinCode = pinCode?.trim();
+    phone = phone?.trim();
+    altPhone = altPhone?.trim();
+    if (!name || !addressLine || !locality || !city || !state || !pinCode || !phone) {
+      throw new AppError("Required fields are missing", HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (!isValidPincode(pinCode)) {
+      throw new AppError("Invalid pincode", HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (!isValidPhone(phone)) {
+      throw new AppError("Invalid phone number", HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if(altPhone===phone){
+      throw new AppError("Alternative Number should be diffrent", HTTP_STATUS.BAD_REQUEST)
+    }
+    isDefault = isDefault === true || isDefault === "true"
     // Update fields
     address.name = name;
     address.addressLine = addressLine;

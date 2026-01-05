@@ -6,6 +6,10 @@ const {IsUserAuthenticated,IsUserLoggedOut} = require("../middleware/auth");
 const homeController=require('../controller/homeController')
 const profileController=require('../controller/profileController')
 const addressController=require('../controller/addressController')
+const cartController=require('../controller/cartController')
+const wishlistController=require('../controller/wishlistController')
+const checkoutController=require('../controller/checkoutController')
+const orderController=require('../controller/orderController')
 const {upload}=require('../helpers/multer')
 const nocache=require('../middleware/cache')
 const passport = require('passport')
@@ -29,7 +33,7 @@ router.get('/auth/google',
 router.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login', session: true }),
   (req, res) => {
-
+req.session.user = req.user
     res.redirect('/user/home'); 
   }
 )
@@ -50,6 +54,7 @@ router.get('/product-details/:id',IsUserAuthenticated,nocache,viewProductControl
 //---User Profile
 
 router.get('/profile/profile',IsUserAuthenticated,nocache,profileController.getUserProfile)
+router.post("/profile/profile/upload-image",upload.single("profileImage"),profileController.uploadProfileImage)
 router.get('/profile/edit-profile',IsUserAuthenticated,nocache,profileController.getEditProfile)
 router.get('/profile/changepassword',IsUserAuthenticated,nocache,profileController.getchangePassword)
 router.get('/profile/forget-password',IsUserAuthenticated,nocache,profileController.getforgetPassword)
@@ -74,6 +79,37 @@ router.post('/profile/address',IsUserAuthenticated,nocache,addressController.add
 router.put('/profile/address/:id',IsUserAuthenticated,nocache,addressController.editUserAddress)
 router.delete('/profile/address/:id',IsUserAuthenticated,nocache,addressController.deleteUserAddress)
 router.post('/profile/address/:id/default',IsUserAuthenticated,nocache, addressController.setDefaultAddress)
+
+//cart management
+
+router.get('/cart',IsUserAuthenticated,nocache,cartController.getCart)
+router.post('/cart/add/:id',IsUserAuthenticated,nocache,cartController.addToCart)
+router.post('/cart/update-quantity',IsUserAuthenticated,nocache,cartController.updateCartQuantity)
+router.delete('/cart/remove',IsUserAuthenticated,nocache,cartController.removeFromCart)
+router.get('/cart/proceedToCheckout',IsUserAuthenticated,nocache,cartController.proceedToCheckout)
+
+//wishlist management
+
+router.get('/wishlist',wishlistController.getWishlist)
+
+
+//checkout
+
+router.get('/checkout',IsUserAuthenticated,nocache,checkoutController.getCheckout)
+router.post('/checkout',IsUserAuthenticated,nocache,checkoutController.checkoutContinue)
+router.get('/payment',IsUserAuthenticated,nocache,checkoutController.getPaymentPage)
+router.post('/payment/place-order',IsUserAuthenticated,nocache,checkoutController.placeOrder)
+router.get('/order-success/:orderId',IsUserAuthenticated,nocache,checkoutController.getOrderSuccess)
+
+//Order management in user side
+
+router.get('/profile/orders',IsUserAuthenticated,nocache,orderController.getOrders)
+router.get('/profile/orders/:orderId',IsUserAuthenticated,nocache,orderController.getOrderDetails)
+router.post('/profile/orderDetails/:orderId/items/:itemId/cancel',IsUserAuthenticated,nocache,orderController.cancelOrderItem)
+router.post('/profile/orderDetails/:orderId/items/:itemId/return',IsUserAuthenticated,nocache,orderController.returnOrderItem)
+router.get('/profile/orders/:orderId/invoice',IsUserAuthenticated,nocache,orderController.downloadInvoice)
+  
+  
 
 
 

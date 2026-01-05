@@ -31,15 +31,27 @@
     <h2 class="text-xl font-bold text-center mb-6 border-b pb-3">PROFILE</h2>
 
     <!-- PROFILE IMAGE -->
-    <div class="flex justify-center mb-6">
-      <div class="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-        <% if (user.profileImage) { %>
-          <img src="<%= user.profileImage %>" class="w-full h-full rounded-full object-cover">
-        <% } else { %>
-          <span class="text-gray-500">IMG</span>
-        <% } %>
-      </div>
-    </div>
+<div class="flex flex-col items-center mb-6 gap-3">
+
+  <div class="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+    <% if (user.profileImage) { %>
+      <img 
+        src="<%= user.profileImage %>" 
+        class="w-full h-full rounded-full object-cover"
+      >
+    <% } else { %>
+      <span class="text-gray-500 text-xs">No Image</span>
+    <% } %>
+  </div>
+
+  <!-- UPLOAD FORM  -->
+  <form   action="/user/profile/profile/upload-image" method="POST" enctype="multipart/form-data"class="flex items-center gap-2">
+  <input type="file"name="profileImage"accept="image/*"class="text-xs"required>
+  <button type="submit"class="bg-black text-white px-3 py-1 rounded text-xs">Upload</button>
+  </form>
+
+</div>
+
 
     <!-- DETAILS -->
     <div class="space-y-4 max-w-md mx-auto text-sm">
@@ -56,7 +68,7 @@
 
       <div class="flex justify-between items-center">
         <p><strong>Phone:</strong> <%= user.mobile %></p>
-        >
+        
       </div>
 
       

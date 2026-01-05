@@ -1,28 +1,28 @@
 <%- include("../partials/user/header") %>
-<!-- Breadcrumb -->
-<div class="w-full bg-gray-50 py-3 px-6 text-sm text-gray-600">
-    <div class="max-w-6xl mx-auto flex gap-2 items-center flex-wrap">
+    <!-- Breadcrumb -->
+    <div class="w-full bg-gray-50 py-3 px-6 text-sm text-gray-600">
+        <div class="max-w-6xl mx-auto flex gap-2 items-center flex-wrap">
 
-        <% breadcrumb.forEach((b, index) => { %>
+            <% breadcrumb.forEach((b, index)=> { %>
 
-            <% if (b.url) { %>
-                <a href="<%= b.url %>" class="hover:text-black hover:underline">
-                    <%= b.name %>
-                </a>
-            <% } else { %>
-                <span class="text-black font-semibold">
-                    <%= b.name %>
-                </span>
-            <% } %>
+                <% if (b.url) { %>
+                    <a href="<%= b.url %>" class="hover:text-black hover:underline">
+                        <%= b.name %>
+                    </a>
+                    <% } else { %>
+                        <span class="text-black font-semibold">
+                            <%= b.name %>
+                        </span>
+                        <% } %>
 
-            <% if (index < breadcrumb.length - 1) { %>
-                <span>/</span>
-            <% } %>
+                            <% if (index < breadcrumb.length - 1) { %>
+                                <span>/</span>
+                                <% } %>
 
-        <% }) %>
+                                    <% }) %>
 
+        </div>
     </div>
-</div>
 
 
     <div class="container mx-auto px-4 py-10">
@@ -40,16 +40,11 @@
                 </div>
 
                 <!-- Main Image -->
-                <div 
-  id="imageZoomContainer"
-  class="flex-1 bg-gray-100 rounded-lg p-3 overflow-hidden relative cursor-zoom-in"
->
-  <img
-    id="mainImage"
-    src="<%= product.activeVariant.images[0] %>"
-    class="w-full max-h-[600px] object-contain transition-transform duration-200"
-  />
-</div>
+                <div id="imageZoomContainer"
+                    class="flex-1 bg-gray-100 rounded-lg p-3 overflow-hidden relative cursor-zoom-in">
+                    <img id="mainImage" src="<%= product.activeVariant.images[0] %>"
+                        class="w-full max-h-[600px] object-contain transition-transform duration-200" />
+                </div>
 
             </div>
 
@@ -97,9 +92,11 @@
                 hover:bg-red-700 hover:text-white transition">ADD TO WISHLIST
                     </button>
 
-                    <button class="w-1/2 min-w-[200px] py-2 rounded-md bg-black text-white font-semibold
-               hover:bg-gray-900 transition">ADD TO BAG
+                    <button onclick="addToCart('<%= product.id %>')"
+                      class="w-1/2 min-w-[200px] py-2 rounded-md bg-black text-white font-semibold hover:bg-gray-900 transition">
+                        ADD TO CART
                     </button>
+
 
                     <button class="w-1/2 min-w-[200px] py-2 rounded-md bg-green-700 text-white font-semibold
                hover:bg-green-800 transition">BUY NOW
@@ -124,82 +121,115 @@
         </div>
     </div>
     <!-- RELATED PRODUCTS SECTION -->
-<div class="mt-16">
-    <h2 class="text-2xl font-semibold mb-6">Related Products</h2>
+    <div class="mt-16">
+        <h2 class="text-2xl font-semibold mb-6">Related Products</h2>
 
-    <% if (relatedProducts && relatedProducts.length > 0) { %>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <% if (relatedProducts && relatedProducts.length> 0) { %>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
 
-            <% relatedProducts.forEach(rp => { %>
-                <a href="/user/product-details/<%= rp._id %>" class="block border rounded-lg shadow hover:shadow-lg transition">
-                    
-                    <!-- IMAGE -->
-                    <div class="h-48 overflow-hidden rounded-t-lg bg-gray-100 flex items-center justify-center">
-                        <% if (rp.variants && rp.variants[0] && rp.variants[0].images && rp.variants[0].images[0]) { %>
-                            <img src="<%= rp.variants[0].images[0] %>" 
-                                alt="Product Image" 
-                                class="w-full h-full object-cover">
-                        <% } else { %>
-                            <div class="text-gray-400 text-center">No Image</div>
-                        <% } %>
-                    </div>
-                    
-                    <!-- DETAILS -->
-                    <div class="p-4">
-                        <p class="font-semibold text-lg"><%= rp.productname %></p>
+                <% relatedProducts.forEach(rp=> { %>
+                    <a href="/user/product-details/<%= rp._id %>"
+                        class="block border rounded-lg shadow hover:shadow-lg transition">
 
-                        <% if (rp.variants && rp.variants[0]) { %>
-                            <p class="text-gray-700 font-medium">
-                                ₹<%= rp.variants[0].price %>
+                        <!-- IMAGE -->
+                        <div class="h-48 overflow-hidden rounded-t-lg bg-gray-100 flex items-center justify-center">
+                            <% if (rp.variants && rp.variants[0] && rp.variants[0].images && rp.variants[0].images[0]) {
+                                %>
+                                <img src="<%= rp.variants[0].images[0] %>" alt="Product Image"
+                                    class="w-full h-full object-cover">
+                                <% } else { %>
+                                    <div class="text-gray-400 text-center">No Image</div>
+                                    <% } %>
+                        </div>
+
+                        <!-- DETAILS -->
+                        <div class="p-4">
+                            <p class="font-semibold text-lg">
+                                <%= rp.productname %>
                             </p>
-                        <% } %>
-                    </div>
 
-                </a>
-            <% }) %>
+                            <% if (rp.variants && rp.variants[0]) { %>
+                                <p class="text-gray-700 font-medium">
+                                    ₹<%= rp.variants[0].price %>
+                                </p>
+                                <% } %>
+                        </div>
 
-        </div>
-    <% } else { %>
-        <p class="text-gray-500">No related products available.</p>
-    <% } %>
-</div>
+                    </a>
+                    <% }) %>
+
+            </div>
+            <% } else { %>
+                <p class="text-gray-500">No related products available.</p>
+                <% } %>
+    </div>
 
 
 
     <script>
-        // {/* Change main image when clicking thumbnail */ }
-        // function changeMainImage(imgUrl) {
-        //     document.getElementById("mainImage").src = imgUrl;
-        // }
-       
-  const container = document.getElementById("imageZoomContainer");
-  const image = document.getElementById("mainImage");
-
-  const ZOOM_LEVEL = 2.5; // realistic zoom, not stupidly high
-
-  container.addEventListener("mousemove", (e) => {
-    const rect = container.getBoundingClientRect();
-
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    image.style.transformOrigin = `${x}% ${y}%`;
-    image.style.transform = `scale(${ZOOM_LEVEL})`;
-  });
-
-  container.addEventListener("mouseleave", () => {
-    image.style.transformOrigin = "center center";
-    image.style.transform = "scale(1)";
-  });
-
-  // Important: reset zoom when thumbnail changes
-  function changeMainImage(imgUrl) {
-    image.src = imgUrl;
-    image.style.transform = "scale(1)";
-    image.style.transformOrigin = "center center";
-  }
-</script>
-
+  async function addToCart(productId) {
     
+  try {
+    const res = await fetch(`/user/cart/add/${productId}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ productId })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+         await Swal.fire({
+            icon:'success',
+            title:data.message ,
+            timer:2000
+        })
+      return;
+    }
+    Swal.fire({
+        icon:'error',
+        title:data.message,
+        timer:2000
+    })
+
+  } catch (err) {
+    Swal.fire({
+        icon:'error',
+        title:'Something went wrong'
+    });
+  }
+}
+ //image zoom
+ 
+
+const container = document.getElementById("imageZoomContainer");
+        const image = document.getElementById("mainImage");
+
+        const ZOOM_LEVEL = 2.5; // realistic zoom, not stupidly high
+
+        container.addEventListener("mousemove", (e) => {
+            const rect = container.getBoundingClientRect();
+
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+            image.style.transformOrigin = `${x}% ${y}%`;
+            image.style.transform = `scale(${ZOOM_LEVEL})`;
+        });
+
+        container.addEventListener("mouseleave", () => {
+            image.style.transformOrigin = "center center";
+            image.style.transform = "scale(1)";
+        });
+
+        // Important: reset zoom when thumbnail changes
+        function changeMainImage(imgUrl) {
+            image.src = imgUrl;
+            image.style.transform = "scale(1)";
+            image.style.transformOrigin = "center center";
+        }
+    </script>
+
+
 
     <%- include("../partials/user/footer") %>

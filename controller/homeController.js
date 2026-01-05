@@ -57,6 +57,11 @@ const loadHome=async(req,res,next)=>{
   }
 };
 const logout = (req, res,next) => {
+   req.logout(err => {
+    if (err) {
+      console.error("Passport logout error:", err);
+      return next(err);
+    }
   req.session.destroy((err) => {
     if (err) {
       console.error("Error destroying session:", err);
@@ -67,6 +72,8 @@ const logout = (req, res,next) => {
     res.setHeader('Cache-Control', 'no-store')
     return res.redirect("/user/login");
   });
+
+})
 };
 
     

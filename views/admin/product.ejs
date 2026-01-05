@@ -43,7 +43,7 @@
                         <table class="w-full border-collapse">
                             <thead>
                                 <tr class="border-b bg-gray-200">
-                                    <th class="text-left px-4 py-2 font-semibold text-gray-700">ProductID</th>
+                                    <th class="text-left px-4 py-2 font-semibold text-gray-700">Serial.No</th>
                                     <th class="text-center px-4 py-2 font-semibold text-gray-700">Product</th>
 
                                     <th class="text-left px-4 py-2 font-semibold text-gray-700">Category</th>
@@ -53,10 +53,10 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <%products.forEach(product=>{%>
+                                <%products.forEach((product,index)=>{%>
                                     <tr class="border-b hover:bg-gray-50 transition">
                                         <td class="px-4 py-2">
-                                            <%=product._id%>
+                                            <%=index+1%>
                                         </td>
                                         <td class="px-4 py-2">
                                             <%=product.productname%>

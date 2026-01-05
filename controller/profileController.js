@@ -8,7 +8,7 @@ const getUserProfile = async (req, res, next) => {
   try {
     const userId = req.session.user;
      const user = await User.findById(userId).select(
-      "fullName email mobile  "
+      "fullName email mobile profileImage "
     );
 
     if (!user) {
@@ -24,6 +24,25 @@ const getUserProfile = async (req, res, next) => {
     next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 }
+const uploadProfileImage = async (req, res, next) => {
+  try {
+    const userId = req.session.user;
+
+    if (!req.file) {
+      throw new AppError("No image uploaded", HTTP_STATUS.BAD_REQUEST);
+    }
+
+    await User.findByIdAndUpdate(userId, {
+      profileImage: req.file.path, // Cloudinary URL
+    });
+
+    res.redirect("/user/profile/profile");
+
+  } catch (err) {
+    next(new AppError(err.message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+};
+
 
  const getEditProfile= async(req,res,next)=>{
     try {
@@ -143,15 +162,18 @@ const getUserProfile = async (req, res, next) => {
  }
  const NewPassword=async (req,res,next)=>{
     try {
-        const{password,Cpassword}=req.body
-        console.log('password',password)
-        console.log('Cpassword',Cpassword)
+        const{password,Cpassword,crntpassword}=req.body
+        
         const userId=req.session.user
         if(!userId){
             throw new AppError("Unauthorized", HTTP_STATUS.UNAUTHORIZED)
         }
-        if(!password || !Cpassword){
+        if(!password || !Cpassword ||!crntpassword){
             throw new AppError('All field are required',HTTP_STATUS.BAD_REQUEST)
+            
+        }
+        if(password === crntpassword){
+            throw new AppError('New password must be different',HTTP_STATUS.BAD_REQUEST)
             
         }
         if(password !== Cpassword){
@@ -354,6 +376,7 @@ const changePassword=async (req,res,next)=>{
 
 module.exports = {
   getUserProfile,
+  uploadProfileImage,
   getEditProfile,
   editProfile,
   getNewPassword,
@@ -366,4 +389,5 @@ module.exports = {
   getverifyOTP,
   verifyOTP,
   emailChange
+  
 };

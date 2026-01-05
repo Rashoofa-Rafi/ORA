@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CheckoutPage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body class="bg-gray-50">
+    <%- include("../partials/user/header") %>
+        <div class="container mx-auto px-6 py-10">
+            <h2 class="text-2xl font-semibold text-center mb-10">
+                PLACE YOUR ORDER
+            </h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+
+  <!-- LEFT SIDE -->
+  <form
+    id="placeOrderForm" class="lg:col-span-2">
+    
+  <!-- Delivered To -->
+    <div class="mb-8">
+      <h3 class="font-semibold mb-2">Delivered To</h3>
+      <p class="font-medium"><%= address.name %></p>
+      <p class="text-sm text-gray-600">
+        <%= address.addressLine %>, <%= address.city %>,
+        <%= address.state %> - <%= address.pinCode %>
+      </p>
+    </div>
+
+    <!-- Payment Methods -->
+    <div class="space-y-4">
+      <label class="flex items-start gap-3 cursor-pointer">
+        <input type="radio" name="paymentMethod" value="RAZORPAY" required />
+        <div>
+          <p class="font-medium">Razorpay</p>
+          <p class="text-sm text-gray-500">Pay using Razorpay</p>
+        </div>
+      </label>
+
+      <label class="flex items-start gap-3 cursor-pointer">
+        <input type="radio" name="paymentMethod" value="UPI" />
+        <div>
+          <p class="font-medium">UPI Payment</p>
+          <p class="text-sm text-gray-500">Pay by any UPI app</p>
+        </div>
+      </label>
+
+      <label class="flex items-start gap-3 cursor-pointer">
+        <input type="radio" name="paymentMethod" value="CARD" />
+        <div>
+          <p class="font-medium">Credit / Debit / ATM Card</p>
+          <p class="text-sm text-gray-500">
+            Add any secure card as per RBI guidelines
+          </p>
+        </div>
+      </label>
+
+      <label class="flex items-start gap-3 cursor-pointer">
+        <input type="radio" name="paymentMethod" value="WALLET" />
+        <div>
+          <p class="font-medium">Wallets</p>
+          <p class="text-sm text-gray-500">Use your wallet balance</p>
+        </div>
+      </label>
+
+      <label class="flex items-start gap-3 cursor-pointer">
+        <input type="radio" name="paymentMethod" value="COD" />
+        <p class="font-medium">Cash on Delivery</p>
+      </label>
+    </div>
+
+  </form>
+
+  <!-- RIGHT SIDE -->
+  <div class="bg-gray-100 rounded-lg p-6 h-fit">
+
+    <h3 class="font-semibold mb-4">Order Summary</h3>
+
+    <% cartItems.forEach(item => { %>
+      <div class="flex justify-between text-sm mb-2">
+        <span><%= item.quantity %> × <%= item.productId.productname %></span>
+        <span>₹<%= item.quantity * item.variantId.price %></span>
+      </div>
+    <% }) %>
+
+    <hr class="my-3">
+
+    <div class="flex justify-between text-sm">
+      <span>Delivery Charges</span>
+      <span class="text-green-600">Free</span>
+    </div>
+
+    <div class="flex justify-between text-sm">
+      <span>Platform Fee</span>
+      <span>₹<%= summary.platformFee %></span>
+    </div>
+
+    <div class="flex justify-between text-sm">
+      <span> Discount</span>
+      <span>-₹<%= summary.discount %></span>
+    </div>
+
+    <hr class="my-3">
+
+    <div class="flex justify-between font-semibold text-lg mb-4">
+      <span>Total</span>
+      <span>₹<%= summary.finalAmount %></span>
+    </div>
+
+    <!-- Submit button linked to form -->
+    <button id="placeOrderBtn"  class="w-full bg-black text-white py-3 rounded">Place Order</button>
+    </div>
+
+</div>
+
+
+        </div>
+        <%- include("../partials/user/footer") %>
+        <script>
+  document.getElementById("placeOrderBtn").addEventListener("click", async () => {
+    const paymentMethod = document.querySelector(
+      'input[name="paymentMethod"]:checked'
+    )?.value;
+
+    if (!paymentMethod) {
+      Swal.fire({
+        icon:'error',
+        title:'Select a payment method'
+      })
+      return;
+    }
+
+    try {
+      const res = await fetch("/user/payment/place-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json"},
+         body: JSON.stringify({ paymentMethod })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        Swal.fire({
+          icon:'error',
+          title:data.message
+        })
+        return;
+      }
+      await Swal.fire({
+        icon:'success'
+      })
+      window.location.href = `/user/order-success/${data.orderId}`;
+      
+
+    } catch (err) {
+      Swal.fire({
+        icon:'error',
+        title:'internal server error'
+      })
+    }
+  });
+</script>
+
+
+</body>

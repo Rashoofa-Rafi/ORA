@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin-Order</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex min-h-screen">
+
+        <%- include("../partials/admin/sidebar") %>
+            <div class="flex flex-col flex-1 ml-64">
+                <header
+                    class="sticky top-0 z-20 p-6 bg-white shadow flex flex-wrap justify-between items-center border-b border-gray-200">
+                    <h1 class="text-2xl font-bold text-gray-800">Orders</h1>
+                   <form method="GET" action="/admin/order" class="flex flex-wrap items-center gap-2 mt-4 md:mt-0">
+
+    <!-- Search (OrderID OR Username) -->
+    <input type="text" name="search" value="<%= search || '' %>"  placeholder="Search Order ID or Username"
+        class="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-yellow-400 focus:outline-none w-64"
+    >
+
+    <!-- Sort -->
+    <select name="sort" class="border border-gray-300 rounded px-3 py-2">
+        <option value="newest-oldest" <%= sort === 'newest-oldest' ? 'selected' : '' %>>Newest-Oldest</option>
+        <option value="oldest-newest" <%= sort === 'oldest-newest' ? 'selected' : '' %>>Oldest-Newest</option>
+    </select>
+
+    <!-- Filter by Status -->
+    <select name="status" placeholder="Filter"class="border border-gray-300 rounded px-3 py-2">
+        <option value="">All Status</option>
+        <option value="pending" <%= status === 'pending' ? 'selected' : '' %>>Pending</option>
+        <option value="confirmed" <%= status === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+        <option value="shipped" <%= status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+        <option value="delivered" <%= status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+        <option value="cancelled" <%= status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+        <option value="returned" <%= status === 'returned' ? 'selected' : '' %>>Returned</option>
+        <option value="return_requested" <%= status === 'return_requested' ? 'selected' : '' %>>Returne_requested</option>
+        <option value="returning" <%= status === 'returning' ? 'selected' : '' %>>Returning</option>
+        <option value="processing" <%= status === 'processing' ? 'selected' : '' %>>Processing</option>
+    </select>
+
+    <!-- Apply -->
+    <button type="submit"  class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-yellow-500 transition"> Apply</button>
+        
+    <!-- Clear -->
+    <a href="/admin/order" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition">Clear</a>
+        
+    </form>
+
+                </header>
+
+                <main class="p-6 flex-1">
+                    <div class="bg-white shadow rounded-lg p-4 overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="border-b bg-gray-200">
+                                    <th class="text-left px-4 py-2 font-semibold text-gray-700">orderID</th>
+                                    <th class="text-center px-4 py-2 font-semibold text-gray-700">Customer</th>
+                                    <th class="text-center px-4 py-2 font-semibold text-gray-700">Date</th>
+                                    <th class="text-center px-4 py-2 font-semibold text-gray-700">Status</th>
+                                    <th class="text-center px-4 py-2 font-semibold text-gray-700">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                                <%orders.forEach(order=>{%>
+                                    
+                                    <tr class="border-b hover:bg-gray-50 transition">
+
+                                        <td class="px-4 py-2">
+                                            <%=order.orderId%>
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <%=order.userId.fullName%>
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <%=order.createdAt.toLocaleDateString("en-IN")%>
+                                        </td>
+                                        
+                                        <td class="px-4 py-2">
+                                            <span class="font-medium
+                                                    <%= 
+              order.orderStatus === 'cancelled'||
+              order.orderStatus==='returned' 
+                ? 'text-red-600'
+              :order.orderStatus === 'delivered'||
+              order.orderStatus==='shipped'||
+              order.orderStatus==='return_requested'
+                ? 'text-green-600'
+              :order.orderStatus === 'pending'||
+               order.orderStatus==='confirmed'||
+               order.orderStatus==='returning'||
+               order.orderStatus==='processing'
+                  ? 'text-yellow-600'
+                  :order.orderStatus === 'partially_cancelled'||
+               order.orderStatus==='partially_confirmed'||
+               order.orderStatus==='partially_returned'
+                  ? 'text-blue-600'
+              : 'text-gray-600' %>">
+             
+
+  
+                                                        <%= order.orderStatus %>
+                                                    </span>
+                                        </td>
+                                        <td class="px-4 py-2 text-center">
+                                            <a href="/admin/order/<%=order.orderId%>" class="bg-yellow-500 text-white px-3 py-1.5 rounded hover:bg-gray-900 text-sm transition">View</button>
+                                        </td>
+                                    </tr>
+                                   
+
+                                    <%})%>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 flex justify-center items-center space-x-2">
+                        <a href="/admin/order?page=<%= page-1 %>&search=<%= search || '' %>&sort=<%= sort || 'newest' %>&status=<%= status || '' %>"
+                            class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                            Prev
+                        </a>
+                        <% for (let i=1; i <=totalPages; i++) { %>
+                            <a href="/admin/order?page=<%= i %>&search=<%= search || '' %>&sort=<%= sort || 'newest' %>&status=<%= status || '' %>"
+                                class="px-3 py-1 border rounded <%= page === i ? 'bg-yellow-500 text-white' : 'hover:bg-gray-200' %>">
+                                <%= i %>
+                            </a>
+                            <% } %>
+                                <a href="/admin/order?page=<%= page+1 %>&search=<%= search || '' %>&sort=<%= sort || 'newest' %>&status=<%= status || '' %>"
+                                    class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                                    Next
+                                </a>
+                    </div>
+
+                </main>
+                <%- include("../partials/admin/footer") %>
+</body>
+</html>

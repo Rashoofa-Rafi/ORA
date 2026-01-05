@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order-success</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body class="bg-gray-50">
+    <%- include("../partials/user/header") %>
+    <div class="container mx-auto px-6 py-16">
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+
+    <!-- LEFT SIDE -->
+    <div class="text-center lg:text-left">
+
+      <div class="flex justify-center lg:justify-start mb-6">
+        <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center">
+          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" stroke-width="3"
+               viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      </div>
+
+      <h1 class="text-2xl font-semibold mb-6">
+        THANK YOU FOR ORDERING
+      </h1>
+
+      <div class="flex gap-4 justify-center lg:justify-start">
+        <a href="/user/profile/orders"
+           class="border border-gray-400 px-6 py-2 rounded hover:bg-gray-100">
+          View Orders
+        </a>
+
+        <a href="/user/allproduct"
+           class="border border-gray-400 px-6 py-2 rounded hover:bg-gray-100">
+          Continue Shopping
+        </a>
+      </div>
+
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="bg-white shadow-lg rounded-lg p-8 max-w-md mx-auto w-full">
+
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" stroke-width="3"
+               viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 class="text-lg font-semibold">Payment Success!</h2>
+      </div>
+
+      <div class="space-y-3 text-sm">
+
+        <div class="flex justify-between">
+          <span class="text-gray-500">Order Id</span>
+          <span class="font-medium"><%= order.orderId %></span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="text-gray-500">Payment Time</span>
+          <span><%= order.paymentTime %></span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="text-gray-500">Payment Method</span>
+          <span><%= order.paymentMethod %></span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="text-gray-500">Sender Name</span>
+          <span><%= order.userName %></span>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="flex justify-between text-lg font-semibold">
+          <span>Amount</span>
+          <span>₹ <%= order.totalAmount %></span>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <p class="text-center text-sm text-gray-500 mt-16">
+    “Thank you for choosing Ora. Every outfit tells your story.”
+  </p>
+
+</div>
+
+
+    <%- include("../partials/user/footer") %>
+</body>

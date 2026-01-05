@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Cart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body class="bg-gray-50">
+    <%- include("../partials/user/header") %>
+        <div class="container mx-auto px-4 py-8">
+            <h1 class="text-2xl font-semibold text-center"> Cart</h1>
+            <p class="text-center text-gray-600 mt-2">Review your items before checkout</p>
+
+            <% if (!cart || cart.items.length===0) { %>
+                <div class="text-center mt-12 text-gray-500">Your cart is empty</div>
+                <% } else { %>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
+
+
+                        <!-- Cart Items -->
+                        <div class="md:col-span-2 space-y-6">
+                            <% cart.items.forEach(item=> { %>
+                                <div
+                                    class="bg-white rounded shadow flex flex-col sm:flex-row overflow-hidden relative max-w-3xl mx-auto">
+
+
+                                    <div class="relative w-full sm:w-40 h-40 flex-shrink-0">
+                                        <img src="<%= item.variant?.images?.[0] || '/images/no-image.png' %>"
+                                            class="w-full h-full object-cover" />
+
+                                      <% if (item.isAvailable) { %>
+
+  <span
+    class="absolute bottom-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded">
+    In stock
+  </span>
+
+<% } else { %>
+
+  <% if (!item.variant) { %>
+    <span
+      class="absolute bottom-2 right-2 bg-gray-700 text-white text-xs px-2 py-1 rounded">
+      Unavailable
+    </span>
+
+  <% } else if (item.variant.stock === 0) { %>
+    <span
+      class="absolute bottom-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+      Out of stock
+    </span>
+
+  <% } else if (item.variant.stock < item.quantity) { %>
+    <span
+      class="absolute bottom-2 right-2 bg-gray-500 text-white text-xs px-2 py-1 rounded">
+      Insufficient Stock
+    </span>
+  <% } %>
+
+<% } %>
+
+                                    </div>
+
+
+                                    <div class="p-4 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <h2 class="font-semibold text-lg">
+                                                <%= item.product?.productname || 'Product unavailable' %>
+
+                                            </h2>
+
+                                            <p class="text-yellow-600 font-bold mt-1">
+                                                ₹<%= item.variant ? item.variant.price : 0 %>
+
+                                            </p>
+
+                                            <% if (!item.isAvailable) { %>
+                                                <p class="text-red-500 text-sm mt-1">
+                                                    <%= item.message %>
+                                                </p>
+                                                <% } %>
+
+                                        </div>
+
+                                        <div class="flex items-center justify-between mt-4">
+                                            <div class="flex items-center border rounded">
+                                                <button class="qtyBtn px-3 py-1" data-id="<%= item._id %>"
+                                                    data-action="dec" <%=!item.isAvailable ? 'disabled' : ''
+                                                    %>>−</button>
+
+                                                <span class="px-4 qtyText" id="qty-<%= item._id %>">
+                                                    <%= item.quantity %>
+                                                </span>
+
+
+                                                <button class="qtyBtn px-3 py-1" data-id="<%= item._id %>"
+                                                    data-action="inc" <%=!item.isAvailable ? 'disabled' : ''
+                                                    %>>+</button>
+                                            </div>
+
+                                            <button class="removeBtn text-red-500 text-sm" data-id="<%= item._id %>">
+                                                Remove
+                                            </button>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <% }) %>
+
+                        </div>
+
+
+                        <!-- Summary -->
+                        <div class="bg-white rounded shadow p-6 h-fit">
+                            <h3 class="text-lg font-semibold mb-4">Order Summary</h3>
+                            <div class="space-y-2 mb-4">
+                                <% cart.items.forEach(item=> { %>
+                                    <% if (item.isAvailable) { %>
+                                        <div class="flex justify-between text-sm text-gray-700">
+                                            <span>
+                                                <%= item.quantity %> × <%= item.product.productname %>
+                                            </span>
+                                            <span>
+                                                ₹<%= item.quantity * item.variant.price %>
+                                            </span>
+                                        </div>
+                                        <% } %>
+                                            <% }) %>
+                            </div>
+
+                            <hr class="my-3">
+
+
+                            <div class="flex justify-between text-gray-700 mb-2">
+                                <span>Total Items</span>
+                                <span>
+                                    <%= cart.totalItem %>
+                                </span>
+                            </div>
+
+
+                            <div class="flex justify-between text-gray-700 mb-4">
+                                <span>Total Price</span>
+                                <span class="font-bold">₹<%= cart.totalPrice %></span>
+                            </div>
+
+
+                            <button id="checkoutBtn" class="w-full bg-lime-900 text-white py-3 rounded
+         hover:bg-lime-700 transition
+         <%= hasInvalidItem ? 'opacity-50 cursor-not-allowed' : '' %>" <%=hasInvalidItem ? 'disabled' : '' %>>
+                                Proceed to Checkout
+                            </button>
+
+
+                            <% if (hasInvalidItem) { %>
+                                <p class="text-sm text-red-500 mt-3">
+                                    Remove unavailable items to continue
+                                </p>
+                                <% } %>
+
+                        </div>
+
+
+                    </div>
+                    <% } %>
+        </div>
+        <%- include("../partials/user/footer") %>
+</body>
+<script>
+    //update quantity
+    document.querySelectorAll('.qtyBtn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault()
+            const cartItemId = btn.dataset.id;
+            const action = btn.dataset.action;
+
+            const res = await fetch('/user/cart/update-quantity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cartItemId, action })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                Swal.fire({
+                    icon: 'error',
+                    title: data.message
+                })
+                return;
+            }
+            await Swal.fire({
+                icon: 'success',
+                title: data.message,
+                timer: 1500
+            })
+
+            location.reload();
+        });
+    })
+
+    //remove cart item
+    document.querySelectorAll('.removeBtn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            await fetch('/user/cart/remove', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cartItemId: btn.dataset.id })
+            });
+            location.reload();
+        });
+    });
+
+    //proceedToCheckout
+    const checkoutBtn = document.getElementById('checkoutBtn');
+
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', async () => {
+            try {
+                const res = await fetch('/user/cart/proceedToCheckout', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Checkout blocked',
+                        text: data.message || 'Remove unavailable items before proceeding'
+                    });
+                    return;
+                }
+
+
+                window.location.href = data.redirect;
+
+            } catch (err) {
+                Swal.fire({
+                    icon: 'Error',
+                    title: 'Something went wrong'
+                });
+            }
+        });
+    }
+
+
+</script>
+
+</html>

@@ -1,85 +1,114 @@
-<%- include("../../partials/user/header") %>
+<!DOCTYPE html>
+<html lang="en">
 
-<div class="max-w-6xl mx-auto py-10 flex gap-8">
-  <!-- LEFT SIDEBAR -->
-  <aside class="w-64 bg-lime-100 rounded-xl p-6 shadow">
-    <div class="flex items-center gap-4 mb-6">
-      <div class="w-12 h-12 rounded-full bg-black"></div>
-      <p class="font-semibold"><%= user.fullName %></p>
-    </div>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CheckoutPage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
 
-    <ul class="space-y-4 text-sm font-medium">
-      <li><a href="/user/profile/profile" class="flex gap-2 items-center"><i data-lucide="user"></i>My Profile</a></li>
-      <li><a href="/user/profile/address" class="flex gap-2 items-center font-semibold"><i data-lucide="map-pin"></i>Address</a></li>
-      <li><a href="/user/profile/orders" class="flex gap-2 items-center"><i data-lucide="package"></i>My Order</a></li>
-      <li><a href="/user/wallet" class="flex gap-2 items-center"><i data-lucide="wallet"></i>My Wallet</a></li>
-      <li><a href="/user/coupons" class="flex gap-2 items-center"><i data-lucide="ticket-percent"></i>My Coupons</a></li>
-      <li><a href="/user/delete-account" class="flex gap-2 items-center text-red-600"><i data-lucide="trash-2"></i>Delete Account</a></li>
-      <li><a href="/user/referral" class="flex gap-2 items-center"><i data-lucide="share-2"></i>Referral Code</a></li>
-    </ul>
-  </aside>
+<body class="bg-gray-50">
+    <%- include("../partials/user/header") %>
+    <div class="container mx-auto px-4 py-8">
+  <h2 class="text-2xl font-semibold text-center mb-8">
+    Select Your Delivery Address
+  </h2>
 
-  <!-- RIGHT: MANAGE ADDRESS -->
-  <section class="flex-1 bg-white rounded-xl shadow p-10">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-bold text-center">MANAGE ADDRESS</h2>
-      <button
-        id="addAddressBtn"
-        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
-        Add new Address
-      </button>
-    </div>
+  <form action="/user/checkout" method="POST">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
 
-    <!-- ADDRESS LIST -->
-    <div class="space-y-4">
-      <% if (addresses && addresses.length) { %>
-        <% addresses.forEach(addr => { %>
-          <div class="bg-gray-50 rounded-lg border px-4 py-3 flex items-start justify-between gap-4">
-            <div class="text-sm">
-              <p class="font-semibold uppercase">
-                <%= addr.name %> 
+      <!-- LEFT: Addresses -->
+      <div class="md:col-span-2 space-y-4">
+        <% if (addresses.length === 0) { %>
+          <p class="text-red-500">No address found. Please add one.</p>
+        <% } %>
+
+        <% addresses.forEach(address => { %>
+          <label class="block border rounded p-4 cursor-pointer hover:border-lime-900">
+            <input
+              type="radio"
+              name="addressId"
+              value="<%= address._id %>"
+              class="mr-2"
+              <%= address.isDefault ? 'checked' : '' %>
+              required
+            />
+
+            <div class="inline-block align-top">
+              <p class="font-medium"><%= address.name %></p>
+              <p class="text-sm text-gray-600">
+                <%= address.house %>, <%= address.city %>,
+                <%= address.state %> - <%= address.pincode %>
               </p>
-              <p class="text-xs mt-1 text-gray-700">
-                <%= addr.addressLine %>, <%= addr.city %>, <%= addr.locality %>,<%= addr.state %> - <%= addr.pinCode %>
-              </p>
-              <p class="text-xs mt-1 text-gray-700">
-                <%= addr.phone %>, <%= addr.altphone %>
-              </p>
-            </div>
 
-            <div class="flex flex-col items-end gap-2">
-              <div class="flex gap-1">
-                <button
-                  class="border px-3 py-1 text-xs rounded edit-address-btn"
-                  data-id="<%= addr._id %>">
-                  Edit
-                </button>
-                <button
-                  class="border px-3 py-1 text-xs rounded delete-address-btn"
-                  data-id="<%= addr._id %>">
-                  Delete
-                </button>
-              </div>
+              <button type="button" class="text-sm text-blue-600 mt-1 inline-block edit-address-btn" data-id="<%= address._id %>">Edit</button>
+                </div>
+          </label>
+        <% }) %>
 
-              <button
-                class="px-4 py-1 text-xs rounded border
-                       <%= addr.isDefault ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700' %>
-                       set-default-btn"
-                data-id="<%= addr._id %>">
-                <%= addr.isDefault ? addr.addressType : 'Set Default' %>
-              </button>
-            </div>
+        <button  type="button" class="inline-block mt-3 text-lime-900 font-medium" id="addAddressBtn">+ Add New Address</button>
+        </div>
+
+       
+
+      <!-- RIGHT: Order Summary -->
+      <div class="bg-white shadow rounded p-6 h-fit">
+        <h3 class="text-lg font-semibold mb-4">Order Summary</h3>
+
+        <% cartItems.forEach(item => { %>
+          <div class="flex justify-between text-sm mb-2">
+            <span>
+              <%= item.quantity %> × <%= item.productId.productname %>
+            </span>
+            <span>
+              ₹<%= item.quantity * item.variantId.price %>
+            </span>
           </div>
         <% }) %>
-      <% } else { %>
-        <p class="text-sm text-gray-500 text-center">No addresses found. Add your first address.</p>
-      <% } %>
-    </div>
-  </section>
-</div>
 
-<!-- ADDRESS MODAL (Add/Edit) -->
-<div id="addressModal"
+        <hr class="my-3">
+
+        <div class="flex justify-between text-sm">
+          <span>Total Items</span>
+          <span><%= summary.totalItems %></span>
+        </div>
+
+        <div class="flex justify-between text-sm">
+          <span>Items Price</span>
+          <span>₹<%= summary.totalPrice %></span>
+        </div>
+
+        <div class="flex justify-between text-sm">
+          <span>Delivery Charges</span>
+          <span>₹<%= summary.deliveryCharge %></span>
+        </div>
+
+        <div class="flex justify-between text-sm">
+          <span>Platform Fee</span>
+          <span>₹<%= summary.platformFee %></span>
+        </div>
+
+        <div class="flex justify-between text-sm text-green-600">
+          <span>Discount</span>
+          <span>-₹<%= summary.discount %></span>
+        </div>
+
+        <hr class="my-3">
+
+        <div class="flex justify-between font-bold text-lg">
+          <span>Total Payable</span>
+          <span>₹<%= summary.finalAmount %></span>
+        </div>
+
+        <button type="submit" class="w-full mt-5 bg-gray-900 text-white py-3 rounded hover:bg-lime-700">Continue</button>
+        </div>
+
+    </div>
+  </form>
+</div>
+ <div id="addressModal"
      class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
   <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
     <h2 id="modalTitle" class="text-lg font-semibold mb-4 text-center border-b pb-2">
@@ -158,15 +187,16 @@
   </div>
 </div>
 
-<script>
-  lucide.createIcons();
-
+        
+    <%- include("../partials/user/footer") %>
+    <script>
+document.addEventListener('DOMContentLoaded', () => {      
   const addAddressBtn  = document.getElementById('addAddressBtn');
   const addressModal   = document.getElementById('addressModal');
   const addressForm    = document.getElementById('addressForm');
   const modalTitle     = document.getElementById('modalTitle');
   const cancelModalBtn = document.getElementById('cancelModalBtn');
-  const addressError   = document.getElementById('addressError');
+
 
   const idInput        = document.getElementById('addressId');
   const nameInput      = document.getElementById('name');
@@ -206,10 +236,13 @@
     addressModal.classList.add('hidden');
   }
 
-  addAddressBtn.addEventListener('click', () => openModal('add'));
+  if (addAddressBtn) {
+    addAddressBtn.addEventListener('click', () => openModal('add'));
+  }
 
-  cancelModalBtn.addEventListener('click', closeModal)
-
+  if (cancelModalBtn) {
+    cancelModalBtn.addEventListener('click', closeModal);
+  }
 // Handle Add/Edit submit
 function isValidPincode(pin) {
   return /^[1-9][0-9]{5}$/.test(pin);
@@ -218,9 +251,8 @@ function isValidPincode(pin) {
 function isValidPhone(phone) {
   return /^[6-9][0-9]{9}$/.test(phone);
 }
-
-
   addressForm.addEventListener('submit', async (e) => {
+    
     e.preventDefault()
     const  data = {
      name       :nameInput.value.trim(),
@@ -235,8 +267,7 @@ function isValidPhone(phone) {
      isDefault  :isDefaultInput.checked
 
     }
-    // PINCODE
-  if (!isValidPincode(data.pinCode)) {
+     if (!isValidPincode(data.pinCode)) {
     return Swal.fire({
       icon: 'error',
       title: 'Invalid Pincode',
@@ -327,75 +358,8 @@ function isValidPhone(phone) {
     }
   });
 });
+
+})
  
-
-document.querySelectorAll('.delete-address-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.dataset.id;
-      const confirm = await Swal.fire({
-        icon: 'warning',
-        text: 'Delete this address?',
-        showCancelButton: true,
-        confirmButtonText: 'Delete'
-      });
-      if (!confirm.isConfirmed) return
-
-      const res = await fetch(`/user/profile/address/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      const result = await res.json();
-      if (result.success) {
-        await Swal.fire({
-            icon:'success',
-            text:result.message,
-            timer:2000
-        })
-        location.reload();
-      } else {
-        Swal.fire({
-             icon: 'error',
-              text: result.message
-             });
-      }
-    });
-  });
-
-  document.querySelectorAll('.set-default-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const id = btn.dataset.id;
-
-    try {
-      const res = await fetch(`/user/profile/address/${id}/default`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-      const result = await res.json();
-
-      if (result.success) {
-        await Swal.fire({
-          icon: 'success',
-          text: result.message,
-          timer: 1500,
-          showConfirmButton: false
-        });
-        location.reload()
-      } else {
-        Swal.fire({
-          icon: 'error',
-          text: result.message,
-        });
-      }
-    } catch (err) {
-      Swal.fire({
-        icon: 'error',
-        text: 'Failed to update default address'
-      });
-    }
-  });
-});
-
-
-</script>
-  
-<%- include("../../partials/user/footer") %>
+    </script>
+</body>

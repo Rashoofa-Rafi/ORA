@@ -8,6 +8,7 @@ const customerController=require('../controller/customerController')
 const categoryController=require('../controller/categoryController')
 const subcategoryController=require('../controller/subcategoryController')
 const productController=require('../controller/productController')
+const adminOrderController=require('../controller/adminOrderController')
 
 
 //for admin authentication
@@ -58,7 +59,11 @@ router.post('/products/add-product',IsAdminAuthenticated,nocache,upload.any(),pr
 router.patch('/products/edit-product/:id',IsAdminAuthenticated,nocache,upload.any(),productController.editProduct)
 router.patch('/products/delete/:id',IsAdminAuthenticated,nocache,productController.deleteProduct)
 
+//for order Management
 
+router.get('/order',IsAdminAuthenticated,nocache,adminOrderController.getOrder)
+router.get('/order/:orderId',IsAdminAuthenticated,nocache,adminOrderController.getOrderDetailPage)
+router.post('/order-details/item-status',IsAdminAuthenticated,nocache,adminOrderController.updateStatus)
 
 
 

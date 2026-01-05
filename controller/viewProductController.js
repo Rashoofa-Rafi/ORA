@@ -30,18 +30,22 @@ const listProducts = async (req, res,next) => {
     if (search && search.trim() !== "") filter.productname = { $regex: search.trim(), $options: "i" };
     
     if (category && category !== "all") {
-      const categoryDoc = await Category.findOne({ name: req.query.category  });
+      const categoryDoc = await Category.findOne({ name: category, isListed: true   });
       if (categoryDoc) {
         filter.category_Id = categoryDoc._id;
-      }
+      }else {
+    filter.category_Id = null
+}
     }
 
     
     if (subcategory && subcategory !== "all") {
-      const subcategoryDoc = await Subcategory.findOne({ name: req.query.subcategory  });
+      const subcategoryDoc = await Subcategory.findOne({ name: subcategory, isListed: true   });
       if (subcategoryDoc) {
         filter.subcategory_Id = subcategoryDoc._id;
-      }
+      }else {
+    filter.subcategory_Id = null
+}
     }
 
     if (brand) filter.brand = brand;
@@ -98,6 +102,7 @@ if (priceProductIds) {
     // map properly
     const productsForUser = productsData.map(p => {
       const firstVariant = p.variants?.[0];
+      
 
       return {
         _id: p._id,
@@ -105,7 +110,8 @@ if (priceProductIds) {
         description: p.description,
         mainImage: firstVariant?.images?.[0],
         price: firstVariant?.price,
-        brand: p.brand
+        brand: p.brand,
+        
       }
     })
 

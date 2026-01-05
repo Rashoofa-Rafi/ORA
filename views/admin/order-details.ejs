@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Order Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+
+<body class="bg-gray-100 h-screen ">
+
+
+    <div class="flex h-full">
+        <%- include("../partials/admin/sidebar") %>
+
+            <!-- MAIN WRAPPER -->
+            <div class="flex-1 ml-64 flex flex-col h-full">
+
+                <header class="h-24 px-6 bg-white border-b flex items-center">
+                    <h1 class="text-2xl font-bold">Order Details</h1>
+                </header>
+                <main class="flex-1 p-6">
+                    <div class="grid grid-cols-12 gap-6 h-full">
+
+                        <div class="col-span-12 lg:col-span-8 h-full overflow-y-auto space-y-6 pr-2">
+
+                            <!-- ORDER SUMMARY -->
+                            <div class="bg-white rounded shadow p-5">
+                                <h2 class="text-lg font-semibold mb-4">Order Summary</h2>
+
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <p><span>Order ID:</span>
+                                        <%= order.orderId %>
+                                    </p>
+                                    <p><span>Date:</span>
+                                        <%= order.createdAt.toDateString() %>
+                                    </p>
+                                    <p><span>Total Items:</span>
+                                        <%= order.totalItems %>
+                                    </p>
+                                    <p><span>Delivery charges:</span>
+                                        <%= order.deliveryCharge %>
+                                    </p>
+                                    <p><span>Total Price:</span> ₹<%= order.totalPrice %>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- ORDER ITEMS -->
+                            <div class="bg-white rounded shadow p-6">
+                                <h2 class="text-lg font-semibold mb-6">Ordered Items</h2>
+
+                                <div class="space-y-4">
+                                    <% order.orderItems.forEach(item=> { %>
+                                        <div class="border rounded p-4 grid grid-cols-12 gap-4 items-center">
+                                            <div class="col-span-2">
+                                                <img src="<%= item.image %>"
+                                                    class="w-20 h-20 object-cover rounded border" />
+                                            </div>
+
+                                            <!-- DETAILS -->
+                                            <div class="col-span-6">
+                                                <p class="font-medium">
+                                                    <%= item.productName %>
+                                                </p>
+                                                <p class="text-sm text-gray-500">Qty: <%= item.quantity %>
+                                                </p>
+                                                <p class="text-sm text-gray-500">₹<%= item.price %>
+                                                </p>
+                                                <p class="text-sm text-gray-500">
+                                                    Status:
+                                                    <span class="font-medium
+                                                    <%= 
+    item.itemStatus === 'cancelled' ||
+    item.itemStatus === 'returned' ||
+    item.itemStatus === 'failed'
+      ? 'text-red-600'
+    : item.itemStatus === 'delivered' ||
+      item.itemStatus === 'shipped' ||
+      item.itemStatus === 'return_requested'
+      ? 'text-green-600'
+    : item.itemStatus === 'pending' ||
+      item.itemStatus === 'confirmed' ||
+      item.itemStatus === 'returning'
+      ? 'text-yellow-600'
+    : 'text-gray-600'
+  %>">
+  
+                                                        <%= item.itemStatus %>
+                                                    </span>
+
+                                                </p>
+                                                <%if(item.itemStatus==='cancelled'){%>
+                                                    <p class="text-sm text-yellow-500">
+                                                        Reason: <%= item.cancellationReason %>
+                                                </p>
+                                                <%}else if(item.itemStatus==='return_requested'){%>
+                                                    <p class="text-sm text-yellow-500">
+                                                        Reason: <%= item.returnReason %>
+                                                </p>
+                                                <%}%>
+                                            </div>
+
+                                            <!-- STATUS -->
+                                            <div class="col-span-4 text-right space-y-2">
+                                                <select
+  class="border px-2 py-1 text-sm item-status-select"
+  data-order-id="<%= order._id %>"
+  data-item-id="<%= item._id %>"
+>
+  <option value="pending" <%= item.itemStatus === 'pending' ? 'selected' : '' %>>Pending</option>
+  <option value="confirmed" <%= item.itemStatus === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+  <option value="shipped" <%= item.itemStatus === 'shipped' ? 'selected' : '' %>>Shipped</option>
+  <option value="delivered" <%= item.itemStatus === 'delivered' ? 'selected' : '' %>>Delivered</option>
+  <option value="returned" <%= item.itemStatus === 'returned' ? 'selected' : '' %>>Returned</option>
+  <option value="returning" <%= item.itemStatus === 'returning' ? 'selected' : '' %>>Returning</option>
+  <option value="return_requested" <%= item.itemStatus === 'return_requested' ? 'selected' : '' %>>Return Requested</option>
+</select>
+
+<button
+  class="ml-2 bg-black text-white px-3 py-1 text-sm rounded update-item-status-btn">
+  Save
+</button>
+
+                                            </div>
+
+                                        </div>
+
+                                        <% }) %>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!--RIGHT PANEL  -->
+                        <div class="col-span-12 lg:col-span-4 h-full">
+
+                            <div class="bg-white rounded shadow p-6 h-full overflow-y-auto space-y-8">
+                                <section>
+                                    <h3 class="font-semibold border-b pb-2 mb-3">User Details</h3>
+                                    <p class="text-sm">
+                                        <%= order.userId.fullName %>
+                                    </p>
+                                    <p class="text-sm">
+                                        <%= order.userId.email %>
+                                    </p>
+                                    <p class="text-sm">
+                                        <%= order.userId.mobile %>
+                                    </p>
+                                </section>
+
+
+                                <section>
+                                    <h3 class="font-semibold border-b pb-2 mb-3">Shipping Address</h3>
+                                    <p class="text-sm font-medium">
+                                        <%= order.address.name %>
+                                    </p>
+                                    <p class="text-sm text-gray-600">
+                                        <%= order.address.addressLine %>,<br>
+                                            <%= order.address.city %>, <%= order.address.state %> <br>
+                                                    <%= order.address.phone %>
+                                    </p>
+                                </section>
+
+                                <!-- PAYMENT -->
+                                <section>
+                                    <h3 class="font-semibold border-b pb-2 mb-3">Payment</h3>
+                                    <p class="text-sm">
+                                        <span>PaymentMethod:</span>
+                                        <%= order.paymentMethod %>
+                                    </p>
+                                </section>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                </main>
+
+            </div>
+    </div>
+  
+</body>
+
+<script>
+  document.querySelectorAll('.update-item-status-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const select = e.target.previousElementSibling;
+
+      const orderId = select.dataset.orderId;
+      const itemId = select.dataset.itemId;
+      const itemStatus = select.value;
+
+      try {
+        const res = await fetch('/admin/order-details/item-status', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ orderId, itemId, itemStatus })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          Swal.fire(data.message );
+          return;
+        }
+
+        await Swal.fire('Item status updated successfully');
+
+      } catch (err) {
+        Swal.fire({
+            icon:'error',
+            message:'Internal server error'
+        })
+      }
+    });
+  });
+</script>
+
+</html>

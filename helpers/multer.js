@@ -19,6 +19,9 @@ const storage = new CloudinaryStorage({
   else if (file.fieldname.startsWith("subcategoryImage")) {
       folder = "subcategory";
     }
+    else if(file.fieldname.startsWith('profileImage')){
+      folder='profile'
+    }
 
     return {
       folder,

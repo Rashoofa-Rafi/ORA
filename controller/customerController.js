@@ -50,7 +50,7 @@ const blockStatus= async(req,res,next)=>{
             success:true,
             message: `Customer ${isBlocked ? 'blocked' : 'unblocked'} successfully`,
         })
-        
+     
     } catch (err) {
          next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }

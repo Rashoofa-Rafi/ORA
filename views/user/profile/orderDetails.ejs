@@ -1,0 +1,210 @@
+<%- include("../../partials/user/header") %>
+
+    <div class="max-w-6xl mx-auto py-10 flex gap-8">
+        <!-- LEFT SIDEBAR -->
+        <aside class="w-64 bg-lime-100 rounded-xl p-6 shadow">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 rounded-full bg-black"></div>
+                <p class="font-semibold">
+                    <%= user.fullName %>
+                </p>
+            </div>
+
+            <ul class="space-y-4 text-sm font-medium">
+                <li><a href="/user/profile/profile" class="flex gap-2 items-center"><i data-lucide="user"></i>My
+                        Profile</a></li>
+                <li><a href="/user/profile/address" class="flex gap-2 items-center font-semibold"><i
+                            data-lucide="map-pin"></i>Address</a></li>
+                <li><a href="/user/profile/orders" class="flex gap-2 items-center"><i data-lucide="package"></i>My
+                        Order</a></li>
+                <li><a href="/user/wallet" class="flex gap-2 items-center"><i data-lucide="wallet"></i>My Wallet</a>
+                </li>
+                <li><a href="/user/coupons" class="flex gap-2 items-center"><i data-lucide="ticket-percent"></i>My
+                        Coupons</a></li>
+                <li><a href="/user/delete-account" class="flex gap-2 items-center text-red-600"><i
+                            data-lucide="trash-2"></i>Delete Account</a></li>
+                <li><a href="/user/referral" class="flex gap-2 items-center"><i data-lucide="share-2"></i>Referral
+                        Code</a></li>
+            </ul>
+        </aside>
+        <!-- RIGHT CONTENT -->
+        <section class="flex-1 bg-white rounded-xl shadow p-6">
+
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold">ORDER DETAILS</h2>
+                <button class="border px-4 py-1 rounded text-sm">Filter</button>
+            </div>
+            <% if (order && order.orderItems && order.orderItems.length> 0) { %>
+
+                <% order.orderItems.forEach(item=> { %>
+
+                    <div class="border rounded-lg p-4 mb-6">
+                        <div class="flex gap-4">
+                            <img src="<%= item.image %>" style="width:50px;height:80px;"
+                                alt="<%= item.productName %>" />
+
+                            <!-- Product Info -->
+                            <div class="flex-1">
+                                <h3 class="font-medium text-sm">
+                                    <%= item.productName %>
+                                </h3>
+
+                                <p class="text-xs text-gray-500  mt-1">
+                                    Price:₹ <%= item.price %>
+                                </p>
+
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Quantity:<%=item.quantity %>
+                                </p>
+                                <p class="text-xs mt-1">
+                                    Status:
+                                    <span class="font-medium
+                                                    <%= 
+    item.itemStatus === 'cancelled' ||
+    item.itemStatus === 'returned' ||
+    item.itemStatus === 'failed'
+      ? 'text-red-600'
+    : item.itemStatus === 'delivered' ||
+      item.itemStatus === 'shipped' ||
+      item.itemStatus === 'return_requested'
+      ? 'text-green-600'
+    : item.itemStatus === 'pending' ||
+      item.itemStatus === 'confirmed' ||
+      item.itemStatus === 'returning'
+      ? 'text-yellow-600'
+    : 'text-gray-600'
+  %>">
+  
+                                                        <%= item.itemStatus %>
+                                                    </span>
+                                </p>
+
+                            </div>
+
+                            <!-- Right Actions -->
+                            <div class="text-right text-sm">
+                                <% if (item.itemStatus==='delivered' ) { %>
+                                    <button class="returnBtn bg-black text-white px-3 py-1 rounded text-xs"
+                                        data-order="<%= order.orderId %>" data-item="<%= item._id %>">Return</button>
+
+                                    <% } else if (item.itemStatus==='pending' || order.orderStatus==='confirmed'||order.orderStatus==='shipped' ) { %>
+                                        <button class="cancelBtn bg-black text-white px-3 py-1 rounded text-xs"
+                                            data-order="<%= order.orderId %>"
+                                            data-item="<%= item._id %>">Cancel</button>
+                                        <% } %>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <% }) %>
+                        <% } else { %>
+                            <p class="text-sm text-gray-500">No items found for this order.</p>
+                            <% } %>
+
+
+    </div>
+
+    </div>
+    <div id="reasonModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+
+        <div class="bg-white p-5 rounded w-80">
+            <h3 id="modalTitle" class="font-semibold mb-2"></h3>
+
+            <textarea id="reasonInput" class="w-full border p-2 text-sm" placeholder="Enter reason" required></textarea>
+            <div class="flex justify-end gap-2 mt-3">
+                <button onclick="closeModal()" class="text-sm">Cancel</button>
+                <button id="confirmBtn" class="bg-black text-white px-3 py-1 text-sm rounded"> Confirm</button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    </section>
+    </div>
+
+    <%- include("../../partials/user/footer") %>
+        <script>
+            lucide.createIcons()
+            let currentAction = '';
+            let orderId = ""
+            let itemId = '';
+
+            document.querySelectorAll('.cancelBtn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    openModal('cancel', btn.dataset.order, btn.dataset.item);
+                });
+            });
+
+            document.querySelectorAll('.returnBtn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    openModal('return', btn.dataset.order, btn.dataset.item);
+                });
+            });
+
+            function openModal(action, oId, iId) {
+                currentAction = action;
+                orderId = oId
+                itemId = iId;
+
+                document.getElementById('modalTitle').innerText =
+                    action === 'cancel' ? 'Cancel Item' : 'Return Item';
+
+                document.getElementById('reasonInput').value = '';
+                document.getElementById('reasonModal').classList.remove('hidden');
+            }
+
+            function closeModal() {
+                document.getElementById('reasonModal').classList.add('hidden');
+            }
+
+            document.getElementById('confirmBtn').addEventListener('click', async () => {
+                const reason = document.getElementById('reasonInput').value.trim();
+
+                if (!reason) {
+                    Swal.fire({
+                        icon:'warning',
+                        text:'Reason is required'
+                    });
+                    return;
+                }
+                const confirmResult = await Swal.fire({
+    title: currentAction === 'cancel'
+      ? 'Are you sure you want to cancel this order?'
+      : 'Are you sure you want to return this order?',
+    text: 'This action cannot be undone',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, proceed',
+    cancelButtonText: 'Cancel',
+    reverseButtons: true
+  });
+
+  if (!confirmResult.isConfirmed) return
+
+                const url =
+                    currentAction === 'cancel'
+                        ? `/user/profile/orderDetails/${orderId}/items/${itemId}/cancel`
+                        : `/user/profile/orderDetails/${orderId}/items/${itemId}/return`;
+
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: data.message
+                    })
+                    location.reload();
+                } else {
+                    Swal.fire(data.message || 'Something went wrong');
+                }
+            });
+        </script>

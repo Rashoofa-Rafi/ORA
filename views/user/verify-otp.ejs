@@ -21,10 +21,10 @@
        <div class="flex items-center justify-center space-x-4">
       <!-- OTP Inputs -->
       <div class="flex space-x-2">
-        <input type="text" maxlength="1" class="otp-input w-14 h-14 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" maxlength="1" class="otp-input w-14 h-14 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" maxlength="1" class="otp-input w-14 h-14 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" maxlength="1" class="otp-input w-14 h-14 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="tel" inputmode="numeric" autocomplete="one-time-code" class="otp-input w-14 h-14 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="tel" inputmode="numeric" autocomplete="one-time-code" class="otp-input w-14 h-14 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="tel" inputmode="numeric" autocomplete="one-time-code" class="otp-input w-14 h-14 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="tel"inputmode="numeric"  autocomplete="one-time-code" class="otp-input w-14 h-14 text-center border rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
       <!-- Timer -->
@@ -50,20 +50,65 @@
     </div>
   </div>
 
-</body>
 
-</html>
 <script>
     // Auto-focus for OTP inputs
-    const inputs = document.querySelectorAll('.otp-input');
-    inputs.forEach((input, idx) => {
-      input.addEventListener('input', () => {
-        if (input.value.length === 1 && idx < inputs.length - 1) inputs[idx + 1].focus();
-      });
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && idx > 0 && input.value.length === 0) inputs[idx - 1].focus();
-      });
+ const inputs = document.querySelectorAll('.otp-input');
+
+inputs.forEach((input, idx) => {
+
+  input.addEventListener('input', () => {
+  const value = input.value.replace(/\D/g, '');
+
+  if (value.length > 1) {
+    // pasted multiple digits
+    const chars = value.split('');
+
+    chars.forEach((char, i) => {
+      if (inputs[idx + i]) {
+        inputs[idx + i].value = char;
+      }
     });
+
+    const last = Math.min(idx + chars.length, inputs.length - 1);
+    inputs[last].focus();
+  } else {
+    input.value = value;
+    if (value && idx < inputs.length - 1) {
+      inputs[idx + 1].focus();
+    }
+  }
+});
+
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !input.value && idx > 0) {
+      inputs[idx - 1].focus();
+    }
+  });
+
+  input.addEventListener('paste', (e) => {
+    e.preventDefault();
+
+    const pastedData = e.clipboardData.getData('text');
+    if (!pastedData) return;
+
+    const digits = pastedData.replace(/\D/g, '').split('');
+    if (!digits.length) return;
+
+    digits.forEach((digit, i) => {
+      if (inputs[idx + i]) {
+        inputs[idx + i].value = digit;
+      }
+    });
+
+    const lastIndex = Math.min(idx + digits.length - 1, inputs.length - 1);
+    inputs[lastIndex].focus();
+  });
+
+});
+
+
 
     // Timer in mm:ss format
     let time = 60;
@@ -175,3 +220,6 @@
   });
 
   </script>
+  </body>
+
+</html>
