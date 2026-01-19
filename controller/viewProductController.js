@@ -2,6 +2,7 @@ const Product = require('../models/productSchema')
 const Variant = require('../models/varientSchema')
 const Category=require('../models/categorySchema')
 const Subcategory=require('../models/subcategorySchema')
+const Offer=require('../models/offerSchema.js')
 const HTTP_STATUS = require('../middleware/statusCode.js');
 const AppError=require('../config/AppError')
 const BRAND_OPTIONS = ['CASIO','TITAN','FOSSIL','FASTRACK','ROLEX','NAVIFORCE','OTHERS']
@@ -111,6 +112,7 @@ if (priceProductIds) {
         mainImage: firstVariant?.images?.[0],
         price: firstVariant?.price,
         brand: p.brand,
+        variantId: firstVariant?._id
         
       }
     })
@@ -133,10 +135,10 @@ if (priceProductIds) {
   }
 }
 
-const getProductDetails = async (req, res) => {
+const getProductDetails = async (req, res,next) => {
   try {
     const productId = req.params.id;
-    const selectedVariantId = req.query.variant; // optional query param
+    const selectedVariantId = req.query.variant
 
     // 1️⃣ Fetch product data
     const product = await Product.findById(productId)
@@ -163,6 +165,63 @@ const getProductDetails = async (req, res) => {
     if (!activeVariant) {
       activeVariant = variants[0];
     }
+     const basePrice = activeVariant.price;
+
+    // 4️⃣ Calculate active offer
+    const now = new Date();
+    let activeOffer = null;
+    let finalPrice = basePrice;
+
+    // PRODUCT OFFER (priority)
+    const productOffer = await Offer.findOne({
+      type: "PRODUCT",
+      productId: product._id,
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    });
+    if (productOffer) {
+      if (productOffer.discountType === "PERCENTAGE") {
+        finalPrice = basePrice - (basePrice * productOffer.discountValue) / 100;
+      } else {
+        finalPrice = basePrice - productOffer.discountValue;
+      }
+      activeOffer = {
+        type: "product",
+        percentage:
+          productOffer.discountType === "PERCENTAGE"
+            ? productOffer.discountValue
+            : Math.round((productOffer.discountValue / basePrice) * 100),
+        discountedPrice: finalPrice,
+        originalPrice: basePrice,
+      };
+    } else {
+      // CATEGORY OFFER (fallback)
+      const categoryOffer = await Offer.findOne({
+        type: "CATEGORY",
+        categoryId: product.category_Id._id,
+        isActive: true,
+        startDate: { $lte: now },
+        endDate: { $gte: now },
+      });
+
+      if (categoryOffer) {
+        if (categoryOffer.discountType === "PERCENTAGE") {
+          finalPrice = basePrice - (basePrice * categoryOffer.discountValue) / 100;
+        } else {
+          finalPrice = basePrice - categoryOffer.discountValue;
+        }
+        activeOffer = {
+          type: "category",
+          percentage:
+            categoryOffer.discountType === "PERCENTAGE"
+              ? categoryOffer.discountValue
+              : Math.round((categoryOffer.discountValue / basePrice) * 100),
+          discountedPrice: finalPrice,
+          originalPrice: basePrice,
+        };
+      }
+    }
 
     // 4️⃣ Prepare structured response
     const productData = {
@@ -179,10 +238,11 @@ const getProductDetails = async (req, res) => {
       activeVariant: {
         id: activeVariant._id,
         color: activeVariant.color,
-        price: activeVariant.price,
+        price: finalPrice,
         images: activeVariant.images,
         stock: activeVariant.stock
-      }
+      },
+      activeOffer,
     };
    const breadcrumb = [
   { name: "Home", url: "/user/allproduct" },

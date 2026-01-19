@@ -32,35 +32,35 @@
                                         <img src="<%= item.variant?.images?.[0] || '/images/no-image.png' %>"
                                             class="w-full h-full object-cover" />
 
-                                      <% if (item.isAvailable) { %>
+                                        <% if (item.isAvailable) { %>
 
-  <span
-    class="absolute bottom-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded">
-    In stock
-  </span>
+                                            <span
+                                                class="absolute bottom-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded">
+                                                In stock
+                                            </span>
 
-<% } else { %>
+                                            <% } else { %>
 
-  <% if (!item.variant) { %>
-    <span
-      class="absolute bottom-2 right-2 bg-gray-700 text-white text-xs px-2 py-1 rounded">
-      Unavailable
-    </span>
+                                                <% if (!item.variant) { %>
+                                                    <span
+                                                        class="absolute bottom-2 right-2 bg-gray-700 text-white text-xs px-2 py-1 rounded">
+                                                        Unavailable
+                                                    </span>
 
-  <% } else if (item.variant.stock === 0) { %>
-    <span
-      class="absolute bottom-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
-      Out of stock
-    </span>
+                                                    <% } else if (item.variant.stock===0) { %>
+                                                        <span
+                                                            class="absolute bottom-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+                                                            Out of stock
+                                                        </span>
 
-  <% } else if (item.variant.stock < item.quantity) { %>
-    <span
-      class="absolute bottom-2 right-2 bg-gray-500 text-white text-xs px-2 py-1 rounded">
-      Insufficient Stock
-    </span>
-  <% } %>
+                                                        <% } else if (item.variant.stock < item.quantity) { %>
+                                                            <span
+                                                                class="absolute bottom-2 right-2 bg-gray-500 text-white text-xs px-2 py-1 rounded">
+                                                                Insufficient Stock
+                                                            </span>
+                                                            <% } %>
 
-<% } %>
+                                                                <% } %>
 
                                     </div>
 
@@ -119,16 +119,24 @@
                             <div class="space-y-2 mb-4">
                                 <% cart.items.forEach(item=> { %>
                                     <% if (item.isAvailable) { %>
-                                        <div class="flex justify-between text-sm text-gray-700">
-                                            <span>
-                                                <%= item.quantity %> × <%= item.product.productname %>
-                                            </span>
-                                            <span>
-                                                ₹<%= item.quantity * item.variant.price %>
-                                            </span>
-                                        </div>
-                                        <% } %>
-                                            <% }) %>
+                                        <% if (item.appliedOffer) { %>
+                                            <p class="text-success">
+                                                <%= item.appliedOffer.name %> applied
+                                            </p>
+                                            <del>₹ <%= item.variant.price %></del>
+                                            <% } %>
+                                                <div class="flex justify-between text-sm text-gray-700">
+                                                    <span>
+                                                        <%= item.quantity %> × <%= item.product.productname %>
+                                                    </span>
+                                                    <span>
+                                                        ₹<%= item.quantity * item.finalPrice %>
+                                                    </span>
+
+                                                </div>
+
+                                                <% } %>
+                                                    <% }) %>
                             </div>
 
                             <hr class="my-3">

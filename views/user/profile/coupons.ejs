@@ -1,0 +1,108 @@
+<%- include("../../partials/user/header") %>
+
+<div class="max-w-6xl mx-auto py-10 flex gap-8">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="w-64 bg-lime-100 rounded-xl p-6 shadow">
+    <div class="flex items-center gap-4 mb-6">
+      <div class="w-12 h-12 rounded-full bg-black">
+        <img
+    src="<%= user.profileImage || '/images/default-avatar.png' %>"
+    alt="Profile Image"
+    class="w-full h-full object-cover"
+  />
+      </div>
+      <p class="font-semibold"><%= user.fullName %></p>
+    </div>
+
+    <ul class="space-y-4 text-sm font-medium">
+      <li><a href="/user/profile/profile" class="flex gap-2 items-center font-semibold"><i data-lucide="user"></i>My Profile</a></li>
+      <li><a href="/user/profile/address" class="flex gap-2 items-center"><i data-lucide="map-pin"></i>Address</a></li>
+      <li><a href="/user/profile/orders" class="flex gap-2 items-center"><i data-lucide="package"></i>My Order</a></li>
+      <li><a href="/user/wallet" class="flex gap-2 items-center"><i data-lucide="wallet"></i>My Wallet</a></li>
+      <li><a href="/user/profile/coupons" class="flex gap-2 items-center"><i data-lucide="ticket-percent"></i>My Coupons</a></li>
+      <li><a href="/user/delete-account" class="flex gap-2 items-center text-red-600"><i data-lucide="trash-2"></i>Delete Account</a></li>
+      <li><a href="/user/profile/referral" class="flex gap-2 items-center"><i data-lucide="share-2"></i>Referral Code</a></li>
+    </ul>
+  </aside>
+<!-- RIGHT CONTENT -->
+  <section class="flex-1 bg-white rounded-xl shadow p-10">
+    <h2 class="text-xl font-bold text-center mb-6 border-b pb-3">
+      MY COUPONS
+    </h2>
+
+    <div class="flex flex-col items-center gap-4">
+      <p class="text-gray-600">
+        Use your coupon code to earn extra discounts
+      </p>
+
+      <% if (!coupons || !coupons.length) { %>
+        <p class="text-center text-gray-500 mt-6">
+          No coupons available
+        </p>
+      <% } else { %>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-4">
+
+          <% coupons.forEach(coupon => { %>
+            <div
+              class="border rounded-xl p-6 shadow-sm
+              <%= coupon.isUsed ? 'opacity-50 pointer-events-none' : '' %>"
+            >
+
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="text-lg font-semibold">
+                  <%= coupon.code %>
+                </h3>
+
+                <% if (coupon.isUsed) { %>
+                  <span class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded">
+                    Used
+                  </span>
+                <% } else { %>
+                  <span class="text-xs px-2 py-1 bg-green-100 text-green-600 rounded">
+                    Available
+                  </span>
+                <% } %>
+              </div>
+
+              <ul class="text-sm text-gray-700 space-y-1 mb-4">
+                <li>
+                  Discount:
+                  <strong>
+                    <%= coupon.discountType === 'PERCENTAGE'
+                      ? coupon.discountValue + '%'
+                      : '₹' + coupon.discountValue %>
+                  </strong>
+                </li>
+
+                <li>
+                  Minimum Order: ₹<%= coupon.minOrderPrice %>
+                </li>
+
+                <li>
+                  Expires:
+                  <%= new Date(coupon.endDate).toLocaleDateString() %>
+                </li>
+              </ul>
+
+              <% if (!coupon.isUsed) { %>
+                <p class="text-xs text-gray-400">
+                  Apply this coupon at checkout
+                </p>
+              <% } %>
+
+            </div>
+          <% }) %>
+
+        </div>
+      <% } %>
+    </div>
+  </section>
+</div>
+
+<%- include("../../partials/user/footer") %>
+<script>
+  lucide.createIcons();
+ 
+</script>

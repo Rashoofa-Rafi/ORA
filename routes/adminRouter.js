@@ -9,6 +9,8 @@ const categoryController=require('../controller/categoryController')
 const subcategoryController=require('../controller/subcategoryController')
 const productController=require('../controller/productController')
 const adminOrderController=require('../controller/adminOrderController')
+const couponController=require('../controller/couponController')
+const offerController=require('../controller/offerController')
 
 
 //for admin authentication
@@ -64,6 +66,24 @@ router.patch('/products/delete/:id',IsAdminAuthenticated,nocache,productControll
 router.get('/order',IsAdminAuthenticated,nocache,adminOrderController.getOrder)
 router.get('/order/:orderId',IsAdminAuthenticated,nocache,adminOrderController.getOrderDetailPage)
 router.post('/order-details/item-status',IsAdminAuthenticated,nocache,adminOrderController.updateStatus)
+
+//for offer management
+
+router.get('/offers',offerController.getOfferlist)
+router.post('/offers/add',offerController.addOffer)
+// router.put('/offers/edit/:id',offerController.editOffer)
+router.put('/offers/edit/:id', (req, res, next) => {
+  console.log('EDIT ROUTE HIT', req.params.id);
+  next();
+}, offerController.editOffer)
+router.patch('/offers/deactivate/:id',offerController.removeOffer)
+
+//for coupon management
+
+router.get('/coupons',couponController.getCouponlist)
+router.post('/coupons/add',couponController.addCoupon)
+router.put('/coupons/edit/:id',couponController.editCoupon)
+router.patch('/coupons/deactivate/:id',couponController.removeCoupon)
 
 
 

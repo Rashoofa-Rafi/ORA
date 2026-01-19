@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your wishlist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body class="bg-gray-50">
+    <%- include("../partials/user/header") %>
+        <div class="container mx-auto px-4 py-8">
+            <h1 class="text-2xl font-semibold text-center"> Wishlist</h1>
+            <p class="text-center text-gray-600 mt-2">Review your items before adding to Cart</p>
+
+            <% if (!wishlist || wishlist.items.length===0) { %>
+                <div class="text-center mt-12 text-gray-500">Your wishlist is empty</div>
+                <% } else { %>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
+
+
+                        <!-- Wishlist Items -->
+                        <div class="md:col-span-2 space-y-6">
+                            <% wishlist.items.forEach(item=> { %>
+
+                                <div
+                                    class="bg-white rounded shadow flex flex-col sm:flex-row overflow-hidden max-w-3xl mx-auto">
+
+                                    <div class="w-full sm:w-40 h-40 flex-shrink-0">
+                                        <img src="<%= item.variantId?.images?.[0] || '/images/no-image.png' %>"
+                                            class="w-full h-full object-cover" />
+                                    </div>
+
+                                    <div class="p-4 flex-1 flex flex-col justify-between">
+
+                                        <div>
+                                            <h2 class="font-semibold text-lg">
+                                                <%= item.productId?.productname || 'Product unavailable' %>
+                                            </h2>
+
+                                            <p class="text-yellow-600 font-bold mt-1">
+                                                ₹<%= item.variantId?.price || 0 %>
+                                            </p>
+                                        </div>
+
+                                        <div class="flex items-center justify-between mt-4">
+                                            <button class="moveBtn text-green-500 text-sm"
+                                                type="button"
+                                                onclick="addToCart('<%= item.productId?._id %>')">
+                                                MoveToCart
+                                            </button>
+
+                                            <button class="removeBtn text-red-500 text-sm"
+                                                data-product="<%= item.productId?._id %>"
+                                                data-variant="<%= item.variantId?._id %>">
+                                                Remove
+                                            </button>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <% }) %>
+                                    <%}%>
+
+
+                        </div>
+                    </div>
+        </div>
+</body>
+<%- include("../partials/user/footer") %>
+    <script>
+        
+
+async function addToCart(productId) {
+    
+  try {
+    const res = await fetch('/user/cart/add/${productId}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ productId })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+         await Swal.fire({
+            icon:'success',
+            title:data.message ,
+            timer:2000
+        })
+        location.reload()
+      return;
+    }
+    Swal.fire({
+        icon:'error',
+        title:data.message,
+        timer:2000
+    })
+
+  } catch (err) {
+    Swal.fire({
+        icon:'error',
+        title:'Something went wrong'
+    });
+  }
+}
+
+
+        //to remove from wishlist
+        document.querySelectorAll('.removeBtn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const productId = btn.dataset.product;
+                const variantId = btn.dataset.variant;
+                try {
+                    const res = await fetch('/user/wishlist/remove', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ productId, variantId })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        await Swal.fire({
+                            icon: 'success',
+                            title: data.message,
+                            timer: 2000
+                        });
+                        location.reload();
+                        return;
+                    }
+                    Swal.fire({ icon: 'error', title: data.message, timer: 2000 });
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Something went wrong' });
+                }
+            });
+        });
+
+    </script>
+
+</html>

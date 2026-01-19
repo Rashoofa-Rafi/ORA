@@ -1,17 +1,20 @@
-const Cart=require('../models/cartSchema')
-const User=require('../models/userSchema')
-const Product=require('../models/productSchema')
-const Category=require('../models/categorySchema')
-const Subcategory=require('../models/subcategorySchema')
-const Variant=require('../models/varientSchema')
-const AppError=require('../config/AppError')
-const HTTP_STATUS=require('../middleware/statusCode')
-const notFound=require('../middleware/notFound')
+const Cart = require('../models/cartSchema')
+
+const Wishlist = require('../models/wishlistSchema')
+const User = require('../models/userSchema')
+const Product = require('../models/productSchema')
+const Category = require('../models/categorySchema')
+const Subcategory = require('../models/subcategorySchema')
+const Variant = require('../models/varientSchema')
+const AppError = require('../config/AppError')
+const HTTP_STATUS = require('../middleware/statusCode')
+const { calculateItemPrice } = require('../config/offerCalculator');
+const notFound = require('../middleware/notFound')
 
 const MAX_QTY_PER_ITEM = 3
 
-const getCart= async (req,res,next)=>{
-     try {
+const getCart = async (req, res, next) => {
+  try {
     const userId = req.session.user;
     if (!userId) {
       throw new AppError('Please Login', HTTP_STATUS.BAD_REQUEST);
@@ -53,18 +56,29 @@ const getCart= async (req,res,next)=>{
         message = `Only ${variant.stock} left in stock`;
       }
 
-      if (!isAvailable) {
-        hasInvalidItem = true;
-      } else {
+      let finalPrice = variant.price;
+      let appliedOffer = null;
+
+      if (isAvailable) {
+        const offerResult = await calculateItemPrice(product, variant, item.categoryId?._id);
+
+        finalPrice = offerResult.finalPrice;
+        appliedOffer = offerResult.appliedOffer;
+
         totalItem += item.quantity;
-        totalPrice += item.quantity * variant.price;
+        totalPrice += item.quantity * finalPrice;
+      } else {
+        hasInvalidItem = true;
       }
+
 
       validatedItems.push({
         _id: item._id,
         quantity: item.quantity,
         product,
         variant,
+        finalPrice,
+        appliedOffer,
         isAvailable,
         message
       });
@@ -78,62 +92,62 @@ const getCart= async (req,res,next)=>{
       },
       hasInvalidItem
     });
-    } catch (err) {
-        next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
-    }
+  } catch (err) {
+    next(new AppError(err.message, HTTP_STATUS.INTERNAL_SERVER_ERROR))
+  }
 }
 
-const addToCart= async(req,res,next)=>{
-  
-      try {
+const addToCart = async (req, res, next) => {
+
+  try {
     const userId = req.session.user
     const { productId } = req.body
 
     if (!userId) {
-      throw new AppError('Please Login',HTTP_STATUS.BAD_REQUEST)
+      throw new AppError('Please Login', HTTP_STATUS.BAD_REQUEST)
     }
 
     if (!productId) {
-     throw new AppError('Product not Found',HTTP_STATUS.BAD_REQUEST)
+      throw new AppError('Product not Found', HTTP_STATUS.BAD_REQUEST)
     }
 
-  const product = await Product.findOne({
+    const product = await Product.findOne({
       _id: productId,
       isListed: true
     });
 
     if (!product) {
-      throw new AppError('Product Unavailable',HTTP_STATUS.BAD_REQUEST)
+      throw new AppError('Product Unavailable', HTTP_STATUS.BAD_REQUEST)
     }
 
-  const category = await Category.findOne({
+    const category = await Category.findOne({
       _id: product.category_Id,
       isListed: true
     });
 
     if (!category) {
-     throw new AppError('Category Unavailable',HTTP_STATUS.BAD_REQUEST)
+      throw new AppError('Category Unavailable', HTTP_STATUS.BAD_REQUEST)
     }
 
-  const subcategory = await Subcategory.findOne({
+    const subcategory = await Subcategory.findOne({
       _id: product.subcategory_Id,
       isListed: true
     });
 
     if (!subcategory) {
-      throw new AppError('Subcategory Unavailable',HTTP_STATUS.BAD_REQUEST)
+      throw new AppError('Subcategory Unavailable', HTTP_STATUS.BAD_REQUEST)
     }
 
-  const variant = await Variant.findOne({
+    const variant = await Variant.findOne({
       product_id: productId,
       stock: { $gt: 0 }
     }).sort({ createdAt: 1 });
 
     if (!variant) {
-     throw new AppError('Product is Out of Stock',HTTP_STATUS.BAD_REQUEST)
+      throw new AppError('Product is Out of Stock', HTTP_STATUS.BAD_REQUEST)
     }
 
- 
+
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
@@ -148,11 +162,11 @@ const addToCart= async(req,res,next)=>{
 
     if (existingItem) {
       if (existingItem.quantity >= MAX_QTY_PER_ITEM) {
-        throw new AppError(`Maximum ${MAX_QTY_PER_ITEM} items allowed per product`,HTTP_STATUS.BAD_REQUEST)
+        throw new AppError(`Maximum ${MAX_QTY_PER_ITEM} items allowed per product`, HTTP_STATUS.BAD_REQUEST)
       }
 
       if (existingItem.quantity + 1 > variant.stock) {
-        throw new AppError('Not enough stock available',HTTP_STATUS.BAD_REQUEST)
+        throw new AppError('Not enough stock available', HTTP_STATUS.BAD_REQUEST)
       }
 
       existingItem.quantity += 1;
@@ -184,23 +198,23 @@ const addToCart= async(req,res,next)=>{
     await cart.save();
 
     // Remove from wishlist if exists
-    // await Wishlist?.updateOne(
-    //   { userId },
-    //   { $pull: { items: { productId } } }
-    // );
+    await Wishlist?.updateOne(
+      { userId },
+      { $pull: { items: { productId } } }
+    );
 
     return res.status(HTTP_STATUS.CREATED).json({
       message: 'Product added to cart successfully',
       cartCount: cart.totalItem
     });
-    
+
   } catch (err) {
-    next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
+    next(new AppError(err.message, HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 }
 
-const updateCartQuantity = async (req, res,next) => {
- try {
+const updateCartQuantity = async (req, res, next) => {
+  try {
     const userId = req.session.user;
     const { cartItemId, action } = req.body;
 
@@ -223,18 +237,18 @@ const updateCartQuantity = async (req, res,next) => {
       throw new AppError('Variant not found', HTTP_STATUS.BAD_REQUEST);
     }
 
-   if (action === 'dec') {
+    if (action === 'dec') {
       if (item.quantity > 1) {
         item.quantity -= 1;
       }
     }
 
-   if (action === 'inc') {
+    if (action === 'inc') {
       if (item.quantity >= variant.stock) {
-        throw new AppError(`Only ${variant.stock} left in stock`,HTTP_STATUS.BAD_REQUEST);
+        throw new AppError(`Only ${variant.stock} left in stock`, HTTP_STATUS.BAD_REQUEST);
       }
-      if(item.quantity>=MAX_QTY_PER_ITEM){
-        throw new AppError(`Maximum ${MAX_QTY_PER_ITEM} items allowed per product`,HTTP_STATUS.BAD_REQUEST)
+      if (item.quantity >= MAX_QTY_PER_ITEM) {
+        throw new AppError(`Maximum ${MAX_QTY_PER_ITEM} items allowed per product`, HTTP_STATUS.BAD_REQUEST)
       }
       item.quantity += 1;
     }
@@ -244,14 +258,14 @@ const updateCartQuantity = async (req, res,next) => {
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       quantity: item.quantity,
-      redirect:'user/cart'
+      redirect: 'user/cart'
     });
   } catch (err) {
-    next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
+    next(new AppError(err.message, HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 }
-const removeFromCart = async (req, res,next) => {
-   try {
+const removeFromCart = async (req, res, next) => {
+  try {
     const userId = req.session.user;
     const { cartItemId } = req.body;
 
@@ -271,12 +285,12 @@ const removeFromCart = async (req, res,next) => {
     await cart.save();
 
     return res.status(HTTP_STATUS.CREATED).json({
-       success: true,
-       message:'cart item removed',
-       redirect:'user/cart'
-      })
+      success: true,
+      message: 'cart item removed',
+      redirect: 'user/cart'
+    })
   } catch (err) {
-   next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
+    next(new AppError(err.message, HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 }
 const proceedToCheckout = async (req, res, next) => {
@@ -308,7 +322,7 @@ const proceedToCheckout = async (req, res, next) => {
     });
 
   } catch (err) {
-   next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
+    next(new AppError(err.message, HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 };
 
@@ -318,7 +332,7 @@ const proceedToCheckout = async (req, res, next) => {
 
 
 
-module.exports={
+module.exports = {
   getCart,
   addToCart,
   updateCartQuantity,

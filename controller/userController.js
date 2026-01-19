@@ -3,49 +3,50 @@ const User = require('../models/userSchema.js')
 const HTTP_STATUS = require('../middleware/statusCode.js');
 const AppError=require('../config/AppError')
 const { generateOTP, sendVerificationEmail } = require('../helpers/generateotp')
+const {generateReferralCode} =require('../helpers/generateReferralCode.js')
 
 
-const loadLogin=async(req,res)=>{
+const loadLogin=async(req,res,next)=>{
     try {
         res.render('user/login')
-    } catch (error) {
-       res.status(500).send('server error')
+    } catch (err) {
+      next(err)
     }
 }
-const loadOTP=async(req,res)=>{
+const loadOTP=async(req,res,next)=>{
     try {
         res.render('user/verify-otp')
-    } catch (error) {
-       res.status(500).send('server error')
+    } catch (err) {
+      next(err)
         
     }
 }
 
 
 
-const loadforgetPassword=async(req,res)=>{
+const loadforgetPassword=async(req,res,next)=>{
     try {
         res.render('user/forget-password')
-    } catch (error) {
-       res.status(500).send('server error')
+    } catch (err) {
+       next(err)
         
     }
 }
 
-const loadchangePassword=async(req,res)=>{
+const loadchangePassword=async(req,res,next)=>{
     try {
         res.render('user/change-password')
-    } catch (error) {
-       res.status(500).send('server error')
+    } catch (err) {
+       next(err)
         
     }
 }
 
-const loadSignup=async(req,res)=>{
+const loadSignup=async(req,res,next)=>{
     try {
         res.render('user/signup')
-    } catch (error) {
-       res.status(500).send('server error')
+    } catch (err) {
+     next(err)
         
     }
 }
@@ -65,11 +66,20 @@ const loadpage404=async(req,res)=>{
 
 const signup = async (req, res,next) => {
     try {
-        const { fullName, email, mobile, password } = req.body
+        const { fullName, email, mobile, password,referralCode } = req.body
         
         const existUser = await User.findOne({ email })
         if (existUser){
             throw new AppError("User already exist",HTTP_STATUS.BAD_REQUEST)
+        }
+         let referredBy = null;
+         if (referralCode) {
+            const referrer = await User.findOne({ referralCode });
+
+            if (!referrer) {
+                throw new AppError("Invalid referral code", HTTP_STATUS.BAD_REQUEST);
+            }
+          referredBy = referrer._id;
         }
           
         //generate OTP for signup
@@ -85,7 +95,7 @@ const signup = async (req, res,next) => {
         req.session.otp = OTP
         req.session.otpExpiresAt = Date.now() + 1 * 60 * 1000
         req.session.action = 'signup'
-        req.session.userData = { fullName, email, mobile, password }
+        req.session.userData = { fullName, email, mobile, password,referredBy }
 
         return res.status(HTTP_STATUS.CREATED).json({
             success: true,
@@ -94,7 +104,7 @@ const signup = async (req, res,next) => {
         })
 
     } catch (err) {
-       next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
+       next(err)
     }
 }
 
@@ -146,13 +156,15 @@ const verifyOTP = async (req, res,next) => {
             
         }
         if (action === 'signup') {
-            const { fullName, mobile, email, password } = sessionData
+            const { fullName, mobile, email, password,referredBy } = sessionData
             const hashPassword = await bcrypt.hash(password, 10)
             const newUser = new User({
                 fullName,
                 email,
                 mobile,
-                password: hashPassword
+                password: hashPassword,
+                referralCode: generateReferralCode(),
+    referredBy :sessionData.referredBy
             })
 
             await newUser.save()
@@ -177,7 +189,7 @@ const verifyOTP = async (req, res,next) => {
             })
 
         }
-        } catch (error) {
+        } catch (err) {
        next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }

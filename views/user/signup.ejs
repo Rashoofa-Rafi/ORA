@@ -19,7 +19,7 @@
         <div class="w-full md:w-1/2 p-10 flex flex-col justify-center">
             <h1 class="text-2xl md:text-3xl font-bold mb-6 text-gray-900">Create Account</h1>
 
-            <form id="myform" method="POST" action="/user/signup" class="flex flex-col space-y-3">
+            <form id="myform" method="POST" action="/user/signup" class="flex flex-col space-y-3 " novalidate>
 
                 <input type="text" placeholder="Full Name"
                     class="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
@@ -41,8 +41,13 @@
                     class="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                     name="Cpassword" id="Cpassword">
 
-                <button type="button" class="text-xs text-gray-500 hover:text-gray-700">Anyone has referred You? Claim
+                <button type="button" id="toggleReferral"class="text-xs text-gray-500 hover:text-gray-700">Anyone has referred You? Claim
                     the reward <span class="text-orange-400 font-semibold">REFERRAL CODE</span></button>
+                    <div id="referralBox" class="hidden mt-2">
+        <input type="text"name="referralCode"placeholder="Enter referral code"
+            class="border p-2 w-full"
+        />
+    </div>
 
                 <button type="submit"
                     class="bg-gray-500 text-white py-2 rounded-md hover:bg-gray-800 transition mt-2">Submit</button>
@@ -81,11 +86,24 @@
 </html>
 
 <script>
+    const toggleBtn = document.getElementById('toggleReferral');
+const referralBox = document.getElementById('referralBox');
+const referralInput = document.querySelector('input[name="referralCode"]');
+
+// Toggle referral input box
+toggleBtn.addEventListener('click', () => {
+    referralBox.classList.toggle('hidden');
+});
+
+// Make referral code uppercase on input
+if(referralInput){
+    referralInput.addEventListener('input', e => {
+        e.target.value = e.target.value.toUpperCase();
+    });
+}
+
     document.getElementById('myform').addEventListener('submit', async function (e) {
         e.preventDefault();
-
-
-
 
         const fullName = document.getElementById('fname').value.trim()
         const email = document.getElementById('Email').value.trim()
@@ -190,7 +208,8 @@
         if (!isValid) return;
 
 
-        const data = { fullName, email, mobile, password };
+const referralCode = referralInput && referralInput.value ? referralInput.value.trim().toUpperCase() : null;
+        const data = { fullName, email, mobile, password ,referralCode};
 
         try {
             const res = await fetch('/user/signup', {

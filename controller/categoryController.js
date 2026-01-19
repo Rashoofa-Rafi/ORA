@@ -21,7 +21,7 @@ const categoryInfo= async(req,res,next)=>{
         const count=await Category.countDocuments(filter)
         const totalPages = Math.ceil(count/limit)
 
-        console.log(categories)
+       
         res.render('admin/category',{
             categories,
             search,

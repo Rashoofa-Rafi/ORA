@@ -44,10 +44,44 @@ const userSchema=new mongoose.Schema({
       type:Boolean,
       required:false
      },
-     walletBalance:{
-        type:Number,
-        //defualt:0
-     },
+     
+     referralCode: {
+    type: String,
+    unique: true
+},
+referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+},
+referralRewardApplied: {
+    type: Boolean,
+    default: false
+},
+wallet: {
+    balance: {
+        type: Number,
+        default: 0
+    },
+    transactions: [
+        {
+            type: {
+                type: String, 
+            },
+            amount: Number,
+            reason: String,
+            createdAt: {
+                type: Date,
+                default: Date.now
+            }
+        }
+    ]
+},
+usedCoupons: [{
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Coupon'
+}]
+
 
    },
 { timestamps: true })

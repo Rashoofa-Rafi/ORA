@@ -54,14 +54,34 @@
                     <%= product.name %>
                 </h2>
                 <p class="text-gray-500 text-sm mb-4">Premium Watches</p>
-                <div class="text-green-600 font-bold text-xl flex gap-4 items-center">₹ <%= product.activeVariant.price
-                        %>
-                </div>
+                <!-- PRICE & OFFER -->
+<div class="text-center flex flex-col items-center gap-2">
 
-                <div class="mt-3 flex gap-2 justify-center">
+  <% if (product.activeOffer) { %>
+    <!-- Show discounted price -->
+    <div class="text-green-600 font-bold text-2xl flex items-center gap-3">
+      ₹ <%= product.activeVariant.price.toFixed(2) %>
+      <span class="text-gray-400 line-through text-lg">
+        ₹ <%= product.activeOffer.originalPrice.toFixed(2) %>
+      </span>
+      <span class="text-xs px-2 py-1 bg-orange-100 text-orange-600 rounded">
+        <%= product.activeOffer.percentage %>% OFF
+      </span>
+    </div>
+  <% } else { %>
+    <!-- No offer -->
+    <div class="text-green-600 font-bold text-2xl">
+      ₹ <%= product.activeVariant.price.toFixed(2) %>
+    </div>
+  <% } %>
+
+</div>
+
+
+                <!-- <div class="mt-3 flex gap-2 justify-center">
                     ⭐⭐⭐⭐⭐
                     <span class="text-gray-500 text-sm">4.6</span>
-                </div>
+                </div> -->
 
                 <!-- COLOR SELECTION -->
                 <div class="mt-5">
@@ -88,7 +108,8 @@
                 <!-- BUTTONS -->
                 <div class="mt-6 space-y-3 flex flex-col items-center">
 
-                    <button class="w-1/2 min-w-[200px] py-2 rounded-md bg-red-600 text-white border border-gray-900 font-semibold 
+                    <button onclick=" addToWishlist('<%= product.id %>','<%= product.activeVariant.id %>')"
+                    class="w-1/2 min-w-[200px] py-2 rounded-md bg-red-600 text-white border border-gray-900 font-semibold 
                 hover:bg-red-700 hover:text-white transition">ADD TO WISHLIST
                     </button>
 
@@ -98,9 +119,9 @@
                     </button>
 
 
-                    <button class="w-1/2 min-w-[200px] py-2 rounded-md bg-green-700 text-white font-semibold
+                    <!-- <button class="w-1/2 min-w-[200px] py-2 rounded-md bg-green-700 text-white font-semibold
                hover:bg-green-800 transition">BUY NOW
-                    </button>
+                    </button> -->
 
                 </div>
 
@@ -199,6 +220,42 @@
     });
   }
 }
+
+//add to wishlist
+
+async function addToWishlist(productId,variantId) {
+     console.log('FRONTEND →', productId, variantId); 
+  try {
+    const res = await fetch(`/user/wishlist/add`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ productId ,variantId})
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+         await Swal.fire({
+            icon:'success',
+            title:data.message ,
+            timer:2000
+        })
+      return;
+    }
+    Swal.fire({
+        icon:'error',
+        title:data.message,
+        timer:2000
+    })
+
+  } catch (err) {
+    Swal.fire({
+        icon:'error',
+        title:'Something went wrong'
+    });
+  }
+}
+ 
  //image zoom
  
 

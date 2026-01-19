@@ -4,7 +4,13 @@
   <!-- LEFT SIDEBAR -->
   <aside class="w-64 bg-lime-100 rounded-xl p-6 shadow">
     <div class="flex items-center gap-4 mb-6">
-      <div class="w-12 h-12 rounded-full bg-black"></div>
+      <div class="w-12 h-12 rounded-full bg-black">
+        <img
+    src="<%= user.profileImage || '/images/default-avatar.png' %>"
+    alt="Profile Image"
+    class="w-full h-full object-cover"
+  />
+      </div>
       <p class="font-semibold"><%= user.fullName %></p>
     </div>
 
@@ -12,10 +18,10 @@
       <li><a href="/user/profile/profile" class="flex gap-2 items-center"><i data-lucide="user"></i>My Profile</a></li>
       <li><a href="/user/profile/address" class="flex gap-2 items-center font-semibold"><i data-lucide="map-pin"></i>Address</a></li>
       <li><a href="/user/profile/orders" class="flex gap-2 items-center"><i data-lucide="package"></i>My Order</a></li>
-      <li><a href="/user/wallet" class="flex gap-2 items-center"><i data-lucide="wallet"></i>My Wallet</a></li>
-      <li><a href="/user/coupons" class="flex gap-2 items-center"><i data-lucide="ticket-percent"></i>My Coupons</a></li>
+      <li><a href="/user/profile/wallet" class="flex gap-2 items-center"><i data-lucide="wallet"></i>My Wallet</a></li>
+      <li><a href="/user/profile/coupons" class="flex gap-2 items-center"><i data-lucide="ticket-percent"></i>My Coupons</a></li>
       <li><a href="/user/delete-account" class="flex gap-2 items-center text-red-600"><i data-lucide="trash-2"></i>Delete Account</a></li>
-      <li><a href="/user/referral" class="flex gap-2 items-center"><i data-lucide="share-2"></i>Referral Code</a></li>
+      <li><a href="/user/profile/referral" class="flex gap-2 items-center"><i data-lucide="share-2"></i>Referral Code</a></li>
     </ul>
   </aside>
   <!-- RIGHT CONTENT -->

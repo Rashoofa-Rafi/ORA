@@ -60,6 +60,19 @@ const orderItemSchema = new mongoose.Schema({
   expectedDelivery: {
     type:Date}
 });
+const couponSchema=new mongoose.Schema({
+  couponId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Coupon',
+    default: null
+  },
+  code: String,
+  discountAmount: {
+    type: Number,
+    default: 0
+  }
+
+},{_id:false})
 
 const addressSchema = new mongoose.Schema({
   addressType: String,
@@ -101,6 +114,14 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  finalAmount:{
+    type:Number,
+    required:true
+  },
+  offerDiscount:{
+    type:Number,
+    required:false
+  },
 
   deliveryCharge: {
     type: Number,
@@ -111,17 +132,7 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-
-//   couponCode: {
-//     type: String
-//   },
-
-//   couponDiscount: {
-//     type: Number,
-//     default: 0
-//   },
-
-  discount: {
+ discount: {
     type: Number,
     default: 0
   },
@@ -148,6 +159,10 @@ const orderSchema = new mongoose.Schema({
   orderItems: {
     type: [orderItemSchema],
     required: true
+  },
+  coupons:{
+    type:[couponSchema]
+
   },
 
   address: {
