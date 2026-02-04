@@ -11,6 +11,9 @@ const wishlistController=require('../controller/wishlistController')
 const checkoutController=require('../controller/checkoutController')
 const orderController=require('../controller/orderController')
 const couponController=require('../controller/couponController')
+const walletController=require('../controller/walletController')
+
+
 
 const {upload}=require('../helpers/multer')
 const nocache=require('../middleware/cache')
@@ -89,6 +92,11 @@ router.get('/profile/referral',IsUserAuthenticated,nocache,couponController.getR
 //coupon 
 router.get('/profile/coupons',IsUserAuthenticated,nocache,couponController.getUserCoupon)
 
+//wallet
+router.get('/profile/wallet',walletController.getWallet)
+
+
+
 
 
 //cart management
@@ -113,10 +121,13 @@ router.get('/checkout',IsUserAuthenticated,nocache,checkoutController.getCheckou
 router.post('/checkout',IsUserAuthenticated,nocache,checkoutController.checkoutContinue)
 router.get('/payment',IsUserAuthenticated,nocache,checkoutController.getPaymentPage)
 router.post('/payment/place-order',IsUserAuthenticated,nocache,checkoutController.placeOrder)
-router.get('/order-success/:orderId',IsUserAuthenticated,nocache,checkoutController.getOrderSuccess)
 
-router.post('/coupons/apply',checkoutController.applyCoupon)
-router.delete('/coupons/remove',checkoutController.removeCoupon)
+router.post('/payment/verify',IsUserAuthenticated,nocache,checkoutController.verifyRazorpayPayment)
+router.get('/order-success/:orderId',IsUserAuthenticated,nocache,checkoutController.getOrderSuccess)
+router.post('/payment/retry',IsUserAuthenticated,nocache, checkoutController.createRetryRazorpayOrder)
+
+router.post('/coupons/apply',IsUserAuthenticated,nocache,checkoutController.applyCoupon)
+router.delete('/coupons/remove',IsUserAuthenticated,nocache,checkoutController.removeCoupon)
 
 //Order management in user side
 

@@ -29,10 +29,7 @@ const orderItemSchema = new mongoose.Schema({
     type:String,
     required:true
   },
-//   offerPercentage: {
-//     type: Number,
-//     default: 0
-//   },
+
   itemStatus: {
     type: String,
     enum: [
@@ -51,14 +48,23 @@ const orderItemSchema = new mongoose.Schema({
   cancellationReason:{
     type:String
   } ,
+  finalItemAmount:{
+    type:Number,
+  },
+  couponShare:{
+type:Number
+  },
   returnReason: {
     type:String
   },
-  adminRemark:{
-    type:String
-} ,
-  expectedDelivery: {
-    type:Date}
+   expectedDelivery: {
+    type:Date},
+    refundAmount:{
+      type:Number,
+    },
+    isRefunded:{
+      type:Boolean
+    }
 });
 const couponSchema=new mongoose.Schema({
   couponId: {
@@ -132,10 +138,7 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
- discount: {
-    type: Number,
-    default: 0
-  },
+ 
 
   orderStatus: {
     type: String,
@@ -149,12 +152,32 @@ const orderSchema = new mongoose.Schema({
       "returning",
       "returned",
       "processing",
+      "failed",
       "partially_cancelled",
       "partially_returned",
       "partially_delivered"
     ],
     default: "pending"
   },
+  payment: {
+     status: {
+      type: String,
+      enum: ['PENDING', 'PAID', 'FAILED'],
+      default: 'PENDING'
+    },
+    razorpay: {
+     orderId: String,
+     paymentId: String,
+     signature: String
+  }
+},
+walletUsed: {
+  type: Number,
+  default: 0
+},
+isFinalized:{
+  type:Boolean
+},
 
   orderItems: {
     type: [orderItemSchema],

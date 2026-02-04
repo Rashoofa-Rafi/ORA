@@ -58,25 +58,6 @@ referralRewardApplied: {
     type: Boolean,
     default: false
 },
-wallet: {
-    balance: {
-        type: Number,
-        default: 0
-    },
-    transactions: [
-        {
-            type: {
-                type: String, 
-            },
-            amount: Number,
-            reason: String,
-            createdAt: {
-                type: Date,
-                default: Date.now
-            }
-        }
-    ]
-},
 usedCoupons: [{
   type: mongoose.Schema.Types.ObjectId,
   ref: 'Coupon'

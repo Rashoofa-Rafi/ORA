@@ -1,0 +1,106 @@
+<%- include("../../partials/user/header") %>
+
+<div class="max-w-6xl mx-auto py-10 flex gap-8">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="w-64 bg-lime-100 rounded-xl p-6 shadow">
+    <div class="flex items-center gap-4 mb-6">
+      <div class="w-12 h-12 rounded-full bg-black">
+        <img
+    src="<%= user.profileImage || '/images/default-avatar.png' %>"
+    alt="Profile Image"
+    class="w-full h-full object-cover"
+  />
+      </div>
+      <p class="font-semibold"><%= user.fullName %></p>
+    </div>
+
+    <ul class="space-y-4 text-sm font-medium">
+      <li><a href="/user/profile/profile" class="flex gap-2 items-center font-semibold"><i data-lucide="user"></i>My Profile</a></li>
+      <li><a href="/user/profile/address" class="flex gap-2 items-center"><i data-lucide="map-pin"></i>Address</a></li>
+      <li><a href="/user/profile/orders" class="flex gap-2 items-center"><i data-lucide="package"></i>My Order</a></li>
+      <li><a href="/user/profile/wallet" class="flex gap-2 items-center"><i data-lucide="wallet"></i>My Wallet</a></li>
+      <li><a href="/user/profile/coupons" class="flex gap-2 items-center"><i data-lucide="ticket-percent"></i>My Coupons</a></li>
+      <li><a href="/user/delete-account" class="flex gap-2 items-center text-red-600"><i data-lucide="trash-2"></i>Delete Account</a></li>
+      <li><a href="/user/profile/referral" class="flex gap-2 items-center"><i data-lucide="share-2"></i>Referral Code</a></li>
+    </ul>
+  </aside>
+
+  <!-- RIGHT CONTENT -->
+  <section class=" relative flex-1 bg-white rounded-xl shadow p-10">
+  <h2 class="text-xl font-bold text-center mb-6 border-b pb-3">MY WALLET</h2>
+  <!-- Wallet Balance -->
+    <div class="flex justify-between items-center mb-6 bg-lime-50 p-6 rounded-xl shadow">
+      <div>
+        <p class="text-sm text-gray-500">Available Balance</p>
+        <p class="text-2xl font-bold text-green-600">₹<%= wallet.balance.toFixed(2) %></p>
+      </div>
+      <!-- <a href='/user/wallet/add-money' 
+              class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+        Add Money
+    </a> -->
+    </div>
+
+    <!-- Transactions -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="py-2 px-4">OrderId</th>
+            <th class="py-2 px-4">Date</th>
+            <th class="py-2 px-4">Type</th>
+            <th class="py-2 px-4">Amount</th>
+            
+            <th class="py-2 px-4">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if(transactions.length === 0){ %>
+            <tr>
+              <td colspan="5" class="text-center py-4 text-gray-500">No transactions yet</td>
+            </tr>
+          <% } %>
+          <% transactions.forEach(tx => { %>
+            <tr class="border-b hover:bg-gray-50">
+                <td class="py-2 px-4 "><%= tx.orderId %></td>
+              <td class="py-2 px-4"><%= tx.createdAt.toLocaleDateString("en-IN") %></td>
+              <td class="py-2 px-4 capitalize <%= tx.type === 'CREDIT' ? 'text-green-600' : 'text-red-600' %>"><%= tx.type %></td>
+              <td class="py-2 px-4 <%= tx.type === 'CREDIT' ? 'text-green-600' : 'text-red-600' %>">
+                ₹<%= tx.amount.toFixed(2) %>
+              </td>
+              
+              <td class="py-2 px-4"><%= tx.reason %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+
+    <div class="mt-4 flex justify-center items-center space-x-2">
+                        <a href="/user/profile/wallet?page=<%= page-1 %>"
+                            class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                            Prev
+                        </a>
+                        <% for (let i=1; i <=totalPages; i++) { %>
+                            <a href="/user/profile/wallet?page=<%= i %>"
+                                class="px-3 py-1 border rounded <%= page === i ? 'bg-yellow-500 text-white' : 'hover:bg-gray-200' %>">
+                                <%= i %>
+                            </a>
+                            <% } %>
+                                <a href="/user/profile/wallet?page=<%= page+1 %>"
+                                    class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                                    Next
+                                </a>
+                    </div>
+    
+
+  </section>
+</div>
+
+<%- include("../../partials/user/footer") %>
+<script>
+  lucide.createIcons();
+ 
+</script>

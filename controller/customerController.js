@@ -20,11 +20,45 @@ const customerInfo = async (req, res,next) => {
     const count = await Customer.countDocuments(query)
 
     // list users (sorted)
-    const customers = await Customer.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .skip((page - 1) * limit)
-      .exec();
+    // const customers = await Customer.find(query)
+    //   .sort({ createdAt: -1 })
+    //   .limit(limit)
+    //   .skip((page - 1) * limit)
+    //   .exec();
+const customers = await Customer.aggregate([
+  { $match: query },
+  { $sort: { createdAt: -1 } },
+  { $skip: (page - 1) * limit },
+  { $limit: limit },
+  {
+    $lookup: {
+      from: "orders",
+      localField: "_id",
+      foreignField: "userId",
+      as: "orders"
+    }
+  },
+  {
+    $lookup: {
+      from: "wallets",
+      localField: "_id",
+      foreignField: "userId",
+      as: "wallet"
+    }
+  },
+  {
+    $addFields: {
+      orderCount: { $size: "$orders" },
+      walletBalance: { $ifNull: [{ $arrayElemAt: ["$wallet.balance", 0] }, 0] }
+    }
+  },
+  {
+    $project: {
+      orders: 0,
+      wallet: 0
+    }
+  }
+]);
 
     const totalPages = Math.ceil(count / limit)
 

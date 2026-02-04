@@ -26,112 +26,113 @@
                     <div class="grid grid-cols-12 gap-6 h-full">
 
                         <div class="col-span-12 lg:col-span-8 h-full overflow-y-auto space-y-6 pr-2">
+                        <!-- ORDER ITEMS -->
+<div class="bg-white rounded shadow p-6">
+  <h2 class="text-lg font-semibold mb-6">Ordered Item</h2>
 
-                            <!-- ORDER SUMMARY -->
-                            <div class="bg-white rounded shadow p-5">
-                                <h2 class="text-lg font-semibold mb-4">Order Summary</h2>
+  <% order.orderItems.forEach(items => { %>
 
-                                <div class="grid grid-cols-2 gap-4 text-sm">
-                                    <p><span>Order ID:</span>
-                                        <%= order.orderId %>
-                                    </p>
-                                    <p><span>Date:</span>
-                                        <%= order.createdAt.toDateString() %>
-                                    </p>
-                                    <p><span>Total Items:</span>
-                                        <%= order.totalItems %>
-                                    </p>
-                                    <p><span>Delivery charges:</span>
-                                        <%= order.deliveryCharge %>
-                                    </p>
-                                    <p><span>Total Price:</span> ₹<%= order.totalPrice %>
-                                    </p>
-                                </div>
-                            </div>
+    <div class="border rounded p-5 mb-6 space-y-4">
 
-                            <!-- ORDER ITEMS -->
-                            <div class="bg-white rounded shadow p-6">
-                                <h2 class="text-lg font-semibold mb-6">Ordered Items</h2>
+      <!-- ROW 1 : Order meta -->
+      <div class="grid grid-cols-2 text-sm text-gray-600">
+        <p><strong>Order ID:</strong> <%= order.orderId %></p>
+        <p class="text-right"><strong>Date:</strong> <%= order.createdAt.toDateString() %></p>
+      </div>
 
-                                <div class="space-y-4">
-                                    <% order.orderItems.forEach(item=> { %>
-                                        <div class="border rounded p-4 grid grid-cols-12 gap-4 items-center">
-                                            <div class="col-span-2">
-                                                <img src="<%= item.image %>"
-                                                    class="w-20 h-20 object-cover rounded border" />
-                                            </div>
+      <!-- ROW 2 : Image + Name -->
+      <div class="grid grid-cols-12 gap-4 items-center">
+        <div class="col-span-3">
+          <img src="<%= items.image %>"
+               class="w-30 h-30 object-cover rounded border" />
+        </div>
 
-                                            <!-- DETAILS -->
-                                            <div class="col-span-6">
-                                                <p class="font-medium">
-                                                    <%= item.productName %>
-                                                </p>
-                                                <p class="text-sm text-gray-500">Qty: <%= item.quantity %>
-                                                </p>
-                                                <p class="text-sm text-gray-500">₹<%= item.price %>
-                                                </p>
-                                                <p class="text-sm text-gray-500">
-                                                    Status:
-                                                    <span class="font-medium
-                                                    <%= 
-    item.itemStatus === 'cancelled' ||
-    item.itemStatus === 'returned' ||
-    item.itemStatus === 'failed'
-      ? 'text-red-600'
-    : item.itemStatus === 'delivered' ||
-      item.itemStatus === 'shipped' ||
-      item.itemStatus === 'return_requested'
-      ? 'text-green-600'
-    : item.itemStatus === 'pending' ||
-      item.itemStatus === 'confirmed' ||
-      item.itemStatus === 'returning'
-      ? 'text-yellow-600'
-    : 'text-gray-600'
-  %>">
-  
-                                                        <%= item.itemStatus %>
-                                                    </span>
+        <div class="col-span-9">
+          <p class="text-lg font-semibold"><%= items.productName %></p>
+        </div>
+      </div>
 
-                                                </p>
-                                                <%if(item.itemStatus==='cancelled'){%>
-                                                    <p class="text-sm text-yellow-500">
-                                                        Reason: <%= item.cancellationReason %>
-                                                </p>
-                                                <%}else if(item.itemStatus==='return_requested'){%>
-                                                    <p class="text-sm text-yellow-500">
-                                                        Reason: <%= item.returnReason %>
-                                                </p>
-                                                <%}%>
-                                            </div>
+      <!-- ROW 3 : Two column item details -->
+      <div class="grid grid-cols-2 gap-4 text-sm text-gray-700">
+        <div>
+          <p>Quantity: <strong><%= items.quantity %></strong></p>
+          <p>Price: ₹<strong><%= items.price %></strong></p>
+          <p>
+            Status:
+            <span class="font-medium
+               <%= 
+                items.itemStatus === 'cancelled' || items.itemStatus === 'returned'
+                  ? 'text-red-600'
+                : items.itemStatus === 'delivered' || items.itemStatus === 'shipped' || items.itemStatus === 'return_requested'
+                  ? 'text-green-600'
+                : items.itemStatus === 'returning' || items.itemStatus === 'pending' || items.itemStatus === 'confirmed'||
+                    items.itemStatus === 'processing'
+                  ? 'text-yellow-600'
+                : 'text-gray-600'
+              %>">
+              <%= items.itemStatus %>
+            </span>
+          </p>
 
-                                            <!-- STATUS -->
-                                            <div class="col-span-4 text-right space-y-2">
-                                                <select
-  class="border px-2 py-1 text-sm item-status-select"
-  data-order-id="<%= order._id %>"
-  data-item-id="<%= item._id %>"
->
-  <option value="pending" <%= item.itemStatus === 'pending' ? 'selected' : '' %>>Pending</option>
-  <option value="confirmed" <%= item.itemStatus === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
-  <option value="shipped" <%= item.itemStatus === 'shipped' ? 'selected' : '' %>>Shipped</option>
-  <option value="delivered" <%= item.itemStatus === 'delivered' ? 'selected' : '' %>>Delivered</option>
-  <option value="returned" <%= item.itemStatus === 'returned' ? 'selected' : '' %>>Returned</option>
-  <option value="returning" <%= item.itemStatus === 'returning' ? 'selected' : '' %>>Returning</option>
-  <option value="return_requested" <%= item.itemStatus === 'return_requested' ? 'selected' : '' %>>Return Requested</option>
-</select>
+          <% if (items.itemStatus === 'cancelled') { %>
+            <p class="text-yellow-500">
+              Reason: <%= items.cancellationReason %>
+            </p>
+          <% } %>
 
-<button
-  class="ml-2 bg-black text-white px-3 py-1 text-sm rounded update-item-status-btn">
-  Save
-</button>
+        </div>
+      </div>
+<% if (items.itemStatus === 'return_requested') { %>
+  <div class="bg-yellow-50 border border-yellow-300 rounded p-4 mt-4">
+    <p class="text-sm font-semibold text-yellow-700 mb-2">
+      Return Request Pending
+    </p>
 
-                                            </div>
+    <p class="text-sm text-gray-700 mb-3">
+      <strong>Reason:</strong> <%= items.returnReason %>
+    </p>
 
-                                        </div>
+    <div class="flex gap-3 justify-end">
+      <button
+        class="approve-return-btn bg-green-600 text-white px-4 py-1 rounded text-sm"
+        data-order-id="<%= order._id %>"
+        data-item-id="<%= items._id %>">
+        Approve 
+      </button>
 
-                                        <% }) %>
-                                </div>
-                            </div>
+      <button
+        class="reject-return-btn bg-red-600 text-white px-4 py-1 rounded text-sm"
+        data-order-id="<%= order._id %>"
+        data-item-id="<%= items._id %>">
+        Reject 
+      </button>
+    </div>
+  </div>
+<% } %>
+
+      <!-- ROW 4 : Actions -->
+      <div class="flex justify-end gap-2">
+        <select
+          class="border px-2 py-1 text-sm item-status-select"
+          data-order-id="<%= order._id %>"
+          data-item-id="<%= items._id %>"
+        >
+          <option value="confirmed" <%= items.itemStatus === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+          <option value="shipped" <%= items.itemStatus === 'shipped' ? 'selected' : '' %>>Shipped</option>
+          <option value="delivered" <%= items.itemStatus === 'delivered' ? 'selected' : '' %>>Delivered</option>
+          <option value="returning" <%= items.itemStatus === 'returning' ? 'selected' : '' %>>Returning</option>
+        </select>
+
+        <button
+          class="bg-black text-white px-4 py-1 text-sm rounded update-item-status-btn">
+          Save
+        </button>
+      </div>
+
+    </div>
+
+  <% }) %>
+</div>
 
                         </div>
 
@@ -194,6 +195,7 @@
       const orderId = select.dataset.orderId;
       const itemId = select.dataset.itemId;
       const itemStatus = select.value;
+      
 
       try {
         const res = await fetch('/admin/order-details/item-status', {
@@ -219,6 +221,40 @@
       }
     });
   });
+  
+document.addEventListener('click', async (e) => {
+  const approveBtn = e.target.closest('.approve-return-btn');
+  const rejectBtn = e.target.closest('.reject-return-btn');
+
+  let action = null;
+  if (approveBtn) action = approveBtn;
+  else if (rejectBtn) action = rejectBtn;
+
+  if (action) {
+    const orderId = action.dataset.orderId;
+    const itemId = action.dataset.itemId;
+    const url = approveBtn ? '/admin/order/item/return-approve' : '/admin/order/item/return-reject';
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, itemId })
+      });
+      const data = await res.json();
+      Swal.fire(data.message);
+      // optionally, reload or update UI
+    } catch (err) {
+      console.error(err);
+      Swal.fire('Something went wrong');
+    }
+  }
+});
+
+
+    
 </script>
+
+
 
 </html>

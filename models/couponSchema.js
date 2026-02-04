@@ -41,7 +41,10 @@ const couponSchema= new mongoose.Schema({
     usedCount:{
         type:Number,
         default:0
-    }
+    },
+    usedOrders: [{ 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Order' }]
 },{timestamps:true})
 
 module.exports= mongoose.model('Coupon',couponSchema)

@@ -91,7 +91,7 @@
                                                     data-action="dec" <%=!item.isAvailable ? 'disabled' : ''
                                                     %>>−</button>
 
-                                                <span class="px-4 qtyText" id="qty-<%= item._id %>">
+                                                <span class="px-4 qtyText" data-id="<%= item._id %>">
                                                     <%= item.quantity %>
                                                 </span>
 
@@ -100,6 +100,8 @@
                                                     data-action="inc" <%=!item.isAvailable ? 'disabled' : ''
                                                     %>>+</button>
                                             </div>
+
+                                            </span>
 
                                             <button class="removeBtn text-red-500 text-sm" data-id="<%= item._id %>">
                                                 Remove
@@ -127,12 +129,15 @@
                                             <% } %>
                                                 <div class="flex justify-between text-sm text-gray-700">
                                                     <span>
-                                                        <%= item.quantity %> × <%= item.product.productname %>
-                                                    </span>
-                                                    <span>
-                                                        ₹<%= item.quantity * item.finalPrice %>
+                                                        <span class="summary-qty" data-id="<%= item._id %>">
+                                                            <%= item.quantity %>
+                                                        </span>
+                                                        × <%= item.product.productname %>
                                                     </span>
 
+                                                    <span class="summary-total" data-id="<%= item._id %>">
+                                                        ₹<%= item.quantity * item.finalPrice %>
+                                                    </span>
                                                 </div>
 
                                                 <% } %>
@@ -144,7 +149,7 @@
 
                             <div class="flex justify-between text-gray-700 mb-2">
                                 <span>Total Items</span>
-                                <span>
+                                <span id="cart-total-items">
                                     <%= cart.totalItem %>
                                 </span>
                             </div>
@@ -152,7 +157,7 @@
 
                             <div class="flex justify-between text-gray-700 mb-4">
                                 <span>Total Price</span>
-                                <span class="font-bold">₹<%= cart.totalPrice %></span>
+                                <span id="cart-total" class="font-bold">₹<%= cart.totalPrice %></span>
                             </div>
 
 
@@ -200,13 +205,26 @@
                 })
                 return;
             }
-            await Swal.fire({
-                icon: 'success',
-                title: data.message,
-                timer: 1500
-            })
+            document
+          .querySelectorAll(`.qtyText[data-id="${cartItemId}"]`)
+          .forEach(el => el.textContent = data.quantity);
 
-            location.reload();
+        document
+          .querySelectorAll(`.summary-qty[data-id="${cartItemId}"]`)
+          .forEach(el => el.textContent = data.quantity);
+
+         if (data.itemTotal !== undefined) {
+          document
+            .querySelectorAll(`.summary-total[data-id="${cartItemId}"]`)
+            .forEach(el => el.textContent = `₹${data.itemTotal}`);
+        }   
+ const totalItemsEl = document.getElementById('cart-total-items');
+        if (totalItemsEl) totalItemsEl.textContent = data.totalItem;
+
+        const totalPriceEl = document.getElementById('cart-total');
+        if (totalPriceEl) totalPriceEl.textContent = `₹${data.totalPrice}`;
+
+            
         });
     })
 

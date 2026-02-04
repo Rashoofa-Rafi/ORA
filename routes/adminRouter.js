@@ -11,6 +11,7 @@ const productController=require('../controller/productController')
 const adminOrderController=require('../controller/adminOrderController')
 const couponController=require('../controller/couponController')
 const offerController=require('../controller/offerController')
+const salesController=require('../controller/salesController')
 
 
 //for admin authentication
@@ -64,26 +65,30 @@ router.patch('/products/delete/:id',IsAdminAuthenticated,nocache,productControll
 //for order Management
 
 router.get('/order',IsAdminAuthenticated,nocache,adminOrderController.getOrder)
-router.get('/order/:orderId',IsAdminAuthenticated,nocache,adminOrderController.getOrderDetailPage)
+router.get('/order/:orderId/item/:itemId',IsAdminAuthenticated,nocache,adminOrderController.getOrderDetailPage)
 router.post('/order-details/item-status',IsAdminAuthenticated,nocache,adminOrderController.updateStatus)
+router.post('/order/item/return-approve',IsAdminAuthenticated,nocache,adminOrderController.approveReturn)
+router.post('/order/item/return-reject',IsAdminAuthenticated,nocache,adminOrderController.rejectReturn)
+
 
 //for offer management
 
-router.get('/offers',offerController.getOfferlist)
-router.post('/offers/add',offerController.addOffer)
-// router.put('/offers/edit/:id',offerController.editOffer)
-router.put('/offers/edit/:id', (req, res, next) => {
-  console.log('EDIT ROUTE HIT', req.params.id);
-  next();
-}, offerController.editOffer)
-router.patch('/offers/deactivate/:id',offerController.removeOffer)
+router.get('/offers',IsAdminAuthenticated,nocache,offerController.getOfferlist)
+router.post('/offers/add',IsAdminAuthenticated,nocache,offerController.addOffer)
+router.put('/offers/edit/:id',IsAdminAuthenticated,nocache,offerController.editOffer)
 
 //for coupon management
 
-router.get('/coupons',couponController.getCouponlist)
-router.post('/coupons/add',couponController.addCoupon)
-router.put('/coupons/edit/:id',couponController.editCoupon)
-router.patch('/coupons/deactivate/:id',couponController.removeCoupon)
+router.get('/coupons',IsAdminAuthenticated,nocache,couponController.getCouponlist)
+router.post('/coupons/add',IsAdminAuthenticated,nocache,couponController.addCoupon)
+router.put('/coupons/edit/:id',IsAdminAuthenticated,nocache,couponController.editCoupon)
+router.patch('/coupons/deactivate/:id',IsAdminAuthenticated,nocache,couponController.removeCoupon)
+
+//for sales report
+router.get('/sales-report',salesController.getSalesReport)
+router.get("/sales-report/pdf", salesController.exportSalesReportPDF);
+router.get("/sales-report/excel", salesController.exportSalesReportExcel)
+
 
 
 

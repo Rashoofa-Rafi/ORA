@@ -252,13 +252,39 @@ const updateCartQuantity = async (req, res, next) => {
       }
       item.quantity += 1;
     }
+    const product = await Product.findById(item.productId);
+    if (!product || !product.isListed) {
+      throw new AppError('Product unavailable', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const offerResult = await calculateItemPrice(product,variant,item.categoryId);
+    const finalPrice = offerResult.finalPrice;
+    const itemTotal = item.quantity * finalPrice;
+
+    let totalItem = 0;
+    let totalPrice = 0;
+
+    for (const i of cart.items) {
+      const v = await Variant.findById(i.variantId);
+      if (!v) continue;
+
+      const p = await Product.findById(i.productId);
+      if (!p || !p.isListed) 
+      continue;
+
+      const priceResult = await calculateItemPrice( p,v,i.categoryId);
+      totalItem += i.quantity;
+      totalPrice += i.quantity * priceResult.finalPrice;
+    }
 
     await cart.save();
 
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       quantity: item.quantity,
-      redirect: 'user/cart'
+     itemTotal,
+     totalItem,
+     totalPrice
     });
   } catch (err) {
     next(new AppError(err.message, HTTP_STATUS.INTERNAL_SERVER_ERROR))

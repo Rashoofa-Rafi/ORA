@@ -79,7 +79,7 @@
                                             <%=order.orderId%>
                                         </td>
                                         <td class="px-4 py-2">
-                                            <%=order.userId.fullName%>
+                                            <%=order.user.fullName%>
                                         </td>
                                         <td class="px-4 py-2">
                                             <%=order.createdAt.toLocaleDateString("en-IN")%>
@@ -88,31 +88,27 @@
                                         <td class="px-4 py-2">
                                             <span class="font-medium
                                                     <%= 
-              order.orderStatus === 'cancelled'||
-              order.orderStatus==='returned' 
+              order.orderItems.itemStatus === 'cancelled'||
+              order.orderItems.itemStatus==='returned' 
                 ? 'text-red-600'
-              :order.orderStatus === 'delivered'||
-              order.orderStatus==='shipped'||
-              order.orderStatus==='return_requested'
+              :order.orderItems.itemStatus === 'delivered'||
+              order.orderItems.itemStatus==='shipped'||
+              order.orderItems.itemStatus==='return_requested'
                 ? 'text-green-600'
-              :order.orderStatus === 'pending'||
-               order.orderStatus==='confirmed'||
-               order.orderStatus==='returning'||
-               order.orderStatus==='processing'
+              :order.orderItems.itemStatus === 'pending'||
+               order.orderItems.itemStatus==='confirmed'||
+               order.orderItems.itemStatus==='returning'||
+               order.orderItems.itemStatus==='processing'
                   ? 'text-yellow-600'
-                  :order.orderStatus === 'partially_cancelled'||
-               order.orderStatus==='partially_confirmed'||
-               order.orderStatus==='partially_returned'
-                  ? 'text-blue-600'
-              : 'text-gray-600' %>">
+            : 'text-gray-600' %>">
              
 
   
-                                                        <%= order.orderStatus %>
+                                                        <%= order.orderItems.itemStatus %>
                                                     </span>
                                         </td>
                                         <td class="px-4 py-2 text-center">
-                                            <a href="/admin/order/<%=order.orderId%>" class="bg-yellow-500 text-white px-3 py-1.5 rounded hover:bg-gray-900 text-sm transition">View</button>
+                                            <a href="/admin/order/<%= order._id %>/item/<%= order.orderItems._id %>" class="bg-yellow-500 text-white px-3 py-1.5 rounded hover:bg-gray-900 text-sm transition">View</button>
                                         </td>
                                     </tr>
                                    

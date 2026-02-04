@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin | Sales Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+
+  <%- include("../partials/admin/sidebar") %>
+
+  <div class="flex flex-col flex-1 ml-64">
+
+    <!-- HEADER -->
+    <header class="sticky top-0 z-20 bg-white border-b shadow px-6 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-gray-800">Sales Report</h1>
+
+      <!-- FILTER + EXPORT -->
+      <form method="GET" action="/admin/sales-report" class="flex items-center gap-3">
+        <select name="filter"  id="filterSelect" class="border rounded px-3 py-2 text-sm">
+          <option value="today" <%= query.filter==='today'?'selected':'' %>>Today</option>
+          <option value="week" <%= query.filter==='week'?'selected':'' %>>Last 7 Days</option>
+          <option value="month" <%= query.filter==='month'?'selected':'' %>>This Month</option>
+          <option value="year" <%= query.filter==='year'?'selected':'' %>>This Year</option>
+          <option value="custom" <%= query.filter==='custom'?'selected':'' %>>Custom</option>
+        </select>
+
+        <div id="customDates" class="flex gap-2 <%= query.filter==='custom'?'':'hidden' %>">
+          <input type="date" name="startDate"  value="<%= query.startDate || '' %>" class="border rounded px-2 py-1 text-sm" />
+          <input type="date" name="endDate" value="<%= query.endDate || '' %>" class="border rounded px-2 py-1 text-sm" />
+        </div>
+
+        <button class="bg-gray-800 text-white px-4 py-2 rounded text-sm">Apply</button>
+        <a href="/admin/sales-report" class="bg-yellow-400 text-white px-4 py-2 rounded text-sm">Clear</a>
+
+        <a href="/admin/sales-report/pdf?startDate=<%= startDate %>&endDate=<%= endDate %>"
+           class="bg-red-600 text-white px-4 py-2 rounded text-sm">
+          Export PDF
+        </a>
+
+        <a href="/admin/sales-report/excel?startDate=<%= startDate %>&endDate=<%= endDate %>"
+           class="bg-green-600 text-white px-4 py-2 rounded text-sm">
+          Export Excel
+        </a>
+      </form>
+    </header>
+
+    <!-- MAIN -->
+    <main class="p-6 flex-1">
+
+      <!-- SUMMARY CARDS -->
+      <div class=" sticky top-[72px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
+
+        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+    <p class="text-sm text-emerald-700">Total Orders</p>
+    <p class="text-2xl font-bold text-emerald-900">
+      <%= report.totalOrders%>
+    </p>
+  </div>
+
+        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+          <p class="text-sm text-emerald-700">Gross Sales</p>
+          <p class="text-2xl font-bold text-emerald-900">₹ <%= report.totalSalesAmount.toFixed(2) %></p>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+          <p class="text-sm text-emerald-700">Offer Discount</p>
+          <p class="text-2xl font-bold text-red-600">₹ <%= report.totalOfferDiscount.toFixed(2) %></p>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+          <p class="text-sm text-emerald-700">Coupon Discount</p>
+          <p class="text-2xl font-bold text-red-600">₹ <%= report.totalCouponDiscount.toFixed(2) %></p>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+          <p class="text-sm text-emerald-700">Refunds</p>
+          <p class="text-2xl font-bold text-red-700">₹ <%= report.totalRefundAmount.toFixed(2) %></p>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+          <p class="text-sm text-emerald-700">Net Revenue</p>
+          <p class="text-2xl font-bold text-green-600">₹ <%= report.netRevenue.toFixed(2) %></p>
+        </div>
+
+      </div>
+
+      <!-- TABLE -->
+      <div class="bg-white shadow rounded overflow-x-auto">
+        <table class="min-w-full border-collapse">
+          <thead class="bg-gray-900 border-b">
+            <tr class="text-left text-sm font-semibold text-white">
+              <th class="px-4 py-3">Order ID</th>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">Customer</th>
+              <th class="px-4 py-3">Payment</th>
+              <th class="px-4 py-3 text-right">Gross</th>
+              <th class="px-4 py-3 text-right">Discount</th>
+              <th class="px-4 py-3 text-right">netRevenue</th>
+              <th class="px-4 py-3">Status</th>
+            </tr>
+          </thead>
+<%
+  const getOrderStatus = (items) => {
+    const statuses = items.map(i => i.itemStatus)
+    if (statuses.every(s => s === 'delivered')) return 'delivered'
+    if (statuses.some(s => s === 'delivered')) return 'partially_delivered'
+    if (statuses.every(s => ['cancelled','returned'].includes(s))) return 'cancelled'
+    return 'processing'
+  }
+%>
+          <tbody class="divide-y">
+<% if (orders.length === 0) { %>
+  <tr>
+    <td colspan="9" class="text-center py-6 text-gray-500">
+      No sales found for selected period
+    </td>
+  </tr>
+<% } %>
+
+<% orders.forEach(order => { 
+   const coupon = order.coupons?.[0]
+   const orderStatus = getOrderStatus(order.orderItems)
+%>
+
+<tr class="text-sm hover:bg-gray-50">
+  <td class="px-4 py-3 font-medium text-blue-600">
+    <a href="/admin/orders/<%= order._id %>" class="hover:underline">
+      <%= order.orderId %>
+    </a>
+  </td>
+
+  <td class="px-4 py-3">
+    <%= new Date(order.createdAt).toLocaleDateString() %>
+  </td>
+
+  <td class="px-4 py-3">
+    <%= order.userId?.fullName || 'Guest' %>
+  </td>
+
+  <td class="px-4 py-3 capitalize">
+    <%= order.paymentMethod %>
+  </td>
+
+  <td class="px-4 py-3 text-right">
+    ₹ <%= order.totalPrice %>
+  </td>
+
+  <td class="px-4 py-3 text-right text-red-600">
+    - ₹ <%= ((order.offerDiscount || 0) + (coupon?.discountAmount || 0)) %>
+  </td>
+<td class="px-4 py-3 text-right font-semibold">
+    ₹ <%= order.finalAmount.toFixed(2) %>
+  </td>
+
+  <td class="px-4 py-3">
+    <span class="px-2 py-1 rounded text-xs font-medium
+      <%= orderStatus === 'delivered' ? 'bg-green-100 text-green-700' :
+         orderStatus === 'cancelled' ? 'bg-red-100 text-red-700' :
+         'bg-yellow-100 text-yellow-700' %>">
+      <%= orderStatus.replace('_',' ') %>
+    </span>
+  </td>
+</tr>
+
+<% }) %>
+</tbody>
+        </table>
+      </div>
+
+      <!-- PAGINATION -->
+      <div class="mt-6 flex justify-center gap-2">
+        <a href="/admin/sales-report?page=<%= page-1 %>&startDate=<%= startDate %>&endDate=<%= endDate %>"
+           class="px-3 py-1 border rounded <%= page===1?'opacity-50 pointer-events-none':'' %>">
+          Prev
+        </a>
+
+        <% for(let i=1;i<=totalPages;i++){ %>
+          <a href="/admin/sales-report?page=<%= page %>&startDate=<%= startDate %>&endDate=<%= endDate %>"
+             class="px-3 py-1 border rounded <%= page===i?'bg-yellow-500 text-white':'' %>">
+            <%= i %>
+          </a>
+        <% } %>
+
+        <a href="/admin/sales-report?page=<%= page+1 %>&startDate=<%= startDate %>&endDate=<%=endDate %>"
+           class="px-3 py-1 border rounded <%= page===totalPages?'opacity-50 pointer-events-none':'' %>">
+          Next
+        </a>
+      </div>
+
+    </main>
+
+    <%- include("../partials/admin/footer") %>
+  </div>
+</div>
+</body>
+<script>
+  const filterSelect = document.getElementById("filterSelect");
+  const customDates = document.getElementById("customDates");
+
+  filterSelect.addEventListener("change", () => {
+    if (filterSelect.value === "custom") {
+      customDates.classList.remove("hidden");
+    } else {
+      customDates.classList.add("hidden");
+    }
+  });
+</script>
+
+</html>

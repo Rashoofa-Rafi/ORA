@@ -7,6 +7,11 @@
   <title>CheckoutPage</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+  const RAZORPAY_KEY_ID = "<%= process.env.RAZORPAY_KEY_ID %>";
+</script>
+<script src="/js/placeOrder.js"></script>
 </head>
 
 <body class="bg-gray-50">
@@ -36,30 +41,13 @@
           <!-- Payment Methods -->
           <div class="space-y-4">
             <label class="flex items-start gap-3 cursor-pointer">
-              <input type="radio" name="paymentMethod" value="RAZORPAY" required />
+              <input type="radio" onclick="openRazorpay()" name="paymentMethod" value="RAZORPAY" required />
               <div>
                 <p class="font-medium">Razorpay</p>
                 <p class="text-sm text-gray-500">Pay using Razorpay</p>
               </div>
             </label>
 
-            <label class="flex items-start gap-3 cursor-pointer">
-              <input type="radio" name="paymentMethod" value="UPI" />
-              <div>
-                <p class="font-medium">UPI Payment</p>
-                <p class="text-sm text-gray-500">Pay by any UPI app</p>
-              </div>
-            </label>
-
-            <label class="flex items-start gap-3 cursor-pointer">
-              <input type="radio" name="paymentMethod" value="CARD" />
-              <div>
-                <p class="font-medium">Credit / Debit / ATM Card</p>
-                <p class="text-sm text-gray-500">
-                  Add any secure card as per RBI guidelines
-                </p>
-              </div>
-            </label>
 
             <label class="flex items-start gap-3 cursor-pointer">
               <input type="radio" name="paymentMethod" value="WALLET" />
@@ -153,50 +141,157 @@
 
     </div>
     <%- include("../partials/user/footer") %>
-      <script>
-        document.getElementById("placeOrderBtn").addEventListener("click", async () => {
-          const paymentMethod = document.querySelector(
-            'input[name="paymentMethod"]:checked'
-          )?.value;
+     <script>
+document.getElementById("placeOrderBtn").addEventListener("click", async () => {
+  const paymentMethod = document.querySelector(
+    'input[name="paymentMethod"]:checked'
+  )?.value;
 
-          if (!paymentMethod) {
-            Swal.fire({
-              icon: 'error',
-              title: 'Select a payment method'
-            })
-            return;
-          }
+  if (!paymentMethod) {
+    return Swal.fire({
+      icon: 'error',
+      title: 'Select a payment method'
+    });
+  }
 
-          try {
-            const res = await fetch("/user/payment/place-order", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ paymentMethod })
-            });
+  try {
+    const res = await fetch("/user/payment/place-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paymentMethod })
+    });
 
-            const data = await res.json();
+    const data = await res.json();
 
-            if (!res.ok) {
-              Swal.fire({
-                icon: 'error',
-                title: data.message
-              })
-              return;
-            }
-            await Swal.fire({
-              icon: 'success'
-            })
-            window.location.href = `/user/order-success/${data.orderId}`;
+    if (!res.ok || !data.success) {
+      return Swal.fire({
+        icon: 'error',
+        title: data.message || 'Order failed'
+      });
+    }
+
+    // ✅ COD → DIRECT REDIRECT
+    if (paymentMethod === "COD") {
+      return window.location.href = `/user/order-success/${data.orderId}`;
+    }
+    if (paymentMethod === "WALLET") {
+  return window.location.href = `/user/order-success/${data.orderId}`;
+}
+
+    // ✅ RAZORPAY → OPEN GATEWAY
+    if (paymentMethod === "RAZORPAY") {
+      openRazorpay({
+        razorpayOrderId: data.razorpayOrderId,
+        amount: data.amount,
+        orderId: data.orderId
+      });
+    }
 
 
-          } catch (err) {
-            Swal.fire({
-              icon: 'error',
-              title: 'internal server error'
-            })
+  } catch (err) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Internal server error'
+    });
+  }
+});
+
+function openRazorpay({ razorpayOrderId, amount, orderId }) {
+  const options = {
+    key: "<%= process.env.RAZORPAY_KEY_ID %>",
+    amount: Math.round(amount * 100),
+    currency: "INR",
+    name: "ORA Store",
+    order_id: razorpayOrderId,
+
+    handler: async function (response) {
+      await verifyPayment({ ...response, orderId });
+    },
+
+    modal: {
+      ondismiss: function () {
+        Swal.fire({
+          icon: 'info',
+          title: 'Payment not completed',
+          text: 'Retry payment or view orders?',
+          showCancelButton: true,
+          confirmButtonText: 'Retry Payment',
+          cancelButtonText: 'View Orders'
+        }).then(result => {
+          if (result.isConfirmed) {
+            retryPayment(orderId);
+          } else {
+            window.location.href = '/user/profile/orders';
           }
         });
-      </script>
+      }
+    },
+
+    theme: { color: "#3399cc" }
+  };
+
+  new Razorpay(options).open();
+}
+
+async function verifyPayment(payload) {
+  try {
+    const res = await fetch('/user/payment/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Payment Failed',
+        text: data.message || 'Please try again',
+        showCancelButton: true,
+        timer:4000,
+        confirmButtonText: 'Retry Payment',
+        cancelButtonText: 'View Orders',
+        allowOutsideClick: false,
+      }).then(result => {
+        if (result.isConfirmed) {
+          retryPayment(data.orderId);
+        } else {
+          window.location.href = '/user/profile/orders';
+        }
+      });
+      return;
+    }
+
+    // ✅ Success
+    window.location.href = `/user/order-success/${data.orderId}`;
+
+  } catch (err) {
+    Swal.fire('Error', 'Something went wrong', 'error');
+  }
+}
+async function retryPayment(orderId) {
+  const res = await fetch('/user/payment/retry', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderId })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.success) {
+    return Swal.fire('Error', 'Unable to retry payment', 'error');
+  }
+
+  openRazorpay({
+    razorpayOrderId: data.razorpayOrderId,
+    amount: data.amount,
+    orderId: data.orderId
+  });
+}
+
+</script>
+
 
 
 </body>

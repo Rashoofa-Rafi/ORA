@@ -7,7 +7,8 @@ const AppError = require('../config/AppError')
 const HTTP_STATUS = require('../middleware/statusCode')
 const notFound = require('../middleware/notFound')
 const PDFDocument = require('pdfkit')
-
+const {creditWallet}= require('../helpers/wallet')
+const razorpay=require('../config/razorpay')
 const getOrders = async (req, res, next) => {
   try {
     const page=parseInt(req.query.page) ||1
@@ -107,6 +108,33 @@ const cancelOrderItem = async (req, res, next) => {
   { $inc: { totalStock: item.quantity } }
 );
 
+ // 3️⃣ Refund amount = EXACT amount user paid
+    const refundAmount = item.finalItemAmount;
+
+    // 4️⃣ Refund only if prepaid
+    if (order.paymentMethod !== 'COD') {
+
+      // Razorpay → refund gateway (optional but correct)
+      if (
+        order.paymentMethod === 'RAZORPAY' &&
+        order.payment?.razorpay?.paymentId
+      ) {
+        await razorpay.payments.refund(
+          order.payment.razorpay.paymentId,
+          { amount: refundAmount * 100 }
+        );
+      }
+      const userId =typeof req.session.user === 'object'? req.session.user._id: req.session.user;
+      await creditWallet({
+          amount: refundAmount,
+          reason: `Refund for cancelled item ${item.productName}`,
+          orderId:order.orderId,
+          userId
+    });
+
+      item.refundAmount = refundAmount;
+      item.isRefunded = true;
+    }
 
     // update order status if needed
     const statuses = order.orderItems.map(i => i.itemStatus);
@@ -120,7 +148,7 @@ const cancelOrderItem = async (req, res, next) => {
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: 'Order cancelled'
+      message: 'Order cancelled and wallet refunded if applicable'
     });
   } catch (err) {
     next(err);

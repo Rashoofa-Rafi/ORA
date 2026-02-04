@@ -72,7 +72,8 @@
           <p class="text-xs mt-1">Status:<span class="font-medium
               <%= 
               order.orderStatus === 'cancelled'||
-              order.orderStatus==='returned' 
+              order.orderStatus==='returned' ||
+              order.orderStatus==='failed'
                 ? 'text-red-600'
               :order.orderStatus === 'delivered'||
               order.orderStatus==='shipped'||
