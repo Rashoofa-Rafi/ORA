@@ -56,7 +56,23 @@
       <div class="grid grid-cols-2 gap-4 text-sm text-gray-700">
         <div>
           <p>Quantity: <strong><%= items.quantity %></strong></p>
-          <p>Price: ₹<strong><%= items.price %></strong></p>
+          <p>Price: ₹<strong><%= items.variantId.price %></strong></p>
+          <% if (items.discount && items.discount> 0) { %>
+                                    <p class="text-green-600">
+                                        Offer Discount: -₹<%= items.discount %>
+                                    </p>
+                                    <% } %>
+
+          
+          <% if (items.couponShare && items.couponShare> 0) { %>
+
+                                            <p class="text-green-600">
+                                                Coupon Discount: -₹<%= items.couponShare %>
+                                            </p>
+                                            <% } else { %>
+                                                <p class="text-gray-400">No coupon applied</p>
+                                                <% } %>
+          <p>FinalAmount: <strong><%= items.finalItemAmount %></strong></p>
           <p>
             Status:
             <span class="font-medium

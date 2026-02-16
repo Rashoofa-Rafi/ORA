@@ -279,6 +279,9 @@ const login = async (req, res,next) => {
             throw new AppError("User not found",HTTP_STATUS.BAD_REQUEST)
             
         }
+        if(user.isDeleted){
+            throw new AppError('Your account is deleted',HTTP_STATUS.BAD_REQUEST)
+        }
         if (!user.password) {
             throw new AppError("Please login with Google",HTTP_STATUS.BAD_REQUEST)
             

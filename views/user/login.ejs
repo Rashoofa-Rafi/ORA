@@ -8,6 +8,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+/>
 </head>
 
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
@@ -40,11 +44,11 @@
                     class="w-full border border-gray-200 rounded-md px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                     name='email' id="email">
 
-
-                <input type="password" placeholder="Password"
-                    class="w-full border border-gray-200 rounded-md px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                    name="password" id="password">
-
+                <div class="password-wrapper relative">
+                    <input type="password" placeholder="Password"
+                        class="w-full border border-gray-200 rounded-md px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        name="password" id="password"><i id="togglePassword" class="fa-solid fa-eye absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500"></i>
+                </div>
                 <a href="/user/forget-password" class="text-sm text-gray-500 mb-4 hover:text-gray-700">Forgot
                     password?</a>
 
@@ -67,6 +71,16 @@
 
 </html>
 <script>
+    const password = document.getElementById("password");
+const toggle = document.getElementById("togglePassword");
+
+toggle.addEventListener("click", () => {
+    const isHidden = password.type === "password";
+
+    password.type = isHidden ? "text" : "password";
+    toggle.classList.toggle("fa-eye");
+    toggle.classList.toggle("fa-eye-slash");
+});
     document.getElementById("myform").addEventListener("submit", async (e) => {
         e.preventDefault()
 
@@ -133,11 +147,11 @@
             const res = await fetch('/user/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials:"include",
+                credentials: "include",
                 body: JSON.stringify(data)
             });
             const result = await res.json()
-            
+
             if (result.success) {
 
                 await Swal.fire({

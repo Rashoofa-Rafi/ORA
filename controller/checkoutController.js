@@ -304,11 +304,28 @@ const placeOrder = async (req, res, next) => {
         if (!paymentMethod) {
             throw new AppError('select a payment Method', HTTP_STATUS.BAD_REQUEST)
         }
+        if (paymentMethod === 'RAZORPAY') {
+            const existingOrder = await Order.findOne({
+                userId,
+                paymentMethod: "RAZORPAY",
+                isFinalized: false,
+                "payment.status": { $in: ["PENDING"] }
+            });
+
+            if (existingOrder) {
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                    success: false,
+                    message: "You already have a pending  payment. Retry from Orders page."
+                });
+            }
+        }
+
         const address = await Address.findById(checkout.addressId);
 
         if (!address) {
             throw new AppError("Address not found", HTTP_STATUS.BAD_REQUEST);
         }
+
 
         const cart = await Cart.findOne({ userId })
             .populate('items.productId')
@@ -319,7 +336,8 @@ const placeOrder = async (req, res, next) => {
         }
 
         // FINAL validation 
-        recalculatedTotal = 0;
+        let recalculatedTotal = 0;
+
         for (const item of cart.items) {
             const offerResult = await calculateItemPrice(item.productId, item.variantId, item.categoryId?._id);
             recalculatedTotal += item.quantity * offerResult.finalPrice;
@@ -340,10 +358,8 @@ const placeOrder = async (req, res, next) => {
             let itemCouponShare = 0;
             if (appliedCoupon) {
                 if (i === cart.items.length - 1) {
-                    // last item gets remaining coupon
                     itemCouponShare = appliedCoupon.discountAmount - distributedCoupon;
                 } else {
-                    // safe calculation to avoid NaN
                     itemCouponShare = Math.floor((itemTotal / (recalculatedTotal || 1)) * appliedCoupon.discountAmount);
                     distributedCoupon += itemCouponShare;
                 }
@@ -358,6 +374,7 @@ const placeOrder = async (req, res, next) => {
                 couponShare: itemCouponShare,
                 finalItemAmount: itemTotal - itemCouponShare,
                 appliedOffer: offerResult.appliedOffer,
+                discount: item.quantity * (item.variantId.price - finalPrice),
                 image: item.variantId.images[0],
                 itemStatus: "pending"
             });
@@ -367,15 +384,38 @@ const placeOrder = async (req, res, next) => {
         }
 
         const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0)
-        const orderId = `ORD${Date.now()}`
         const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
         const finalAmount = orderItems.reduce((sum, i) => sum + i.finalItemAmount, 0)
             + checkout.deliveryCharge
             + checkout.platformFee;
-        console.log(finalAmount)
+
         if (couponDiscount > recalculatedTotal) {
             throw new AppError('Invalid coupon discount', HTTP_STATUS.BAD_REQUEST);
         }
+        if (paymentMethod === "WALLET") {
+            const wallet = await Wallet.findOne({ userId })
+            if (!wallet || wallet.balance < finalAmount) {
+                throw new AppError("Insufficient wallet balance", HTTP_STATUS.BAD_REQUEST);
+            }
+        }
+        if (!finalAmount || isNaN(finalAmount) || finalAmount <= 0) {
+            throw new AppError(`Invalid payment amount: ${finalAmount}`, HTTP_STATUS.BAD_REQUEST);
+        }
+        let razorpayOrder
+
+        if (paymentMethod === "RAZORPAY") {
+             razorpayOrder = await razorpay.orders.create({
+                amount: Math.round(finalAmount * 100),
+                currency: "INR",
+                receipt: `TEMP${Date.now()}`
+            });
+            if(!razorpayOrder){
+                throw new AppError('payment gateway error',HTTP_STATUS.BAD_REQUEST)
+            }
+            
+        }
+
+        const orderId = `ORD${Date.now()}`
 
         const order = await Order.create({
             orderId,
@@ -406,7 +446,8 @@ const placeOrder = async (req, res, next) => {
                 pincode: address.pincode,
                 phone: address.phone,
                 altPhone: address.altPhone
-            }
+            },
+            payment: { status: 'PENDING' }
         });
 
         //  COD 
@@ -427,8 +468,6 @@ const placeOrder = async (req, res, next) => {
         // Wallet Payment
         if (paymentMethod === "WALLET") {
             const wallet = await Wallet.findOne({ userId })
-            if (!wallet || wallet.balance < finalAmount) throw new AppError("Insufficient wallet balance", HTTP_STATUS.BAD_REQUEST);
-
             wallet.balance -= finalAmount;
             await wallet.save();
 
@@ -442,6 +481,9 @@ const placeOrder = async (req, res, next) => {
             });
             order.payment.status = "PAID";
             order.orderStatus = "confirmed";
+            order.orderItems.forEach(item => {
+                item.itemStatus = 'confirmed';
+            });
             await order.save()
 
             await finalizeOrder(order._id);
@@ -454,34 +496,24 @@ const placeOrder = async (req, res, next) => {
                 orderId: order.orderId
             });
         }
-
-        //  Razorpay 
-        if (paymentMethod === "RAZORPAY") {
-
-            if (!finalAmount || isNaN(finalAmount) || finalAmount <= 0) {
-                throw new AppError(`Invalid payment amount: ${finalAmount}`, HTTP_STATUS.BAD_REQUEST);
-            }
-
-            const razorpayOrder = await razorpay.orders.create({
-                amount: Math.round(finalAmount * 100),
-                currency: "INR",
-                receipt: orderId
-            });
-            order.payment.status = 'PENDING'
+         if (paymentMethod === "RAZORPAY") {
             order.payment.razorpay = {
                 orderId: razorpayOrder.id,
             };
 
             await order.save();
-
             return res.json({
                 success: true,
                 razorpayOrderId: razorpayOrder.id,
                 message: 'order created,payment pending',
                 orderId: order.orderId,
-                amount: finalAmount
+                amount: order.finalAmount
             });
         }
+
+
+
+
 
         throw new AppError("Invalid payment method", HTTP_STATUS.BAD_REQUEST)
 
@@ -519,12 +551,8 @@ const verifyRazorpayPayment = async (req, res, next) => {
                 orderId: order.orderId
             });
         }
-
-        // Signature verification
-        const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
-        hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
-        const generatedSignature = hmac.digest("hex");
         if (!order.payment?.razorpay || order.payment.razorpay.orderId !== razorpay_order_id) {
+
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: "Invalid payment reference",
@@ -532,10 +560,16 @@ const verifyRazorpayPayment = async (req, res, next) => {
             })
         }
 
+        // Signature verification
+        const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+        hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+        const generatedSignature = hmac.digest("hex");
+
+
         if (generatedSignature !== razorpay_signature) {
 
             order.payment.status = "FAILED";
-            order.orderStatus = "failed"
+            order.orderStatus = "pending"
             await order.save();
 
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
@@ -549,6 +583,10 @@ const verifyRazorpayPayment = async (req, res, next) => {
         // Payment verified → finalize order
         order.orderStatus = "confirmed";
         order.payment.status = "PAID";
+        order.orderItems.forEach(item => {
+            item.itemStatus = 'confirmed';
+        });
+
         order.payment.razorpay = {
             orderId: razorpay_order_id,
             paymentId: razorpay_payment_id,
@@ -610,21 +648,30 @@ const getOrderSuccess = async (req, res, next) => {
 }
 const createRetryRazorpayOrder = async (req, res, next) => {
     try {
-        const { orderId } = req.body;
+        const { orderId } = req.params;
         const order = await Order.findOne({ orderId, userId: req.session.user });
-
         if (!order) throw new Error("Order not found");
-
-        if (order.payment.status === 'PAID') {
-            return res.status(400).json({ success: false, message: "Order already paid" });
+        if (order.paymentMethod !== 'RAZORPAY') {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: 'Retry not allowed for this payment method'
+            });
         }
 
-        const finalAmount = order.finalAmount || order.totalAmount;
+        if (order.payment.status === 'PAID') {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Order already paid" });
+        }
+        if (order.payment.status !== 'FAILED') {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'Payment retry not allowed' });
+        }
+
+        const finalAmount = order.finalAmount;
         if (!finalAmount || finalAmount <= 0) {
             throw new Error("Invalid payment amount");
         }
 
         // Create Razorpay order
+
         const razorpayOrder = await razorpay.orders.create({
             amount: Math.round(finalAmount * 100),
             currency: "INR",
@@ -646,6 +693,30 @@ const createRetryRazorpayOrder = async (req, res, next) => {
         next(err);
     }
 };
+const paymentFailed = async (req, res, next) => {
+    try {
+
+        const { orderId } = req.params;
+
+        const userId = req.session.user;
+
+        const order = await Order.findOne({ orderId, userId });
+        if (!order) throw new AppError("Order not found", HTTP_STATUS.UNAUTHORIZED);
+
+        // Only mark as failed if still pending
+        if (order.payment.status === 'PENDING') {
+            order.payment.status = 'FAILED';
+            order.orderStatus = 'pending';
+            await order.save();
+        }
+        delete req.session.checkout;
+        req.session.coupon = null;
+        res.json({ success: true, message: "Payment marked as failed" });
+    } catch (err) {
+        next(err);
+    }
+};
+
 
 
 module.exports = {
@@ -657,5 +728,6 @@ module.exports = {
     placeOrder,
     verifyRazorpayPayment,
     getOrderSuccess,
-    createRetryRazorpayOrder
+    createRetryRazorpayOrder,
+    paymentFailed
 }

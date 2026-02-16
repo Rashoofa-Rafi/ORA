@@ -101,7 +101,7 @@ const addToCart = async (req, res, next) => {
 
   try {
     const userId = req.session.user
-    const { productId } = req.body
+    const { productId,variantId } = req.body
 
     if (!userId) {
       throw new AppError('Please Login', HTTP_STATUS.BAD_REQUEST)
@@ -110,6 +110,9 @@ const addToCart = async (req, res, next) => {
     if (!productId) {
       throw new AppError('Product not Found', HTTP_STATUS.BAD_REQUEST)
     }
+    if (!variantId) {
+      throw new AppError('Variant not Found', HTTP_STATUS.BAD_REQUEST)
+    }
 
     const product = await Product.findOne({
       _id: productId,
@@ -117,7 +120,7 @@ const addToCart = async (req, res, next) => {
     });
 
     if (!product) {
-      throw new AppError('Product Unavailable', HTTP_STATUS.BAD_REQUEST)
+      throw new AppError('variant Unavailable', HTTP_STATUS.BAD_REQUEST)
     }
 
     const category = await Category.findOne({
@@ -139,9 +142,10 @@ const addToCart = async (req, res, next) => {
     }
 
     const variant = await Variant.findOne({
+      _id: variantId,
       product_id: productId,
       stock: { $gt: 0 }
-    }).sort({ createdAt: 1 });
+    })
 
     if (!variant) {
       throw new AppError('Product is Out of Stock', HTTP_STATUS.BAD_REQUEST)

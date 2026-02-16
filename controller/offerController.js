@@ -70,6 +70,24 @@ const addOffer = async (req, res, next) => {
         if (new Date(startDate) >= new Date(endDate)) {
             throw new Error("Invalid offer date range",HTTP_STATUS.BAD_REQUEST);
         }
+        const offerQuery = {type,
+            startDate: { $lte: new Date(endDate) },
+            endDate: { $gte: new Date(startDate) }
+        };
+
+        if (type === "PRODUCT") {
+            offerQuery.productId = productId;
+        }
+
+        if (type === "CATEGORY") {
+            offerQuery.categoryId = categoryId;
+        }
+
+        const existingOffer = await Offer.findOne(offerQuery);
+
+        if (existingOffer) {
+            throw new AppError(`An active ${type.toLowerCase()} offer already exists`,HTTP_STATUS.CONFLICT);
+        }
 
         await Offer.create({
             name,

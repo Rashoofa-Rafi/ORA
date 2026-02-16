@@ -141,7 +141,7 @@
 
           <button
   type="button"
-  onclick="event.stopPropagation(); addToCart('<%= product._id %>')"
+  onclick="event.stopPropagation(); addToCart('<%= product._id %>','<%= product.variantId %>')"
   class="bg-white p-2 rounded-full shadow hover:bg-green-100 transition text-green-500"
   title="Add to Cart">
   🛒
@@ -193,13 +193,13 @@
     window.location.href = `/user/product-details/${id}`;
   }
 
-  async function addToCart(productId) {
+  async function addToCart(productId,variantId) {
     
   try {
-    const res = await fetch('/user/cart/add/${productId}', {
+    const res = await fetch('/user/cart/add', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ productId })
+      body: JSON.stringify({ productId,variantId })
     });
 
     const data = await res.json();

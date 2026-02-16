@@ -1,138 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CheckoutPage</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    const RAZORPAY_KEY_ID = "<%= process.env.RAZORPAY_KEY_ID %>";
+  </script>
+  <script src="/js/placeOrder.js"></script>
+</head>
+<body>
+  
+
 <%- include("../../partials/user/header") %>
 
-<div class="max-w-6xl mx-auto py-10 flex gap-8">
-  <!-- LEFT SIDEBAR -->
-  <aside class="w-64 bg-lime-100 rounded-xl p-6 shadow">
-    <div class="flex items-center gap-4 mb-6">
-      <div class="w-12 h-12 rounded-full bg-black">
-        <img
-    src="<%= user.profileImage || '/images/default-avatar.png' %>"
-    alt="Profile Image"
-    class="w-full h-full object-cover"
-  />
-      </div>
-      <p class="font-semibold"><%= user.fullName %></p>
-    </div>
-
-    <ul class="space-y-4 text-sm font-medium">
-      <li><a href="/user/profile/profile" class="flex gap-2 items-center"><i data-lucide="user"></i>My Profile</a></li>
-      <li><a href="/user/profile/address" class="flex gap-2 items-center font-semibold"><i data-lucide="map-pin"></i>Address</a></li>
-      <li><a href="/user/profile/orders" class="flex gap-2 items-center"><i data-lucide="package"></i>My Order</a></li>
-      <li><a href="/user/profile/wallet" class="flex gap-2 items-center"><i data-lucide="wallet"></i>My Wallet</a></li>
-      <li><a href="/user/profile/coupons" class="flex gap-2 items-center"><i data-lucide="ticket-percent"></i>My Coupons</a></li>
-      <li><a href="/user/delete-account" class="flex gap-2 items-center text-red-600"><i data-lucide="trash-2"></i>Delete Account</a></li>
-      <li><a href="/user/profile/referral" class="flex gap-2 items-center"><i data-lucide="share-2"></i>Referral Code</a></li>
-    </ul>
-  </aside>
-  <!-- RIGHT CONTENT -->
-  <section class="flex-1 bg-white rounded-xl shadow p-6">
-
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-semibold">YOUR ORDERS</h2>
-      <form method="GET" action="/user/profile/orders" class="flex gap-2 mb-6">
-        <input type="text" name="search" placeholder="Search by Order ID" value="<%= search %>" class="border px-3 py-2 rounded w-64 text-sm"/>
-        <select name="status" class="border px-3 py-2 rounded text-sm">
-    <option value="">All Status</option>
-    <option value="pending">Pending</option>
-    <option value="confirmed">Confirmed</option>
-    <option value="delivered">Delivered</option>
-    <option value="cancelled">Cancelled</option>
-  </select>
-        <button class="bg-black text-white px-4 py-2 rounded text-sm">Search</button>
-        <a  href="/user/profile/orders" class="bg-yellow-400 text-white px-4 py-2 rounded text-sm">Clear</a>
-
-    
-  
-</form>
-
-
-      
-  </div>
-<% if (orders &&  orders.length > 0) { %>
-    <% orders.forEach(order => { %>
-      <a href="/user/profile/orders/<%= order.orderId %>" class="block">
-        <div class="border rounded-lg p-4 mb-6 hover:bg-gray-50 cursor-pointer transition">
-          <div class="flex gap-4">
-              <h3 class="font-medium text-sm"><%= order.orderId %></h3>
-           
-        <!-- Order Info -->
-        <div class="flex-1">
-          
-          <p class="text-xs text-gray 500 mt-1">
-            TotalPrice:₹ <%= order.totalPrice %>
-          </p>
-
-          <p class="text-xs text-gray-500 mt-1">
-            TotalItems:<%= order.totalItems %>
-          </p>
-          <p class="text-xs text-gray-500 mt-1">
-            Order Date: <%= order.createdAt.toLocaleDateString("en-IN") %>
-          </p>
-
-          <p class="text-xs mt-1">Status:<span class="font-medium
-              <%= 
-              order.orderStatus === 'cancelled'||
-              order.orderStatus==='returned' ||
-              order.orderStatus==='failed'
-                ? 'text-red-600'
-              :order.orderStatus === 'delivered'||
-              order.orderStatus==='shipped'||
-              order.orderStatus==='return_requested'
-                ? 'text-green-600'
-              :order.orderStatus === 'pending'||
-               order.orderStatus==='confirmed'||
-               order.orderStatus==='returning'
-                  ? 'text-yellow-600'
-                  :order.orderStatus === 'partially_cancelled'||
-                    order.orderStatus==='partially_confirmed'||
-                    order.orderStatus==='partially_returned'
-                  ? 'text-blue-600'
-              : 'text-gray-600' %>">
-               <%= order.orderStatus %></span>
-          </p>
-
-          <div class="text-right text-sm space-y-2">
-            <a
-    href="/user/profile/orders/<%= order.orderId %>/invoice"
-    class="border px-3 py-1 rounded text-xs inline-block">
-    Invoice
-  </a>
-
-          </div>
-
+  <div class="max-w-6xl mx-auto py-10 flex gap-8">
+    <!-- LEFT SIDEBAR -->
+    <aside class="w-64 bg-lime-100 rounded-xl p-6 shadow">
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-full bg-black">
+          <img src="<%= user.profileImage || '/images/default-avatar.png' %>" alt="Profile Image"
+            class="w-full h-full object-cover" />
         </div>
+        <p class="font-semibold">
+          <%= user.fullName %>
+        </p>
+      </div>
+
+      <ul class="space-y-4 text-sm font-medium">
+        <li><a href="/user/profile/profile" class="flex gap-2 items-center"><i data-lucide="user"></i>My Profile</a>
+        </li>
+        <li><a href="/user/profile/address" class="flex gap-2 items-center font-semibold"><i
+              data-lucide="map-pin"></i>Address</a></li>
+        <li><a href="/user/profile/orders" class="flex gap-2 items-center"><i data-lucide="package"></i>My Order</a>
+        </li>
+        <li><a href="/user/profile/wallet" class="flex gap-2 items-center"><i data-lucide="wallet"></i>My Wallet</a>
+        </li>
+        <li><a href="/user/profile/coupons" class="flex gap-2 items-center"><i data-lucide="ticket-percent"></i>My
+            Coupons</a></li>
+        <li><a href="/user/profile/delete-account" class="flex gap-2 items-center text-red-600"><i
+              data-lucide="trash-2"></i>Delete Account</a></li>
+        <li><a href="/user/profile/referral" class="flex gap-2 items-center"><i data-lucide="share-2"></i>Referral
+            Code</a></li>
+      </ul>
+    </aside>
+    <!-- RIGHT CONTENT -->
+    <section class="flex-1 bg-white rounded-xl shadow p-6">
+
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold">YOUR ORDERS</h2>
+        <form method="GET" action="/user/profile/orders" class="flex gap-2 mb-6">
+          <input type="text" name="search" placeholder="Search by Order ID" value="<%= search %>"
+            class="border px-3 py-2 rounded w-64 text-sm" />
+          <select name="status" class="border px-3 py-2 rounded text-sm">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <button class="bg-black text-white px-4 py-2 rounded text-sm">Search</button>
+          <a href="/user/profile/orders" class="bg-yellow-400 text-white px-4 py-2 rounded text-sm">Clear</a>
+
+
+
+        </form>
+
+      </div>
+      <% const retryShown={}; %>
+        <% if (orders && orders.length> 0) { %>
+          <% orders.forEach(item=> { %>
+
+            <div class="orderRow border rounded-lg p-4 mb-4 hover:bg-gray-50 cursor-pointer"
+              data-href="/user/profile/orders/<%= item.orderId %>/items/<%= item.itemId %>">
+
+              <div class="flex gap-4">
+                <img src="<%= item.image %>" class="w-16 h-16 object-cover rounded">
+
+                <div class="flex-1">
+                  <p class="text-sm font-medium">
+                    <%= item.productName %>
+                  </p>
+
+                  <p class="text-xs text-gray-500">
+                    Order ID: <%= item.orderId %>
+                  </p>
+
+                  <p class="text-xs">Qty: <%= item.quantity %>
+                  </p>
+                  
+
+                  <p class="text-xs mt-1">
+                    Item Status:
+                    <span class="font-medium
+              <%= item.itemStatus === 'cancelled' || item.itemStatus === 'returned'
+                ? 'text-red-600'
+                : item.itemStatus === 'delivered' || item.itemStatus === 'shipped'
+                ? 'text-green-600'
+                : 'text-yellow-600' %>">
+                      <%= item.itemStatus %>
+                    </span>
+                  </p>
+                </div>
+                <div class="text-right text-sm space-y-2">
+                  <% if (item.itemStatus==='delivered' ) { %>
+                    <button class="returnBtn bg-black text-white px-3 py-1 rounded text-xs"
+                      data-order="<%= item.orderId %>" data-item="<%= item.itemId %>">
+                      Return
+                    </button>
+                    <% } %>
+
+                      <% if (item.itemStatus==='pending' || item.itemStatus==='confirmed' ) { %>
+                        <button class="cancelBtn bg-black text-white px-3 py-1 rounded text-xs"
+                          data-order="<%= item.orderId %>" data-item="<%=item.itemId %>">
+                          Cancel
+                        </button>
+                        <% } %>
+
+                          <% if ( item.paymentStatus==='FAILED' ||item.paymentStatus==='PENDING' && !retryShown[item.orderId] ) { %>
+
+                            <% retryShown[item.orderId]=true; %>
+
+                              <button class="retryBtn bg-yellow-500 text-white px-3 py-1 rounded text-xs"
+                                data-order="<%= item.orderId %>">
+                                Retry Payment
+                              </button>
+
+                              <% } %>
+
+
+
+
+                </div>
+              </div>
+
+            </div>
+
+
+            <% }) %>
+
+              <% } else { %>
+                <p class="text-sm text-gray-500">No orders found.</p>
+                <% } %>
+  </div>
+  </div>
+  <div id="reasonModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+
+    <div class="bg-white p-5 rounded w-80">
+      <h3 id="modalTitle" class="font-semibold mb-2"></h3>
+
+      <textarea id="reasonInput" class="w-full border p-2 text-sm" placeholder="Enter reason" required></textarea>
+      <div class="flex justify-end gap-2 mt-3">
+        <button onclick="closeModal()" class="text-sm">Cancel</button>
+        <button id="confirmBtn" class="bg-black text-white px-3 py-1 text-sm rounded"> Confirm</button>
       </div>
     </div>
-      </a>
-<% }) %>
-<% } else { %>
-  <p class="text-sm text-gray-500">No orders found.</p>
-<% } %>
-</div>
-</div>
+  </div>
 
-<div class="mt-4 flex justify-center items-center space-x-2">
-                        <a href="/user/orders?page=<%= page-1 %>&search=<%= search  %>&status=<%= status || '' %>"
-                            class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === 1 ? 'pointer-events-none opacity-50' : '' %>">
-                            Prev
-                        </a>
-                        <% for (let i=1; i <=totalPages; i++) { %>
-                            <a href="/user/orders?page=<%= i %>&search=<%= search %>&status=<%= status || '' %>"
-                                class="px-3 py-1 border rounded <%= page === i ? 'bg-yellow-500 text-white' : 'hover:bg-gray-200' %>">
-                                <%= i %>
-                            </a>
-                            <% } %>
-                                <a href="/user/orders?page=<%= page+1 %>&search=<%= search %>&status=<%= status || '' %>"
-                                    class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === totalPages ? 'pointer-events-none opacity-50' : '' %>">
-                                    Next
-                                </a>
-                    </div>
-      
+  <div class="mt-4 flex justify-center items-center space-x-2">
+    <a href="/user/orders?page=<%= page-1 %>&search=<%= search  %>&status=<%= status || '' %>"
+      class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === 1 ? 'pointer-events-none opacity-50' : '' %>">
+      Prev
+    </a>
+    <% for (let i=1; i <=totalPages; i++) { %>
+      <a href="/user/orders?page=<%= i %>&search=<%= search %>&status=<%= status || '' %>"
+        class="px-3 py-1 border rounded <%= page === i ? 'bg-yellow-500 text-white' : 'hover:bg-gray-200' %>">
+        <%= i %>
+      </a>
+      <% } %>
+        <a href="/user/orders?page=<%= page+1 %>&search=<%= search %>&status=<%= status || '' %>"
+          class="px-3 py-1 border rounded hover:bg-gray-200 <%= page === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+          Next
+        </a>
+  </div>
+
 
   </section>
-</div>
+  </div>
 
-<%- include("../../partials/user/footer") %>
-<script>
-  lucide.createIcons()
-</script>
+  <%- include("../../partials/user/footer") %>
+    <script>
+      lucide.createIcons();
+
+      let currentAction = '';
+      let orderId = '';
+      let itemId = '';
+
+      function openModal(action, oId, iId) {
+        currentAction = action;
+        orderId = oId;
+        itemId = iId;
+
+        document.getElementById('modalTitle').innerText =
+          action === 'cancel' ? 'Cancel Item' : 'Return Item';
+
+        document.getElementById('reasonInput').value = '';
+        document.getElementById('reasonModal').classList.remove('hidden');
+      }
+
+      function closeModal() {
+        document.getElementById('reasonModal').classList.add('hidden');
+      }
+
+      // Row click navigation
+      document.querySelectorAll('.orderRow').forEach(row => {
+        row.addEventListener('click', function () {
+          window.location.href = row.dataset.href;
+        });
+      });
+
+      // Cancel/Return butto
+      document.querySelectorAll('.cancelBtn, .returnBtn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation(); 
+          const action = btn.classList.contains('cancelBtn') ? 'cancel' : 'return';
+          openModal(action, btn.dataset.order, btn.dataset.item);
+        });
+      });
+      // Retry payment button
+      document.querySelectorAll('.retryBtn').forEach(btn => {
+  btn.addEventListener('click', async function (e) {
+    e.stopPropagation();
+
+    const orderId = btn.dataset.order;
+
+    const confirmResult = await Swal.fire({
+      title: 'Retry payment?',
+      text: 'You will be redirected to payment',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Retry',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+      const res = await fetch(`/user/profile/orders/${orderId}/retry-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      // Log response for debugging
+      console.log('Retry fetch response', res.status, res.statusText);
+
+      const data = await res.json();
+      console.log('Retry fetch data', data);
+
+      if (!res.ok || !data.success) {
+        return Swal.fire('Error', data.message || 'Unable to retry payment', 'error');
+      }
+
+      // ✅ Open Razorpay for retry
+      openRazorpay({
+        razorpayOrderId: data.razorpayOrderId,
+        amount: data.amount,
+        orderId: data.orderId
+      });
+
+    } catch (err) {
+      console.error('Retry fetch error', err);
+      Swal.fire('Error', 'Network or server error', 'error');
+    }
+  });
+});
+function openRazorpay({ razorpayOrderId, amount, orderId }) {
+          const options = {
+            key: "<%= process.env.RAZORPAY_KEY_ID %>",
+            amount: Math.round(amount * 100),
+            currency: "INR",
+            name: "ORA Store",
+            order_id: razorpayOrderId,
+            handler: async function (response) {
+              await verifyPayment({ ...response, orderId });
+            },
+
+            modal: {
+              ondismiss: async function () {
+                await fetch(`/user/profile/orders/${orderId}/payment-failed`, {
+                  method: 'POST'
+                });
+                Swal.fire({
+                  icon: 'info',
+                  title: 'Payment not completed',
+                  text: 'You can Retry payment from  orders page?',
+                  timer: 4000,
+                  confirmButtonText: 'View Orders',
+                  allowOutsideClick: false
+                }).then(() => {
+                  window.location.href = '/user/profile/orders';
+                });
+
+              }
+            },
+
+            theme: { color: "#3399cc" }
+          };
+
+          const rzp = new Razorpay(options)
+          rzp.on('payment.failed', async function (response) {
+            await fetch(`/user/profile/orders/${orderId}/payment-failed`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.error.metadata.order_id,
+                razorpay_payment_id: response.error.metadata.payment_id,
+                reason: response.error.reason
+              })
+            });
+
+            Swal.fire({
+              icon: 'error',
+              title: 'Payment Failed',
+              text: 'You can retry payment from Orders page',
+              confirmButtonText: 'View Orders',
+              allowOutsideClick: false
+            }).then(() => {
+              window.location.href = '/user/profile/orders';
+            });
+          });
+
+          rzp.open();
+        };
+
+async function verifyPayment(payload) {
+          try {
+            const res = await fetch('/user/payment/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+              await fetch(`/user/profile/orders/${payload.orderId}/payment-failed`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+              });
+              await Swal.fire({
+                icon: 'error',
+                title: 'Payment Failed',
+                text: 'You can retry payment from Orders page',
+                confirmButtonText: 'View Orders',
+                allowOutsideClick: false
+              })
+              return window.location.href = '/user/profile/orders';
+
+
+            }
+
+            // ✅ Success
+            window.location.href = `/user/order-success/${data.orderId}`;
+
+          } catch (err) {
+            Swal.fire('Error', 'Something went wrong', 'error');
+          }
+        }
+      // Confirm modal
+      document.getElementById('confirmBtn').addEventListener('click', async () => {
+        const reason = document.getElementById('reasonInput').value.trim();
+        if (!reason) {
+          Swal.fire({ icon: 'warning', text: 'Reason is required' });
+          return;
+        }
+
+        const confirmResult = await Swal.fire({
+          title: currentAction === 'cancel'
+            ? 'Are you sure you want to cancel this item?'
+            : 'Are you sure you want to return this item?',
+          text: 'This action cannot be undone',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, proceed',
+          cancelButtonText: 'Cancel',
+          reverseButtons: true
+        });
+
+        if (!confirmResult.isConfirmed) return;
+
+        const url = `/user/profile/orders/${orderId}/items/${itemId}/${currentAction}`;
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          await Swal.fire({ icon: 'success', title: data.message });
+          location.reload();
+        } else {
+          Swal.fire(data.message || 'Something went wrong');
+        }
+      });
+    </script>
+    </body>
+    </html>

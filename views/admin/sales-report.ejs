@@ -25,7 +25,7 @@
           <option value="today" <%= query.filter==='today'?'selected':'' %>>Today</option>
           <option value="week" <%= query.filter==='week'?'selected':'' %>>Last 7 Days</option>
           <option value="month" <%= query.filter==='month'?'selected':'' %>>This Month</option>
-          <option value="year" <%= query.filter==='year'?'selected':'' %>>This Year</option>
+          <option value="year" <%= !query.filter|| query.filter==='year'?'selected':'' %>>This Year</option>
           <option value="custom" <%= query.filter==='custom'?'selected':'' %>>Custom</option>
         </select>
 
@@ -37,12 +37,19 @@
         <button class="bg-gray-800 text-white px-4 py-2 rounded text-sm">Apply</button>
         <a href="/admin/sales-report" class="bg-yellow-400 text-white px-4 py-2 rounded text-sm">Clear</a>
 
-        <a href="/admin/sales-report/pdf?startDate=<%= startDate %>&endDate=<%= endDate %>"
-           class="bg-red-600 text-white px-4 py-2 rounded text-sm">
-          Export PDF
-        </a>
+        <a href="/admin/sales-report/pdf?filter=<%= filter %><%
+  if (filter === 'custom' && startDate && endDate) { %>
+  &startDate=<%= startDate %>&endDate=<%= endDate %>
+<% } %>"
+class="bg-red-600 text-white px-4 py-2 rounded text-sm">
+  Export PDF
+</a>
 
-        <a href="/admin/sales-report/excel?startDate=<%= startDate %>&endDate=<%= endDate %>"
+
+        <a href="/admin/sales-report/excel?filter=<%= filter %><%
+  if (filter === 'custom' && startDate && endDate) { %>
+  &startDate=<%= startDate %>&endDate=<%= endDate %>
+<% } %>"
            class="bg-green-600 text-white px-4 py-2 rounded text-sm">
           Export Excel
         </a>
@@ -128,8 +135,8 @@
 %>
 
 <tr class="text-sm hover:bg-gray-50">
-  <td class="px-4 py-3 font-medium text-blue-600">
-    <a href="/admin/orders/<%= order._id %>" class="hover:underline">
+  <td class="px-4 py-3 font-medium text-gray-600">
+    
       <%= order.orderId %>
     </a>
   </td>
@@ -174,23 +181,38 @@
 
       <!-- PAGINATION -->
       <div class="mt-6 flex justify-center gap-2">
-        <a href="/admin/sales-report?page=<%= page-1 %>&startDate=<%= startDate %>&endDate=<%= endDate %>"
-           class="px-3 py-1 border rounded <%= page===1?'opacity-50 pointer-events-none':'' %>">
-          Prev
-        </a>
 
-        <% for(let i=1;i<=totalPages;i++){ %>
-          <a href="/admin/sales-report?page=<%= page %>&startDate=<%= startDate %>&endDate=<%= endDate %>"
-             class="px-3 py-1 border rounded <%= page===i?'bg-yellow-500 text-white':'' %>">
-            <%= i %>
-          </a>
-        <% } %>
+  <!-- PREV -->
+  <a href="/admin/sales-report?page=<%= page - 1 %>&filter=<%= filter %><%
+    if (filter === 'custom' && startDate && endDate) { %>
+      &startDate=<%= startDate %>&endDate=<%= endDate %>
+  <% } %>"
+  class="px-3 py-1 border rounded <%= page === 1 ? 'opacity-50 pointer-events-none' : '' %>">
+    Prev
+  </a>
 
-        <a href="/admin/sales-report?page=<%= page+1 %>&startDate=<%= startDate %>&endDate=<%=endDate %>"
-           class="px-3 py-1 border rounded <%= page===totalPages?'opacity-50 pointer-events-none':'' %>">
-          Next
-        </a>
-      </div>
+  <!-- PAGE NUMBERS -->
+  <% for (let i = 1; i <= totalPages; i++) { %>
+    <a href="/admin/sales-report?page=<%= i %>&filter=<%= filter %><%
+      if (filter === 'custom' && startDate && endDate) { %>
+        &startDate=<%= startDate %>&endDate=<%= endDate %>
+    <% } %>"
+    class="px-3 py-1 border rounded <%= page === i ? 'bg-yellow-500 text-white' : '' %>">
+      <%= i %>
+    </a>
+  <% } %>
+
+  <!-- NEXT -->
+  <a href="/admin/sales-report?page=<%= page + 1 %>&filter=<%= filter %><%
+    if (filter === 'custom' && startDate && endDate) { %>
+      &startDate=<%= startDate %>&endDate=<%= endDate %>
+  <% } %>"
+  class="px-3 py-1 border rounded <%= page === totalPages ? 'opacity-50 pointer-events-none' : '' %>">
+    Next
+  </a>
+
+</div>
+
 
     </main>
 

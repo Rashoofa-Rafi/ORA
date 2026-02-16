@@ -1,6 +1,9 @@
 const Product = require('../models/productSchema')
 const Category=require('../models/categorySchema')
-const Variants=require('../models/varientSchema')
+const Variants=require('../models/varientSchema');
+const HTTP_STATUS = require('../middleware/statusCode');
+const AppError=require('../config/AppError')
+const User=require('../models/userSchema')
 
 const loadHome=async(req,res,next)=>{
  try {
@@ -75,8 +78,52 @@ const logout = (req, res,next) => {
 
 })
 };
+const getdeleteAccount=async(req,res,next)=>{
+  try {
+    res.render('user/profile/account')
+  } catch (err) {
+    next(err)
+  }
+}
+const deleteAccount=async(req,res,next)=>{
+  try {
+    const userId=req.session.user
+    if(!userId){
+      throw new AppError('please login',HTTP_STATUS.UNAUTHORIZED)
+
+    }
+    const {confirmation}=req.body
+    if(!confirmation ||confirmation!=='DELETE'){
+      throw new AppError('confirmation text invalid',HTTP_STATUS.BAD_REQUEST)
+    }
+    const user=await User.findById(userId)
+    if(!user){
+      throw new AppError('User not found',HTTP_STATUS.BAD_REQUEST)
+    }
+    if(user.isDeleted){
+      throw new AppError('Account already deleted',HTTP_STATUS.BAD_REQUEST)
+    }
+    user.isDeleted=true
+    user.deletedAt=new Date()
+    await user.save()
+
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Session destroy error:", err);
+      }
+      return res.redirect("/user/login");
+    });
+
+    return res.status(HTTP_STATUS.OK).json({
+  success: true,
+  message: "Account deleted successfully"
+});
+  } catch (err) {
+    next(err)
+  }
+}
 
     
 
 
-module.exports={loadHome,logout}
+module.exports={loadHome,logout,getdeleteAccount,deleteAccount}

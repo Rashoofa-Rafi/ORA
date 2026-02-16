@@ -102,7 +102,7 @@ router.get('/profile/wallet',walletController.getWallet)
 //cart management
 
 router.get('/cart',IsUserAuthenticated,nocache,cartController.getCart)
-router.post('/cart/add/:id',IsUserAuthenticated,nocache,cartController.addToCart)
+router.post('/cart/add',IsUserAuthenticated,nocache,cartController.addToCart)
 router.post('/cart/update-quantity',IsUserAuthenticated,nocache,cartController.updateCartQuantity)
 router.delete('/cart/remove',IsUserAuthenticated,nocache,cartController.removeFromCart)
 router.get('/cart/proceedToCheckout',IsUserAuthenticated,nocache,cartController.proceedToCheckout)
@@ -124,20 +124,24 @@ router.post('/payment/place-order',IsUserAuthenticated,nocache,checkoutControlle
 
 router.post('/payment/verify',IsUserAuthenticated,nocache,checkoutController.verifyRazorpayPayment)
 router.get('/order-success/:orderId',IsUserAuthenticated,nocache,checkoutController.getOrderSuccess)
-router.post('/payment/retry',IsUserAuthenticated,nocache, checkoutController.createRetryRazorpayOrder)
+router.post('/profile/orders/:orderId/payment-failed', IsUserAuthenticated, nocache, checkoutController.paymentFailed);
 
+router.post('/profile/orders/:orderId/retry-payment',IsUserAuthenticated,nocache, checkoutController.createRetryRazorpayOrder)
 router.post('/coupons/apply',IsUserAuthenticated,nocache,checkoutController.applyCoupon)
 router.delete('/coupons/remove',IsUserAuthenticated,nocache,checkoutController.removeCoupon)
 
 //Order management in user side
 
 router.get('/profile/orders',IsUserAuthenticated,nocache,orderController.getOrders)
-router.get('/profile/orders/:orderId',IsUserAuthenticated,nocache,orderController.getOrderDetails)
-router.post('/profile/orderDetails/:orderId/items/:itemId/cancel',IsUserAuthenticated,nocache,orderController.cancelOrderItem)
-router.post('/profile/orderDetails/:orderId/items/:itemId/return',IsUserAuthenticated,nocache,orderController.returnOrderItem)
-router.get('/profile/orders/:orderId/invoice',IsUserAuthenticated,nocache,orderController.downloadInvoice)
+router.get('/profile/orders/:orderId/:items/:itemId',IsUserAuthenticated,nocache,orderController.getOrderDetails)
+router.post('/profile/orders/:orderId/items/:itemId/cancel',IsUserAuthenticated,nocache,orderController.cancelOrderItem)
+router.post('/profile/orders/:orderId/items/:itemId/return',IsUserAuthenticated,nocache,orderController.returnOrderItem)
+router.get('/profile/orders/:orderId/items/:itemId/invoice',IsUserAuthenticated,nocache,orderController.downloadInvoice)
   
   
+router.get('/profile/delete-account',IsUserAuthenticated,nocache,homeController.getdeleteAccount)
+router.post('/profile/delete-account',IsUserAuthenticated,nocache,homeController.deleteAccount)
+
 
 
 

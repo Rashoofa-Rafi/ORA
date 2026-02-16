@@ -44,6 +44,13 @@ const userSchema=new mongoose.Schema({
       type:Boolean,
       required:false
      },
+     isDeleted:{
+      type:Boolean,
+      default:false
+     },
+     deletedAt:{
+      type:Date,
+     },
      
      referralCode: {
     type: String,

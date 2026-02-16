@@ -6,7 +6,7 @@ const { generateOTP, sendVerificationEmail } = require('../helpers/generateotp')
 
 const getUserProfile = async (req, res, next) => {
   try {
-    const userId = req.session.user;
+    const userId = req.session.user
      const user = await User.findById(userId).select(
       "fullName email mobile profileImage "
     );

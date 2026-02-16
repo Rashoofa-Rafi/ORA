@@ -113,7 +113,7 @@
                 hover:bg-red-700 hover:text-white transition">ADD TO WISHLIST
                     </button>
 
-                    <button onclick="addToCart('<%= product.id %>')"
+                    <button onclick="addToCart('<%= product.id %>','<%= product.activeVariant.id %>')"
                       class="w-1/2 min-w-[200px] py-2 rounded-md bg-black text-white font-semibold hover:bg-gray-900 transition">
                         ADD TO CART
                     </button>
@@ -188,13 +188,13 @@
 
 
     <script>
-  async function addToCart(productId) {
+  async function addToCart(productId,variantId) {
     
   try {
-    const res = await fetch(`/user/cart/add/${productId}`, {
+    const res = await fetch(`/user/cart/add`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ productId })
+      body: JSON.stringify({ productId ,variantId})
     });
 
     const data = await res.json();

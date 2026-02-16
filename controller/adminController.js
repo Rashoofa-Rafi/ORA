@@ -185,6 +185,18 @@ const changePassword=async(req,res,next)=>{
        next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
     }
 }
+const logout=(req,res,next)=>{
+    req.session.destroy((err) => {
+    if (err) {
+      console.error("Error destroying session:", err);
+      return res.redirect("/admin/dashboard");
+    }
+
+    res.clearCookie("connect.sid");
+    res.setHeader('Cache-Control', 'no-store')
+    return res.redirect("/admin/login");
+  });
+}
 
 
 module.exports={
@@ -197,4 +209,5 @@ module.exports={
     forgetPassword,
     verifyOTP,
     resendOTP,
-    changePassword}
+    changePassword,
+logout}

@@ -37,7 +37,7 @@
     </a>
 
     <a href="/admin/order" class="flex items-center px-6 py-2 rounded
-       <%= currentPath === '/orders' ? 'bg-black text-white' : 'text-gray-700 hover:bg-gray-100' %>">
+       <%= currentPath === '/order' ? 'bg-black text-white' : 'text-gray-700 hover:bg-gray-100' %>">
       <i data-lucide="shopping-bag" class="w-5 h-5 mr-3"></i> Orders
     </a>
 
@@ -58,7 +58,16 @@
        <%= currentPath === '/coupons' ? 'bg-black text-white' : 'text-gray-700 hover:bg-gray-100' %>">
       <i data-lucide="ticket" class="w-5 h-5 mr-3"></i> Coupon
     </a>
-
+    <a href="/admin/logout"
+      class="flex items-center  px-6 py-2 rounded text-white bg-red-500 hover:bg-red-600">
+      <i data-lucide="log-out" class="w-5 h-5 mr-2"></i> Sign Out
+    </a>
+</nav>
+<!-- Sign Out -->
+  
+    
+ 
+</aside>
 
 
     <!-- <a href="/admin/refunds" class="flex items-center px-6 py-2 rounded
@@ -66,7 +75,7 @@
       <i data-lucide="rotate-ccw" class="w-5 h-5 mr-3"></i> Refund/Return
     </a> -->
 
-    <a href="/admin/banners" class="flex items-center px-6 py-2 rounded
+    <!-- <a href="/admin/banners" class="flex items-center px-6 py-2 rounded
        <%= currentPath === '/banners' ? 'bg-black text-white' : 'text-gray-700 hover:bg-gray-100' %>">
       <i data-lucide="image" class="w-5 h-5 mr-3"></i> Banners
     </a>
@@ -74,19 +83,11 @@
     <a href="/admin/reviews" class="flex items-center px-6 py-2 rounded
        <%= currentPath === '/reviews' ? 'bg-black text-white' : 'text-gray-700 hover:bg-gray-100' %>">
       <i data-lucide="message-square" class="w-5 h-5 mr-3"></i> Reviews
-    </a>
+    </a> -->
 
-  </nav>
+  
 
-  <!-- Sign Out -->
-  <div class="p-4 border-t">
-    <a href="/admin/logout"
-      class="flex items-center justify-center px-6 py-2 rounded text-white bg-red-500 hover:bg-red-600">
-      <i data-lucide="log-out" class="w-5 h-5 mr-2"></i> Sign Out
-    </a>
-  </div>
-
-</aside>
+  
 
 <!-- Load Lucide Icons -->
 <script src="https://unpkg.com/lucide@latest"></script>

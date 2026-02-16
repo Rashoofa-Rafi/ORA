@@ -1,30 +1,242 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ORA Admin Dashboard - Tailwind</title>
 
-  <!-- Tailwind Play CDN (no build step) -->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin-dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
-  
-  <style>
-    /* small custom scrollbar for sidebar */
-    .sidebar-scroll::-webkit-scrollbar { width: 8px; }
-    .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 999px; }
-  </style>
 </head>
-<body class="bg-gray-100 text-slate-800 antialiased">
 
-  <%- include("../partials/admin/sidebar") %>
+<body class="bg-gray-100">
+  <div class="flex min-h-screen">
+    <%- include("../partials/admin/sidebar") %>
+      <div class="flex flex-col flex-1 ml-64">
+
+        <header class="sticky top-0 z-20 bg-white border-b shadow px-6 py-4 flex justify-between items-center">
+          <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+
+          <!-- FILTER + EXPORT -->
+          <form method="GET" action="/admin/dashboard" class="flex items-center gap-3">
+
+            <select name="filter" id="filterSelect" class="border rounded px-3 py-2 text-sm">
+              <option value="today" <%=query.filter==='today' ?'selected':'' %>>Today</option>
+              <option value="week" <%=query.filter==='week' ?'selected':'' %>>Last 7 Days</option>
+              <option value="month" <%=query.filter==='month' ?'selected':'' %>>This Month</option>
+              <option value="year" <%=!query.filter || query.filter==='year' ?'selected':'' %>>This Year</option>
+              <option value="custom" <%=query.filter==='custom' ?'selected':'' %>>Custom</option>
+            </select>
+
+            <!-- Custom Date Inputs -->
+            <div id="customDates" class="flex gap-2 <%= query.filter==='custom'?'':'hidden' %>">
+
+              <input type="date" name="startDate" value="<%= query.startDate || '' %>"
+                class="border rounded px-2 py-1 text-sm" />
+
+              <input type="date" name="endDate" value="<%= query.endDate || '' %>"
+                class="border rounded px-2 py-1 text-sm" />
+            </div>
+
+            <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded text-sm">
+              Apply
+            </button>
+
+            <a href="/admin/dashboard" class="bg-yellow-400 text-white px-4 py-2 rounded text-sm">
+              Clear
+            </a>
+
+          </form>
+
+        </header>
+        <main class="p-6 flex-1">
+
+          <!-- SUMMARY CARDS -->
+          <div class=" sticky top-[72px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
+
+            <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+              <p class="text-sm text-emerald-700">Total Orders</p>
+              <p class="text-2xl font-bold text-emerald-900">
+                <%= report.totalOrders%>
+              </p>
+            </div>
+
+            <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+              <p class="text-sm text-emerald-700">TotalRevenue</p>
+              <p class="text-2xl font-bold text-emerald-900">₹ <%= report.netRevenue.toFixed(2) %>
+              </p>
+            </div>
+
+            <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+              <p class="text-sm text-emerald-700">TotalCustomer</p>
+              <p class="text-2xl font-bold text-red-600">
+                <%= report.totalCustomer%>
+              </p>
+            </div>
+
+            <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+              <p class="text-sm text-emerald-700">TotalProduct</p>
+              <p class="text-2xl font-bold text-red-600">
+                <%= report.totalProduct %>
+              </p>
+            </div>
+
+            <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+              <p class="text-sm text-emerald-700">ConfirmedOrders</p>
+              <p class="text-2xl font-bold text-red-700">
+                <%= report.totalPending%>
+              </p>
+            </div>
+
+            <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+              <p class="text-sm text-emerald-700">CancelledOrders</p>
+              <p class="text-2xl font-bold text-green-600">
+                <%= report.totalCancelled %>
+              </p>
+            </div>
+
+          </div>
+          <div class="grid grid-cols-1 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow">
+              <h2 class="text-lg font-semibold mb-4 text-gray-700">Sales Analytics</h2>
+              <canvas id="salesChart" height="120"></canvas>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+
+            <div class="bg-white p-6 rounded-xl shadow">
+              <h2 class="text-lg font-semibold mb-4 text-gray-700">Top 10 Products</h2>
+              <canvas id="topProductsChart"></canvas>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow">
+              <h2 class="text-lg font-semibold mb-4 text-gray-700">Top Categories</h2>
+              <canvas id="topCategoriesChart"></canvas>
+            </div>
+
+          </div>
 
 
-        
+        </main>
+        <div id="dashboardData" data-report='<%- JSON.stringify(report || {}) %>'>
+        </div>
 
- <%- include("../partials/admin/footer") %> 
+        <%- include("../partials/admin/footer") %>
+      </div>
+  </div>
+  <script>
+    const dashboardElement = document.getElementById("dashboardData");
+
+    const reportData = dashboardElement
+      ? JSON.parse(dashboardElement.dataset.report)
+      : {};
+
+
+    const salesLabels = reportData.salesChartLabels || [];
+    const salesData = reportData.salesChartData || [];
+    const topProducts = reportData.topProducts || [];
+    const topCategories = reportData.topCategories || []
+
+    const filterSelect = document.getElementById("filterSelect");
+    const customDates = document.getElementById("customDates");
+
+    filterSelect.addEventListener("change", function () {
+
+      if (this.value === "custom") {
+        customDates.classList.remove("hidden");
+      } else {
+        customDates.classList.add("hidden");
+        this.form.submit(); // auto-submit for non-custom
+      }
+
+    });
+
+
+    /* ================= SALES LINE CHART ================= */
+    const salesCtx = document.getElementById("salesChart");
+
+    new Chart(salesCtx, {
+      type: "line",
+      data: {
+        labels: salesLabels,
+        datasets: [{
+          label: "Revenue",
+          data: salesData,
+          borderColor: "#10b981",
+          backgroundColor: "rgba(16,185,129,0.1)",
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    /* ================= TOP PRODUCTS DONUT ================= */
+    const productCtx = document.getElementById("topProductsChart");
+
+    new Chart(productCtx, {
+      type: "doughnut",
+      data: {
+        labels: topProducts.map(p => p.name),
+        datasets: [{
+          data: topProducts.map(p => p.totalSold),
+          backgroundColor: [
+            "#6366f1", "#f59e0b", "#10b981", "#ef4444", "#3b82f6",
+            "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#64748b"
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "bottom"
+          }
+        }
+      }
+    });
+
+    /* ================= TOP CATEGORIES DONUT ================= */
+    const categoryCtx = document.getElementById("topCategoriesChart");
+
+    new Chart(categoryCtx, {
+      type: "doughnut",
+      data: {
+        labels: topCategories.map(c => c.name),
+        datasets: [{
+          data: topCategories.map(c => c.totalSold),
+          backgroundColor: [
+            "#22c55e", "#3b82f6", "#f97316", "#e11d48", "#8b5cf6",
+            "#14b8a6", "#facc15", "#6366f1", "#ec4899", "#64748b"
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "bottom"
+          }
+        }
+      }
+    });
+
+  </script>
 </body>
+
+
 </html>

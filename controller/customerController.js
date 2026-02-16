@@ -1,6 +1,7 @@
 const HTTP_STATUS = require('../middleware/statusCode.js');
 const AppError=require('../config/AppError')
 const Customer = require('../models/userSchema.js');
+const Order=require('../models/orderSchema.js')
 
 const customerInfo = async (req, res,next) => {
   try {
@@ -9,7 +10,9 @@ const customerInfo = async (req, res,next) => {
     const limit = 10;
 
     const query = {
+      
       role: 'user',
+      isDeleted:false,
       $or: [
         {fullName:{$regex: '.*' + search + '.*', $options: 'i'}},
         {email:{$regex: '.*' + search + '.*', $options: 'i'}}
@@ -19,12 +22,6 @@ const customerInfo = async (req, res,next) => {
     
     const count = await Customer.countDocuments(query)
 
-    // list users (sorted)
-    // const customers = await Customer.find(query)
-    //   .sort({ createdAt: -1 })
-    //   .limit(limit)
-    //   .skip((page - 1) * limit)
-    //   .exec();
 const customers = await Customer.aggregate([
   { $match: query },
   { $sort: { createdAt: -1 } },
@@ -77,8 +74,26 @@ const customers = await Customer.aggregate([
 const blockStatus= async(req,res,next)=>{
     try {
         const { id, action } = req.body
+        if (!id || !action) {
+      throw new AppError("Invalid request data", HTTP_STATUS.BAD_REQUEST);
+    }
 
     const isBlocked = action === 'block'
+     if (isBlocked) {
+      const activeOrderCount = await Order.countDocuments({
+        userId: id,
+        orderStatus: {
+          $nin: ["delivered", "cancelled", "returned"]
+        }
+      });
+
+      if (activeOrderCount > 0) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          success: false,
+          message: "Customer has active orders. Blocking not allowed."
+        });
+      }
+    }
     await Customer.findByIdAndUpdate(id, { isBlocked });
         res.status(HTTP_STATUS.CREATED).json({
             success:true,

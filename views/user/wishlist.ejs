@@ -48,7 +48,7 @@
                                         <div class="flex items-center justify-between mt-4">
                                             <button class="moveBtn text-green-500 text-sm"
                                                 type="button"
-                                                onclick="addToCart('<%= item.productId?._id %>')">
+                                                onclick="addToCart('<%= item.productId?._id %>','<%= item.variantId?._id %>')">
                                                 MoveToCart
                                             </button>
 
@@ -74,13 +74,13 @@
     <script>
         
 
-async function addToCart(productId) {
+async function addToCart(productId,variantId) {
     
   try {
-    const res = await fetch('/user/cart/add/${productId}', {
+    const res = await fetch('/user/cart/add', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ productId })
+      body: JSON.stringify({ productId,variantId })
     });
 
     const data = await res.json();

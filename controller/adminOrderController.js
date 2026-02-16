@@ -105,7 +105,12 @@ const getOrderDetailPage = async (req, res, next) => {
         createdAt: 1,
         "orderItems.$": 1 
       }
-    ).populate('userId', 'fullName email mobile');
+    ).populate('userId', 'fullName email mobile')
+    .populate({
+      path:'orderItems.variantId',
+      select:'price'
+    })
+    
 
     if (!order || !order.orderItems.length) {
       throw new AppError('Order item not found', HTTP_STATUS.NOT_FOUND);

@@ -12,12 +12,13 @@ const adminOrderController=require('../controller/adminOrderController')
 const couponController=require('../controller/couponController')
 const offerController=require('../controller/offerController')
 const salesController=require('../controller/salesController')
+const dashboardController=require('../controller/dashboardController')
 
 
 //for admin authentication
 
 router.get('/login',IsAdminLoggedOut,nocache,adminController.loadLogin)
-router.get('/dashboard',IsAdminAuthenticated,nocache,adminController.loadDashboard)
+router.get('/dashboard',IsAdminAuthenticated,nocache,dashboardController.getDashboard)
 router.get('/forget-password',adminController.loadforgetPassword)
 router.get('/otp',adminController.loadOTP)
 router.get('/change-password',adminController.loadchangePassword)
@@ -27,6 +28,8 @@ router.post('/otp',adminController.verifyOTP)
 router.post('/resend-otp',adminController.resendOTP)
 router.post('/change-password',adminController.changePassword)
 router.post('/login',adminController.login)
+router.get('/logout',adminController.logout)
+
 
 
 
@@ -85,11 +88,12 @@ router.put('/coupons/edit/:id',IsAdminAuthenticated,nocache,couponController.edi
 router.patch('/coupons/deactivate/:id',IsAdminAuthenticated,nocache,couponController.removeCoupon)
 
 //for sales report
-router.get('/sales-report',salesController.getSalesReport)
-router.get("/sales-report/pdf", salesController.exportSalesReportPDF);
-router.get("/sales-report/excel", salesController.exportSalesReportExcel)
+router.get('/sales-report',IsAdminAuthenticated,nocache,salesController.getSalesReport)
+router.get("/sales-report/pdf",IsAdminAuthenticated,nocache, salesController.exportSalesReportPDF);
+router.get("/sales-report/excel", IsAdminAuthenticated,nocache,salesController.exportSalesReportExcel)
 
 
+ 
 
 
 module.exports=router

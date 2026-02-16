@@ -25,14 +25,9 @@ async function finalizeOrder(orderId) {
     await Product.findOneAndUpdate({ _id: item.productId, totalStock: { $gte: item.quantity } }, { $inc: { totalStock: -item.quantity } })
   }
 
-  // // coupon
-  // if (order.coupons) {
-  //   const coupon = await Coupon.updateOne({_id: order.coupons.couponId, usedOrders: { $ne: order._id }},
-  //                  {$inc: { usedCount: 1 },$push: { usedOrders: order._id }})
-  //   }
   if (order.coupons && order.coupons.length > 0) {
   for (const coupon of order.coupons) {
-    if (!coupon.couponId) continue; // skip invalid entries
+    if (!coupon.couponId) continue; 
     await Coupon.updateOne(
       { _id: coupon.couponId, usedOrders: { $ne: order._id } },
       { $inc: { usedCount: 1 }, $push: { usedOrders: order._id } }

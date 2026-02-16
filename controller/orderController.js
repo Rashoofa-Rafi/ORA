@@ -1,80 +1,119 @@
 const Cart = require('../models/cartSchema')
 const Orders = require('../models/orderSchema')
 const Variant = require('../models/varientSchema')
-const Product=require('../models/productSchema')
+const Product = require('../models/productSchema')
 const User = require('../models/userSchema')
 const AppError = require('../config/AppError')
 const HTTP_STATUS = require('../middleware/statusCode')
 const notFound = require('../middleware/notFound')
 const PDFDocument = require('pdfkit')
-const {creditWallet}= require('../helpers/wallet')
-const razorpay=require('../config/razorpay')
+const { creditWallet } = require('../helpers/wallet')
+const razorpay = require('../config/razorpay')
 const getOrders = async (req, res, next) => {
   try {
-    const page=parseInt(req.query.page) ||1
-    const limit=6
+    const page = parseInt(req.query.page) || 1
+    const limit = 6
 
-    const userId = req.session.user;
+    const userId = req.session.user
     if (!userId) {
       throw new AppError('Please Login', HTTP_STATUS.UNAUTHORIZED)
     }
-    const user = await User.findById(userId).select('fullName')
-     const search = req.query.search || ''
-     const {status}=req.query
-     
-     const filter = { userId };
+
+    const search = req.query.search || ''
+    const status = req.query.status || ''
+
+    const filter = { userId }
 
     if (search) {
-      filter.orderId = { $regex: search, $options: 'i' };
+      filter.orderId = { $regex: search, $options: 'i' }
     }
+
     if (status) {
-      filter.orderStatus = status;
+
+      filter.orderStatus = status
     }
 
-    const totalOrders=await Orders.countDocuments(filter)
-    const totalPages=Math.ceil(totalOrders/limit)
     const orders = await Orders.find(filter)
+      .populate('orderItems.productId')
+      .populate('orderItems.variantId')
       .sort({ createdAt: -1 })
-      .skip((page-1)*limit)
-      .limit(limit)
 
-    res.render('user/profile/orders',
-      { orders,
-        search,
-        status,
-        page,
-        totalPages
-        
-       });
+
+    const itemList = []
+
+    orders.forEach(order => {
+      order.orderItems.forEach(item => {
+        itemList.push({
+          orderId: order.orderId,
+          createdAt: order.createdAt,
+          paymentMethod: order.paymentMethod,
+          paymentStatus: order.payment.status,
+          orderStatus: order.orderStatus,
+          
+
+          // item-specific
+          itemId: item._id,
+          product: item.productId,
+          variant: item.variantId,
+          productName: item.productName,
+          quantity: item.quantity,
+          price: item.variantId.price,
+          image: item.image,
+          itemStatus: item.itemStatus,
+          finalItemAmount: item.finalItemAmount,
+          expectedDelivery: item.expectedDelivery
+        })
+      })
+    })
+
+    // ITEM LEVEL PAGINATION
+    const totalItems = itemList.length
+    const totalPages = Math.ceil(totalItems / limit)
+
+    const paginatedItems = itemList.slice(
+      (page - 1) * limit,
+      page * limit
+    )
+
+    res.render('user/profile/orders', {
+      orders: paginatedItems,
+      
+      page,
+      totalPages,
+      search,
+      status
+    })
 
   } catch (err) {
     next(err)
   }
-
 }
+
 
 const getOrderDetails = async (req, res, next) => {
   try {
-    const { orderId } = req.params
+    const { orderId, itemId } = req.params
     const userId = req.session.user
     if (!userId) {
       throw new AppError('Please Login', HTTP_STATUS.BAD_REQUEST)
     }
     const user = await User.findById(userId).select('fullName')
 
-    const order = await Orders.findOne({ orderId, userId })
+    const order = await Orders.findOne({ orderId, userId, 'orderItems._id': itemId })
+      .populate('orderItems.productId')
+      .populate('orderItems.variantId')
       .sort({ createdAt: -1 })
 
-    if (!orderId) {
-      throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND)
-    }
+if (!orderId) {
+  throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND)
+}
 
-    res.render('user/profile/orderDetails',
-      { order });
+res.render('user/profile/orderDetails',
+  { order ,itemId});
 
   } catch (err) {
-    next(err)
-  }
+  next(err)
+}
 
 }
 const cancelOrderItem = async (req, res, next) => {
@@ -82,7 +121,7 @@ const cancelOrderItem = async (req, res, next) => {
     const userId = req.session.user;
     const { orderId, itemId } = req.params;
     const { reason } = req.body;
-    
+
 
     const order = await Orders.findOne({ orderId, userId });
     if (!order) throw new AppError('Order not found', 404);
@@ -104,17 +143,15 @@ const cancelOrderItem = async (req, res, next) => {
       { $inc: { stock: item.quantity } }
     );
     await Product.findByIdAndUpdate(
-  item.productId,
-  { $inc: { totalStock: item.quantity } }
-);
+      item.productId,
+      { $inc: { totalStock: item.quantity } }
+    );
 
- // 3️⃣ Refund amount = EXACT amount user paid
-    const refundAmount = item.finalItemAmount;
+   const refundAmount = item.finalItemAmount;
 
-    // 4️⃣ Refund only if prepaid
     if (order.paymentMethod !== 'COD') {
 
-      // Razorpay → refund gateway (optional but correct)
+      // Razorpay → refund gateway 
       if (
         order.paymentMethod === 'RAZORPAY' &&
         order.payment?.razorpay?.paymentId
@@ -124,13 +161,13 @@ const cancelOrderItem = async (req, res, next) => {
           { amount: refundAmount * 100 }
         );
       }
-      const userId =typeof req.session.user === 'object'? req.session.user._id: req.session.user;
+      const userId = typeof req.session.user === 'object' ? req.session.user._id : req.session.user;
       await creditWallet({
-          amount: refundAmount,
-          reason: `Refund for cancelled item ${item.productName}`,
-          orderId:order.orderId,
-          userId
-    });
+        amount: refundAmount,
+        reason: `Refund for cancelled item ${item.productName}`,
+        orderId: order.orderId,
+        userId
+      });
 
       item.refundAmount = refundAmount;
       item.isRefunded = true;
@@ -158,7 +195,7 @@ const returnOrderItem = async (req, res, next) => {
   try {
     const userId = req.session.user;
     const { orderId, itemId } = req.params;
-    
+
     const { reason } = req.body;
 
     if (!reason) {
@@ -168,12 +205,12 @@ const returnOrderItem = async (req, res, next) => {
     const order = await Orders.findOne({ orderId, userId });
     if (!order) throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND);
 
-    
+
 
     const item = order.orderItems.id(itemId);
     if (!item) throw new AppError('Item not found', HTTP_STATUS.NOT_FOUND);
 
-    if ( item.itemStatus !== 'delivered') {
+    if (item.itemStatus !== 'delivered') {
       throw new AppError('Only delivered item can be returned', HTTP_STATUS.BAD_REQUEST);
     }
 
@@ -190,9 +227,9 @@ const returnOrderItem = async (req, res, next) => {
 
     await order.save();
 
-    res.status(HTTP_STATUS.OK).json({ 
-      success: true ,
-      message:'Return request submitted'
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: 'Return request submitted'
     });
   } catch (err) {
     next(err);
@@ -201,34 +238,42 @@ const returnOrderItem = async (req, res, next) => {
 const downloadInvoice = async (req, res, next) => {
   try {
     const userId = req.session.user;
-    const { orderId } = req.params;
+    const { orderId, itemId } = req.params;
 
-    const order = await Orders.findOne({ orderId });
+    const order = await Orders.findOne({userId,
+      orderId,
+      'orderItems._id': itemId
+    });
 
     if (!order) {
-      throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND)
-
+      throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND);
     }
 
-    if (order.userId.toString() !== userId.toString()) {
-      throw new AppError('Unauthorized', HTTP_STATUS.UNAUTHORIZED);
+   
+
+    // extract the single item
+    const item = order.orderItems.find(
+      i => i._id.toString() === itemId.toString()
+    );
+
+    if (!item) {
+      throw new AppError('Item not found', HTTP_STATUS.NOT_FOUND);
     }
 
-    // PDF headers
+    /* ---------- PDF HEADERS ---------- */
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename=invoice-${order.orderId}.pdf`
+      `attachment; filename=invoice-${order.orderId}-${item._id}.pdf`
     );
 
     const doc = new PDFDocument({ margin: 40 });
     doc.pipe(res);
+
     const margin = 40;
-    const pageWidth = 595.28; // A4
+    const pageWidth = 595.28;
     const usableWidth = pageWidth - margin * 2;
-
     let y = 50;
-
 
     /* ---------- HEADER ---------- */
     doc
@@ -244,19 +289,17 @@ const downloadInvoice = async (req, res, next) => {
 
     y += 30;
 
-
     /* ---------- ADDRESS ---------- */
     doc.rect(margin, y, usableWidth, 80).stroke();
 
     doc
       .fontSize(10)
       .text('Billing Address', margin + 10, y + 8)
-      .text(`${order.address.name}`, margin + 10, y + 25)
+      .text(order.address.name, margin + 10, y + 25)
       .text(`${order.address.locality}, ${order.address.city}`, margin + 10, y + 40)
       .text(`${order.address.state} - ${order.address.pincode}`, margin + 10, y + 55);
 
     y += 100;
-
 
     /* ---------- TABLE HEADER ---------- */
     const col = {
@@ -277,56 +320,50 @@ const downloadInvoice = async (req, res, next) => {
     doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
     y += 10;
 
-    /* ---------- ITEMS ---------- */
-    order.orderItems.forEach(item => {
-      const rowHeight = 18;
+    /* ---------- SINGLE ITEM ---------- */
+    doc
+      .fontSize(9)
+      .text(item.productName, col.name, y, { width: 250 })
+      .text(item.quantity.toString(), col.qty, y)
+      .text(`₹${item.price}`, col.price, y)
+      .text(`₹${item.price * item.quantity}`, col.total, y);
 
-      doc
-        .fontSize(9)
-        .text(item.productName, col.name, y, { width: 250 })
-        .text(item.quantity.toString(), col.qty, y)
-        .text(`₹${item.price}`, col.price, y)
-        .text(`₹${item.price * item.quantity}`, col.total, y);
-
-      y += rowHeight;
-    });
-
+    y += 30;
 
     /* ---------- TOTALS ---------- */
-    y += 20;
+    const subtotal = item.price * item.quantity;
+    const Discount=item.offerDiscount ||0
+    const coupon = item.couponShare || 0
+    const finalAmount = item.finalItemAmount || subtotal - coupon;
 
-    doc
-      .fontSize(10)
-      .text(`Subtotal: ₹${order.totalPrice}`, col.total - 80, y, { align: 'right' });
+    doc.fontSize(10);
+    doc.text(`Subtotal: ₹${subtotal}`, col.total - 80, y, { align: 'right' });
+    y += 15;
+    doc.text(`Offer Discount: -₹${Discount}`, col.total - 80, y, { align: 'right' });
 
     y += 15;
-    doc.text(`Delivery: ₹${order.deliveryCharge}`, col.total - 80, y, { align: 'right' });
+    doc.text(`Coupon Discount: -₹${coupon}`, col.total - 80, y, { align: 'right' });
 
     y += 15;
-    doc.text(`Platform Fee: ₹${order.platformFee}`, col.total - 80, y, { align: 'right' });
-
-    y += 15;
-    doc.fontSize(12).text(`Grand Total: ₹${order.totalPrice + order.deliveryCharge + order.platformFee}`,
+    doc.fontSize(12).text(
+      `Final Amount: ₹${finalAmount}`,
       col.total - 80,
       y,
       { align: 'right' }
     );
 
-
     /* ---------- FOOTER ---------- */
-   doc
-  .moveDown(2)
-  .fontSize(10)
-  .text(
-    'Thank you for shopping with ORA.',
-    margin,               
-    doc.y,                
-    {
-      width: usableWidth, 
-      align: 'center'
-    }
-  );
+    doc
+      .moveDown(2)
+      .fontSize(10)
+      .text(
+        'Thank you for shopping with ORA.',
+        margin,
+        doc.y,
+        { width: usableWidth, align: 'center' }
+      );
 
+    doc.end();
 
   } catch (err) {
     next(err);

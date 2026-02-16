@@ -1,0 +1,110 @@
+<%- include("../../partials/user/header") %>
+
+<div class="max-w-6xl mx-auto py-10 flex gap-8">
+  <!-- LEFT SIDEBAR -->
+  <aside class="w-64 bg-lime-100 rounded-xl p-6 shadow">
+    <div class="flex items-center gap-4 mb-6">
+      <div class="w-12 h-12 rounded-full bg-black">
+        <img
+    src="<%= user.profileImage || '/images/default-avatar.png' %>"
+    alt="Profile Image"
+    class="w-full h-full object-cover"
+  />
+      </div>
+      <p class="font-semibold"><%= user.fullName %></p>
+    </div>
+    <ul class="space-y-4 text-sm font-medium">
+      <li><a href="/user/profile/profile" class="flex gap-2 items-center"><i data-lucide="user"></i>My Profile</a></li>
+      <li><a href="/user/profile/address" class="flex gap-2 items-center font-semibold"><i data-lucide="map-pin"></i>Address</a></li>
+      <li><a href="/user/profile/orders" class="flex gap-2 items-center"><i data-lucide="package"></i>My Order</a></li>
+      <li><a href="/user/profile/wallet" class="flex gap-2 items-center"><i data-lucide="wallet"></i>My Wallet</a></li>
+      <li><a href="/user/profile/coupons" class="flex gap-2 items-center"><i data-lucide="ticket-percent"></i>My Coupons</a></li>
+      <li><a href="/user/profile/delete-account" class="flex gap-2 items-center text-red-600"><i data-lucide="trash-2"></i>Delete Account</a></li>
+      <li><a href="/user/profile/referral" class="flex gap-2 items-center"><i data-lucide="share-2"></i>Referral Code</a></li>
+    </ul>
+  </aside>
+
+
+ <section class="flex-1 bg-white rounded-xl shadow p-10">
+
+  
+  <div class="max-w-xl mx-auto bg-gray-50 border border-red-200 rounded-2xl p-8 shadow-sm">
+
+  <h3 class="text-xl font-semibold text-center text-gray-800 mb-4">
+    Delete Your Account
+  </h3>
+
+  <p class="text-gray-600 text-center text-sm mb-6">
+    This action is permanent. Type DELETE to confirm.
+  </p>
+
+  <div class="space-y-4">
+
+    <input 
+      type="text"
+      id="deleteConfirmation"
+      placeholder="Type DELETE here"
+      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:outline-none"
+    />
+
+    <button 
+      onclick="deleteAccount()"
+      class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg transition">
+      Permanently Delete
+    </button>
+    
+
+    <p id="deleteError" class="text-red-600 text-sm text-center hidden"></p>
+
+  </div>
+
+</div>
+
+
+</section>
+
+<script>
+    lucide.createIcons();
+    
+async function deleteAccount() {
+  const confirmation = document.getElementById("deleteConfirmation").value.trim();
+  const errorEl = document.getElementById("deleteError");
+
+  errorEl.classList.add("hidden");
+  errorEl.textContent = "";
+
+  if (confirmation !== "DELETE") {
+    errorEl.textContent = "You must type DELETE exactly.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+
+  try {
+    const response = await fetch("/user/profile/delete-account", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "same-origin",
+      body: JSON.stringify({ confirmation })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      window.location.href = "/user/login";
+    } else {
+      errorEl.textContent = data.message || "Something went wrong.";
+      errorEl.classList.remove("hidden");
+    }
+
+  } catch (error) {
+    errorEl.textContent = "Server error. Try again.";
+    errorEl.classList.remove("hidden");
+  }
+}
+</script>
+
+
+
+</html>

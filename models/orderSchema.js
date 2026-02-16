@@ -51,6 +51,9 @@ const orderItemSchema = new mongoose.Schema({
   finalItemAmount:{
     type:Number,
   },
+  discount:{
+    type:Number,
+  },
   couponShare:{
 type:Number
   },
@@ -88,7 +91,7 @@ const addressSchema = new mongoose.Schema({
   locality: String,
   landmark: String,
   state: String,
-  pincode: String,
+  pincode: Number,
   phone: String,
   altPhone: String
 },{_id:false});
@@ -107,7 +110,7 @@ const orderSchema = new mongoose.Schema({
 
   paymentMethod: {
     type: String,
-    enum: ["COD", "RAZORPAY", "UPI", "CARD", "WALLET"],
+    enum: ["COD", "RAZORPAY",   "WALLET"],
     required: true
   },
 
@@ -152,7 +155,7 @@ const orderSchema = new mongoose.Schema({
       "returning",
       "returned",
       "processing",
-      "failed",
+     
       "partially_cancelled",
       "partially_returned",
       "partially_delivered"
@@ -163,7 +166,7 @@ const orderSchema = new mongoose.Schema({
      status: {
       type: String,
       enum: ['PENDING', 'PAID', 'FAILED'],
-      default: 'PENDING'
+      defualt:'PENDING'
     },
     razorpay: {
      orderId: String,
@@ -194,4 +197,5 @@ isFinalized:{
   }
 
 }, { timestamps: true })
+
 module.exports=mongoose.model('Order',orderSchema)
