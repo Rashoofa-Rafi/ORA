@@ -8,7 +8,7 @@ const AppError=require('../config/AppError')
 const BRAND_OPTIONS = ['CASIO','TITAN','FOSSIL','FASTRACK','ROLEX','NAVIFORCE','OTHERS']
 const MATERIAL_OPTIONS = ['Metal','Rubber','Leather']
 const DIALTYPE_OPTIONS = ['Analogue','Digital']
-const listProducts = async (req, res,next) => {
+const listProducts = async (req, res, next) => {
   try {
     let {
       search,
@@ -19,104 +19,111 @@ const listProducts = async (req, res,next) => {
       dialType,
       sort,
       page,
-      
     } = req.query;
 
     page = parseInt(page) || 1;
     const limit = 8;
     const skip = (page - 1) * limit;
 
-    const filter = {isListed:true };
+    const filter = { isListed: true };
 
-    if (search && search.trim() !== "") filter.productname = { $regex: search.trim(), $options: "i" };
-    
-    if (category && category !== "all") {
-      const categoryDoc = await Category.findOne({ name: category, isListed: true   });
-      if (categoryDoc) {
-        filter.category_Id = categoryDoc._id;
-      }else {
-    filter.category_Id = null
-}
+    if (search && search.trim() !== "") {
+      filter.productname = { $regex: search.trim(), $options: "i" };
     }
 
-    
+    if (category && category !== "all") {
+      const categoryDoc = await Category.findOne({
+        name: category,
+        isListed: true,
+      });
+      filter.category_Id = categoryDoc ? categoryDoc._id : null;
+    }
+
     if (subcategory && subcategory !== "all") {
-      const subcategoryDoc = await Subcategory.findOne({ name: subcategory, isListed: true   });
-      if (subcategoryDoc) {
-        filter.subcategory_Id = subcategoryDoc._id;
-      }else {
-    filter.subcategory_Id = null
-}
+      const subcategoryDoc = await Subcategory.findOne({
+        name: subcategory,
+        isListed: true,
+      });
+      filter.subcategory_Id = subcategoryDoc ? subcategoryDoc._id : null;
     }
 
     if (brand) filter.brand = brand;
     if (material) filter.material = material;
     if (dialType) filter.dialType = dialType;
-    
-    let priceProductIds = null;
 
-if (req.query.priceRange) {
-  const [min, max] = req.query.priceRange.split("-").map(Number);
-
-  const variantQuery = {};
-
-  if (!isNaN(min)) variantQuery.price = { $gte: min };
-  if (!isNaN(max)) variantQuery.price = { ...(variantQuery.price || {}), $lte: max };
-
-  const matchedVariants = await Variant.find(variantQuery, "product_id");
-
-  priceProductIds = matchedVariants.map(v => v.product_id);
-}
-
-
-
-    let sortQuery = {};
-    switch (sort) {
-      case "low-high": sortQuery['variant.price']= 1; break;
-      case "high-low": sortQuery["variants.price"]= -1; break;
-      case "a-z": sortQuery.productname = 1; break;
-      case "z-a": sortQuery.productname = -1; break;
+    const variantPriceMatch = {};
+    if (req.query.priceRange) {
+      const [min, max] = req.query.priceRange.split("-").map(Number);
+      if (!isNaN(min)) variantPriceMatch.$gte = min;
+      if (!isNaN(max)) variantPriceMatch.$lte = max;
     }
-    const finalFilter = { ...filter };
 
-if (priceProductIds) {
-  finalFilter._id = { $in: priceProductIds };
-}
+    const pipeline = [
+      { $match: filter },
 
+      {
+        $lookup: {
+          from: "variants",
+          localField: "_id",
+          foreignField: "product_id",
+          as: "variants",
+        },
+      },
 
+      { $unwind: "$variants" },
+    ];
 
-    const totalProducts = await Product.countDocuments(finalFilter);
+    // Price filter
+    if (req.query.priceRange) {
+      pipeline.push({
+        $match: {
+          "variants.price": variantPriceMatch,
+        },
+      });
+    }
 
-    const productsData = await Product.find(finalFilter)
-    .populate("category_Id")
-    .populate("subcategory_Id")
-    .populate({
-      path: "variants",
-       match:  priceProductIds ? {} : {}
-  })
-      .sort(sortQuery)
-      .skip(skip)
-      .limit(limit);
+    // Group (FIRST variant only — no sorting before this)
+    pipeline.push({
+      $group: {
+        _id: "$_id",
+        productname: { $first: "$productname" },
+        description: { $first: "$description" },
+        brand: { $first: "$brand" },
+        firstVariant: { $first: "$variants" },
+      },
+    });
 
+    // Product-level sorting
+    if (sort === "low-high") {
+      pipeline.push({ $sort: { "firstVariant.price": 1 } });
+    } else if (sort === "high-low") {
+      pipeline.push({ $sort: { "firstVariant.price": -1 } });
+    } else if (sort === "a-z") {
+      pipeline.push({ $sort: { productname: 1 } });
+    } else if (sort === "z-a") {
+      pipeline.push({ $sort: { productname: -1 } });
+    }
+
+    // Count after filters
+    const totalResult = await Product.aggregate(pipeline);
+    const totalProducts = totalResult.length;
     const totalPages = Math.ceil(totalProducts / limit);
 
-    // map properly
-    const productsForUser = productsData.map(p => {
-      const firstVariant = p.variants?.[0];
-      
+    // Pagination
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: limit });
 
-      return {
-        _id: p._id,
-        name: p.productname,
-        description: p.description,
-        mainImage: firstVariant?.images?.[0],
-        price: firstVariant?.price,
-        brand: p.brand,
-        variantId: firstVariant?._id
-        
-      }
-    })
+    const productsData = await Product.aggregate(pipeline);
 
+    const productsForUser = productsData.map((p) => ({
+      _id: p._id,
+      name: p.productname,
+      description: p.description,
+      mainImage: p.firstVariant?.images?.[0], // first variant image
+      price: p.firstVariant?.price,
+      brand: p.brand,
+      variantId: p.firstVariant?._id,
+    }));
 
     return res.render("user/allProduct", {
       products: productsForUser,
@@ -131,9 +138,10 @@ if (priceProductIds) {
     });
 
   } catch (err) {
-    next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
+    next(new AppError(err.message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
-}
+};
+
 
 const getProductDetails = async (req, res,next) => {
   try {

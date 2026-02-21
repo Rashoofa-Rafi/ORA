@@ -60,7 +60,7 @@ type:Number
   returnReason: {
     type:String
   },
-   expectedDelivery: {
+   deliveryDate: {
     type:Date},
     refundAmount:{
       type:Number,

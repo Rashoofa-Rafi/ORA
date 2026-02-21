@@ -153,6 +153,9 @@ const updateStatus=async(req,res,next)=>{
 
     
     item.itemStatus = itemStatus;
+    if(itemStatus==='delivered' && previousStatus!=='delivered'){
+      item.deliveryDate=new Date()
+    }
     const restoreStatuses = [ 'returned'];
 
     if (

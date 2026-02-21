@@ -1,241 +1,318 @@
-const Order = require("../models/orderSchema")
-const Product = require("../models/productSchema")
-const Category = require("../models/categorySchema")
+const Order = require("../models/orderSchema");
+const Product = require("../models/productSchema");
+const Category = require("../models/categorySchema");
 const User = require("../models/userSchema");
 
 const getDashboard = async (req, res, next) => {
   try {
     const { filter = "year", startDate, endDate } = req.query;
 
-    let dateFilter = {};
     const now = new Date();
 
-    if (filter === "today") {
-      const start = new Date();
-      start.setHours(0,0,0,0);
-      const end = new Date();
-      end.setHours(23,59,59,999);
-      dateFilter = { createdAt: { $gte: start, $lte: end } };
-    }
-
-    if (filter === "week") {
-      const start = new Date();
-      start.setDate(now.getDate() - 7);
-      dateFilter = { createdAt: { $gte: start, $lte: now } };
-    }
-
-    if (filter === "month") {
-      const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      const end = new Date(now.getFullYear(), now.getMonth()+1, 0, 23,59,59);
-      dateFilter = { createdAt: { $gte: start, $lte: end } };
-    }
-
-    if (filter === "year") {
-      const start = new Date(now.getFullYear(), 0, 1);
-      const end = new Date(now.getFullYear(), 11, 31, 23,59,59);
-      dateFilter = { createdAt: { $gte: start, $lte: end } };
-    }
-
-    if (filter === "custom" && startDate && endDate) {
-  dateFilter = {
-    createdAt: {
-      $gte: new Date(startDate),
-      $lte: new Date(new Date(endDate).setHours(23,59,59,999))
-    }
-  };
-}
-
-    /*  SUMMARY CARDS */
-const matchCondition = {
-      ...dateFilter,
-      isFinalized: true
-    };
-    
-
-    const deliveredOrdersCount = await Order.aggregate([
-  { $match: matchCondition },
-  { $unwind: "$orderItems" },
-  { $match: { "orderItems.itemStatus": "delivered" } },
-  {
-    $group: { 
-      _id: "$_id"
-    }
-  },
-  { $count: "total" }
-]);
-const totalOrders =deliveredOrdersCount[0]?.total|| 0 
-
-    const deliveredRevenueAgg = await Order.aggregate([
-  { $match: matchCondition },
-  { $unwind: "$orderItems" },
-  { $match: { "orderItems.itemStatus": "delivered" } },
-  {
-    $group: {
-      _id: null,
-      totalRevenue: { $sum: "$orderItems.finalItemAmount" },
-      
-    }
-  }
-]);
-
-const netRevenue = deliveredRevenueAgg[0]?.totalRevenue || 0;
-
-    const totalCustomer = await User.countDocuments({ role: "user",isDeleted:false });
-    const totalProduct = await Product.countDocuments();
-
-    const pendingItemsAgg = await Order.aggregate([
-  { $match: matchCondition },
-  { $unwind: "$orderItems" },
-  { $match: { "orderItems.itemStatus": "confirmed" ||"shipped" } },
-  { $count: "total" }
-])
-const totalPending = pendingItemsAgg[0]?.total ||0
-
-const cancelledItemsAgg = await Order.aggregate([
-  { $match: matchCondition },
-  { $unwind: "$orderItems" },
-  { $match: { "orderItems.itemStatus": "cancelled" } },
-  { $count: "total" }
-]);
-
-const totalCancelled = cancelledItemsAgg[0]?.total || 0;
-
-
-   
-
-   /* ================= DYNAMIC SALES CHART ================= */
-
-let groupStage;
-let labelFormat;
+let start, end;
 
 if (filter === "today") {
-  // Group by hour
-  groupStage = {
-    _id: { hour: { $hour: "$createdAt" } },
-    revenue: { $sum: "$finalAmount" }
-  };
-  labelFormat = (d) => `${d._id.hour}:00`;
+  start = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    0, 0, 0, 0
+  ));
+
+  end = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    23, 59, 59, 999
+  ));
 }
 
-else if (filter === "week" || filter === "month" || filter === "custom") {
-  // Group by day
-  groupStage = {
-    _id: {
-      day: { $dayOfMonth: "$createdAt" },
-      month: { $month: "$createdAt" }
-    },
-    revenue: { $sum: "$finalAmount" }
-  };
-  labelFormat = (d) => `${d._id.day}/${d._id.month}`;
+else if (filter === "week") {
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setUTCDate(now.getUTCDate() - 6);
+
+  start = new Date(Date.UTC(
+    sevenDaysAgo.getUTCFullYear(),
+    sevenDaysAgo.getUTCMonth(),
+    sevenDaysAgo.getUTCDate(),
+    0, 0, 0, 0
+  ));
+
+  end = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    23, 59, 59, 999
+  ));
 }
 
-else {
-  // Year → group by month
-  groupStage = {
-    _id: { month: { $month: "$createdAt" } },
-    revenue: { $sum: "$finalAmount" }
-  };
-  labelFormat = (d) => `Month ${d._id.month}`;
+else if (filter === "month") {
+  start = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    1, 0, 0, 0, 0
+  ));
+
+  end = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth() + 1,
+    0, 23, 59, 59, 999
+  ));
 }
 
-const salesDataAgg = await Order.aggregate([
-  { $match: matchCondition },
-  { $unwind: "$orderItems" },
-  { $match: { "orderItems.itemStatus": "delivered" } },
-  {
-    $group: groupStage = {
-      _id: filter === "today"
-        ? { hour: { $hour: "$createdAt" } }
-        : filter === "year"
-        ? { month: { $month: "$createdAt" } }
-        : {
-            day: { $dayOfMonth: "$createdAt" },
-            month: { $month: "$createdAt" }
-          },
-      revenue: { $sum: "$orderItems.finalItemAmount" }
+else if (filter === "year") {
+  start = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    0, 1, 0, 0, 0, 0
+  ));
+
+  end = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    11, 31, 23, 59, 59, 999
+  ));
+}
+
+    
+
+    /*BASE PIPELINE */
+
+    const baseMatch = {
+      isFinalized: true
+    };
+
+    const deliveryMatch = {
+      "orderItems.itemStatus": "delivered",
+      "orderItems.deliveryDate": { $gte: start, $lte: end }
+    };
+
+    /* TOTAL DELIVERED ORDERS */
+
+    const deliveredOrdersAgg = await Order.aggregate([
+      { $match: baseMatch },
+      { $unwind: "$orderItems" },
+      { $match: deliveryMatch },
+      { $group: { _id: "$_id" } },
+      { $count: "total" }
+    ]);
+
+    const totalOrders = deliveredOrdersAgg[0]?.total || 0;
+
+    /* REVENUE  */
+
+    const revenueAgg = await Order.aggregate([
+      { $match: baseMatch },
+      { $unwind: "$orderItems" },
+      { $match: deliveryMatch },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$orderItems.finalItemAmount" }
+        }
+      }
+    ]);
+
+    const netRevenue = revenueAgg[0]?.totalRevenue || 0;
+
+    /* ================= OTHER COUNTS ================= */
+
+    const totalCustomer = await User.countDocuments({ role: "user", isDeleted: false });
+    const totalProduct = await Product.countDocuments();
+
+    const pendingAgg = await Order.aggregate([
+      { $match: baseMatch },
+      { $unwind: "$orderItems" },
+      { $match: { "orderItems.itemStatus": { $in: ["confirmed", "shipped"] } } },
+      { $count: "total" }
+    ]);
+
+    const totalPending = pendingAgg[0]?.total || 0;
+
+    const cancelledAgg = await Order.aggregate([
+      { $match: baseMatch },
+      { $unwind: "$orderItems" },
+      { $match: { "orderItems.itemStatus": "cancelled" } },
+      { $count: "total" }
+    ]);
+
+    const totalCancelled = cancelledAgg[0]?.total || 0;
+
+    const returnedAgg = await Order.aggregate([
+      { $match: baseMatch },
+      { $unwind: "$orderItems" },
+      { $match: { "orderItems.itemStatus": "returned" } },
+      { $count: "total" }
+    ]);
+
+    const totalReturned = returnedAgg[0]?.total || 0;
+
+    /*SALES CHART  */
+
+    let groupId;
+    let sortStage;
+    let labelFormat;
+
+    if (filter === "today") {
+      groupId = { hour: { $hour: "$orderItems.deliveryDate" } };
+      sortStage = { "_id.hour": 1 };
+      labelFormat = d => `${d._id.hour}:00`;
     }
-  },
-  { $sort: { "_id": 1 } }
-]);
 
+    else if (filter === "year") {
+      groupId = { month: { $month: "$orderItems.deliveryDate" } };
+      sortStage = { "_id.month": 1 };
+      labelFormat = d => `Month ${d._id.month}`;
+    }
 
-const salesChartLabels = salesDataAgg.map(labelFormat);
-const salesChartData = salesDataAgg.map(d => d.revenue);
+    else {
+      groupId = {
+        day: { $dayOfMonth: "$orderItems.deliveryDate" },
+        month: { $month: "$orderItems.deliveryDate" }
+      };
+      sortStage = { "_id.month": 1, "_id.day": 1 };
+      labelFormat = d => `${d._id.day}/${d._id.month}`;
+    }
 
-
-    /*TOP PRODUCTS */
+    const salesAgg = await Order.aggregate([
+      { $match: baseMatch },
+      { $unwind: "$orderItems" },
+      { $match: deliveryMatch },
+      {
+        $group: {
+          _id: groupId,
+          revenue: { $sum: "$orderItems.finalItemAmount" }
+        }
+      },
+      { $sort: sortStage }
+    ]);
+    
+    let salesChartLabels = [];
+    let salesChartData = [];
+    
+   if (filter === "today") {
+    
+      const hoursRevenue = Array(24).fill(0);
+    
+      salesAgg.forEach(item => {
+        const hourIndex = item._id.hour;
+        hoursRevenue[hourIndex] = item.revenue;
+      });
+    
+      salesChartLabels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+      salesChartData = hoursRevenue;
+    }
+    else if (filter === "year") {
+    
+      const monthsRevenue = Array(12).fill(0);
+    
+      salesAgg.forEach(item => {
+        const monthIndex = item._id.month - 1;
+        monthsRevenue[monthIndex] = item.revenue;
+      });
+    
+      salesChartLabels = [
+        "Jan","Feb","Mar","Apr","May","Jun",
+        "Jul","Aug","Sep","Oct","Nov","Dec"
+      ];
+    
+      salesChartData = monthsRevenue;
+    }
+    else {
+    
+      const daysInMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0
+      ).getDate();
+    
+      const monthRevenue = Array(daysInMonth).fill(0);
+    
+      salesAgg.forEach(item => {
+        const dayIndex = item._id.day - 1;
+        monthRevenue[dayIndex] = item.revenue;
+      });
+    
+      salesChartLabels = Array.from(
+        { length: daysInMonth },
+        (_, i) => `${i + 1}/${now.getMonth() + 1}`
+      );
+    
+      salesChartData = monthRevenue;
+    }
+    
+    /* TOP PRODUCTS */
 
     const topProductsAgg = await Order.aggregate([
-  { $match: matchCondition },
-  { $unwind: "$orderItems" },
-  { $match: { "orderItems.itemStatus": "delivered" } },
-  {
-    $group: {
-      _id: "$orderItems.productId",
-      totalSold: { $sum: "$orderItems.quantity" },
-      revenue: { $sum: "$orderItems.finalItemAmount" }
-    }
-  },
-  { $sort: { totalSold: -1 } },
-  { $limit: 10 },
-  {
-    $lookup: {
-      from: "products",
-      localField: "_id",
-      foreignField: "_id",
-      as: "product"
-    }
-  },
-  { $unwind: "$product" }
-]);
-
+      { $match: baseMatch },
+      { $unwind: "$orderItems" },
+      { $match: deliveryMatch },
+      {
+        $group: {
+          _id: "$orderItems.productId",
+          totalSold: { $sum: "$orderItems.quantity" }
+        }
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "product"
+        }
+      },
+      { $unwind: "$product" }
+    ]);
 
     const topProducts = topProductsAgg.map(p => ({
-      name: p.product.productname ,
+      name: p.product.productname,
       totalSold: p.totalSold
     }));
 
-    /*TOP CATEGORIES */
+    /* TOP CATEGORIES  */
 
-  const topCategoriesAgg = await Order.aggregate([
-  { $match: matchCondition},
-  { $unwind: "$orderItems" },
-  { $match: { "orderItems.itemStatus": "delivered" } },
-  {
-    $lookup: {
-      from: "products",
-      localField: "orderItems.productId",
-      foreignField: "_id",
-      as: "product"
-    }
-  },
-  { $unwind: "$product" },
-  {
-    $group: {
-      _id: "$product.category_Id",
-      totalSold: { $sum: "$orderItems.quantity" }
-    }
-  },
-  { $sort: { totalSold: -1 } },
-  { $limit: 10 },
-  {
-    $lookup: {
-      from: "categories",
-      localField: "_id",
-      foreignField: "_id",
-      as: "category"
-    }
-  },
-  { $unwind: "$category" }
-]);
-
+    const topCategoriesAgg = await Order.aggregate([
+      { $match: baseMatch },
+      { $unwind: "$orderItems" },
+      { $match: deliveryMatch },
+      {
+        $lookup: {
+          from: "products",
+          localField: "orderItems.productId",
+          foreignField: "_id",
+          as: "product"
+        }
+      },
+      { $unwind: "$product" },
+      {
+        $group: {
+          _id: "$product.category_Id",
+          totalSold: { $sum: "$orderItems.quantity" }
+        }
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "category"
+        }
+      },
+      { $unwind: "$category" }
+    ]);
 
     const topCategories = topCategoriesAgg.map(c => ({
       name: c.category.name,
       totalSold: c.totalSold
     }));
 
-  res.render("admin/dashboard", {
+    /* ================= RENDER ================= */
+    console.log("LABELS:", salesChartLabels);
+    console.log("DATA:", salesChartData);
+    
+    res.render("admin/dashboard", {
       report: {
         totalOrders,
         netRevenue,
@@ -243,6 +320,7 @@ const salesChartData = salesDataAgg.map(d => d.revenue);
         totalProduct,
         totalPending,
         totalCancelled,
+        totalReturned,
         salesChartLabels,
         salesChartData,
         topProducts,

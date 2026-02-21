@@ -65,11 +65,7 @@
               </p>
             </div>
 
-            <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
-              <p class="text-sm text-emerald-700">TotalRevenue</p>
-              <p class="text-2xl font-bold text-emerald-900">₹ <%= report.netRevenue.toFixed(2) %>
-              </p>
-            </div>
+            
 
             <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
               <p class="text-sm text-emerald-700">TotalCustomer</p>
@@ -96,6 +92,12 @@
               <p class="text-sm text-emerald-700">CancelledOrders</p>
               <p class="text-2xl font-bold text-green-600">
                 <%= report.totalCancelled %>
+              </p>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+              <p class="text-sm text-emerald-700">ReturnedOrders</p>
+              <p class="text-2xl font-bold text-green-600">
+                <%= report.totalReturned %>
               </p>
             </div>
 

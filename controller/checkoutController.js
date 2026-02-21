@@ -401,6 +401,9 @@ const placeOrder = async (req, res, next) => {
         if (!finalAmount || isNaN(finalAmount) || finalAmount <= 0) {
             throw new AppError(`Invalid payment amount: ${finalAmount}`, HTTP_STATUS.BAD_REQUEST);
         }
+        if (paymentMethod === "COD" && finalAmount > 1000) {
+            throw new AppError("Cash on Delivery is not available for orders above ₹1000",HTTP_STATUS.BAD_REQUEST)
+        }
         let razorpayOrder
 
         if (paymentMethod === "RAZORPAY") {
@@ -731,3 +734,5 @@ module.exports = {
     createRetryRazorpayOrder,
     paymentFailed
 }
+
+

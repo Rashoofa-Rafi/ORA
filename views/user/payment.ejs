@@ -143,7 +143,9 @@
 
     </div>
     <%- include("../partials/user/footer") %>
+    
       <script>
+        const finalAmount = <%= summary && summary.finalAmount ? summary.finalAmount : 0 %>;
         document.getElementById("placeOrderBtn").addEventListener("click", async () => {
           const paymentMethod = document.querySelector(
             'input[name="paymentMethod"]:checked'
@@ -155,6 +157,13 @@
               title: 'Select a payment method'
             });
           }
+          if (paymentMethod === "COD" && finalAmount > 1000) {
+    return Swal.fire({
+      icon: 'error',
+      title: 'COD not available',
+      text: 'Cash on Delivery is allowed only for orders up to ₹1000.'
+    });
+  }
 
           try {
             const res = await fetch("/user/payment/place-order", {

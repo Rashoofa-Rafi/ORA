@@ -71,6 +71,7 @@ const addOffer = async (req, res, next) => {
             throw new Error("Invalid offer date range",HTTP_STATUS.BAD_REQUEST);
         }
         const offerQuery = {type,
+            isActive:true,
             startDate: { $lte: new Date(endDate) },
             endDate: { $gte: new Date(startDate) }
         };

@@ -97,7 +97,7 @@
                 <option value="0-999" <%= query.priceRange === "0-999" ? 'selected' : '' %>>Below ₹1000</option>
                 <option value="1000-1999" <%= query.priceRange === "1000-1999" ? 'selected' : '' %>>₹1000 - ₹2000</option>
                 <option value="2000-4999" <%= query.priceRange === "2000-4999" ? 'selected' : '' %>>₹2000 - ₹5000</option>
-                <option value="5000+" <%= query.priceRange === "5000+" ? 'selected' : '' %>>Above ₹5000</option>
+                <option value="5000-30000" <%= query.priceRange === "5000-29999" ? 'selected' : '' %>>₹5000 - ₹30000</option>
             </select>
             <% if(query.priceRange){ %>
             <p class="text-green-600 text-sm font-medium">Selected: <%= query.priceRange %></p>

@@ -13,13 +13,7 @@ const loadLogin=async(req,res)=>{
     }
 }
 
-const loadDashboard=async(req,res)=>{
-    try {
-        res.render('admin/dashboard')
-    } catch (error) {
-        res.status(500).send('server error')
-    }
-}
+
 
 const loadOTP=async(req,res)=>{
     try {
@@ -67,7 +61,7 @@ const login= async (req,res,next)=>{
             redirectUrl:'/admin/dashboard'
         })
     } catch (err) {
-        next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
+        next(err)
     }
 }
 
@@ -202,7 +196,7 @@ const logout=(req,res,next)=>{
 module.exports={
     loadLogin,
     loadOTP,
-    loadDashboard,
+    
     loadchangePassword,
     loadforgetPassword,
     login,

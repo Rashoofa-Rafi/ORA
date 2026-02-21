@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const PDFDocument = require("pdfkit");
 const ExcelJS = require("exceljs")
 
+
 const getSalesReport = async (req, res, next) => {
   try {
     const {
@@ -12,42 +13,62 @@ const getSalesReport = async (req, res, next) => {
       page = 1
     } = req.query;
 
+
     const limit = 10;
     const skip = (page - 1) * limit;
+
 
     let dateFilter = {};
     const now = new Date();
 
+
     if (filter === "today") {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
-      dateFilter = { createdAt: { $gte: start } };
+      dateFilter = {
+        orderItems: {$elemMatch: {deliveryDate: { $gte: start }}}
+      };
     }
+   
+   
+
 
     if (filter === "week") {
       const start = new Date();
       start.setDate(start.getDate() - 7);
-      dateFilter = { createdAt: { $gte: start } };
+      dateFilter = {
+        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
+      };
     }
+
 
     if (filter === "month") {
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      dateFilter = { createdAt: { $gte: start } };
+      dateFilter = {
+        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
+      };
     }
+
 
     if (filter === "year") {
       const start = new Date(now.getFullYear(), 0, 1);
-      dateFilter = { createdAt: { $gte: start } };
+      dateFilter = {
+        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
+      };
     }
+
 
     if (filter === "custom" && startDate && endDate) {
       dateFilter = {
-        createdAt: {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate)
+        orderItems: {$elemMatch: {deliveryDate: {
+              $gte: new Date(startDate),
+              $lte: new Date(endDate)
+            }
+          }
         }
       };
     }
+
 
     const matchCondition = {
       ...dateFilter,
@@ -57,6 +78,7 @@ const getSalesReport = async (req, res, next) => {
     const summary = await Order.aggregate([
       { $match: matchCondition },
       { $unwind: "$orderItems" },
+      
 
       {
         $group: {
@@ -119,20 +141,23 @@ const getSalesReport = async (req, res, next) => {
 
 
     const orders = await Order.find(matchCondition)
-      .populate("userId", "fullName email")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    .populate("userId", "fullName email")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
 
-    // derive item-based totals per order (for UI)
-    orders.forEach(order => {
-      order.deliveredAmount = order.orderItems
-        .filter(i => i.itemStatus === "delivered")
-        .reduce((sum, i) => sum + (i.finalItemAmount || 0), 0);
-    });
 
-    const totalOrdersCount = await Order.countDocuments(matchCondition);
+  // derive item-based totals per order (for UI)
+  orders.forEach(order => {
+    order.deliveredAmount = order.orderItems
+      .filter(i => i.itemStatus === "delivered")
+      .reduce((sum, i) => sum + (i.finalItemAmount || 0), 0);
+  });
+
+
+  const totalOrdersCount = await Order.countDocuments(matchCondition);
+        
     const totalPages = Math.ceil(totalOrdersCount / limit);
 
     res.render("admin/sales-report", {
@@ -161,30 +186,40 @@ const exportSalesReportPDF = async (req, res, next) => {
     if (filter === "today") {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
-      dateFilter = { createdAt: { $gte: start } };
+      dateFilter = {
+        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
+      };
     }
 
     if (filter === "week") {
       const start = new Date();
       start.setDate(start.getDate() - 7);
-      dateFilter = { createdAt: { $gte: start } };
+      dateFilter = {
+        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
+      };
     }
 
     if (filter === "month") {
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      dateFilter = { createdAt: { $gte: start } };
+      dateFilter = {
+        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
+      };
     }
 
     if (filter === "year") {
       const start = new Date(now.getFullYear(), 0, 1);
-      dateFilter = { createdAt: { $gte: start } };
+      dateFilter = {
+        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
+      };
     }
 
     if (filter === "custom" && startDate && endDate) {
       dateFilter = {
-        createdAt: {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate)
+        orderItems: {$elemMatch: {deliveryDate: {
+              $gte: new Date(startDate),
+              $lte: new Date(endDate)
+            }
+          }
         }
       };
     }
@@ -388,30 +423,40 @@ const exportSalesReportExcel = async (req, res, next) => {
     if (filter === "today") {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
-      dateFilter = { createdAt: { $gte: start } };
+      dateFilter = {
+        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
+      };
     }
 
     if (filter === "week") {
       const start = new Date();
       start.setDate(start.getDate() - 7);
-      dateFilter = { createdAt: { $gte: start } };
+      dateFilter = {
+        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
+      };
     }
 
     if (filter === "month") {
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      dateFilter = { createdAt: { $gte: start } };
+      dateFilter = {
+        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
+      };
     }
 
     if (filter === "year") {
       const start = new Date(now.getFullYear(), 0, 1);
-      dateFilter = { createdAt: { $gte: start } };
+      dateFilter = {
+        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
+      };
     }
 
     if (filter === "custom" && startDate && endDate) {
       dateFilter = {
-        createdAt: {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate)
+        orderItems: {$elemMatch: {deliveryDate: {
+              $gte: new Date(startDate),
+              $lte: new Date(endDate)
+            }
+          }
         }
       };
     }

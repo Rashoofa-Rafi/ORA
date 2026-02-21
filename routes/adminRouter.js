@@ -79,6 +79,8 @@ router.post('/order/item/return-reject',IsAdminAuthenticated,nocache,adminOrderC
 router.get('/offers',IsAdminAuthenticated,nocache,offerController.getOfferlist)
 router.post('/offers/add',IsAdminAuthenticated,nocache,offerController.addOffer)
 router.put('/offers/edit/:id',IsAdminAuthenticated,nocache,offerController.editOffer)
+router.patch('/offers/deactivate/:id',IsAdminAuthenticated,nocache,offerController.removeOffer)
+
 
 //for coupon management
 
