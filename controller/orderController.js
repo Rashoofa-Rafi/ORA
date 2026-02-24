@@ -278,7 +278,7 @@ const downloadInvoice = async (req, res, next) => {
     /* ---------- HEADER ---------- */
     doc
       .fontSize(20)
-      .text('INVOICE', margin, y, { align: 'center' });
+      .text('ORA', margin, y, { align: 'center' });
 
     y += 40;
 

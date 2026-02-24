@@ -48,10 +48,26 @@ const applyCoupon = async (req, res, next) => {
             throw new AppError('Coupons usage limit reached', HTTP_STATUS.BAD_REQUEST)
 
         }
-        const totalPrice = cart.items.reduce(
-            (sum, i) => sum + i.quantity * i.variantId.price,
-            0
-        )
+        // const totalPrice = cart.items.reduce(
+        //     (sum, i) => sum + i.quantity * i.variantId.price,
+        //     0
+        // )
+        let totalPrice = 0;
+
+for (const item of cart.items) {
+  const product = item.productId;
+  const variant = item.variantId;
+
+  if (!product || !variant || variant.stock === 0 || item.quantity > variant.stock) {
+    continue; 
+  }
+
+  const offerResult = await calculateItemPrice(product, variant, item.categoryId?._id);
+  const finalPrice = offerResult.finalPrice;
+
+  totalPrice += item.quantity * finalPrice;
+}
+        
         if (totalPrice < coupon.minOrderPrice) {
             throw new AppError(`Minimum order ₹${coupon.minOrderPrice}`, HTTP_STATUS.BAD_REQUEST)
         }
@@ -185,7 +201,7 @@ const checkoutContinue = async (req, res, next) => {
         if (!cart || cart.items.length === 0) {
             throw new AppError('Cart is empty', HTTP_STATUS.BAD_REQUEST);
         }
-        // validate cart again (CRITICAL)
+        // validate cart again 
         for (const item of cart.items) {
             const variant = await Variant.findById(item.variantId);
 

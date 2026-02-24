@@ -12,12 +12,8 @@ const getSalesReport = async (req, res, next) => {
       endDate,
       page = 1
     } = req.query;
-
-
     const limit = 10;
     const skip = (page - 1) * limit;
-
-
     let dateFilter = {};
     const now = new Date();
 
@@ -179,7 +175,7 @@ const exportSalesReportPDF = async (req, res, next) => {
   try {
    const { filter = "today", startDate, endDate } = req.query;
 
-    /* ---------------- DATE FILTER (MATCH UI EXACTLY) ---------------- */
+    /*  DATE FILTER  */
     const now = new Date();
     let dateFilter = {};
 
@@ -289,8 +285,7 @@ const exportSalesReportPDF = async (req, res, next) => {
   totalRefundAmount: 0,
   netRevenue: 0
 }
-
-   /* ---------------- ORDERS (MATCH SUMMARY DATASET) ---------------- */
+/* ORDERS  */
     const orders = await Order.find({
       ...matchCondition,
       orderItems: { $elemMatch: { itemStatus: "delivered" } }
@@ -299,7 +294,6 @@ const exportSalesReportPDF = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    /* ---------------- PDF SETUP ---------------- */
     const doc = new PDFDocument({ margin: 40, size: "A4" });
 
     res.setHeader("Content-Type", "application/pdf");
@@ -309,8 +303,6 @@ const exportSalesReportPDF = async (req, res, next) => {
     );
 
     doc.pipe(res);
-
-    /* ---------------- HEADER ---------------- */
     doc.fontSize(18).text("Sales Report", { align: "center" });
     doc.moveDown();
 
@@ -319,7 +311,6 @@ const exportSalesReportPDF = async (req, res, next) => {
     );
     doc.moveDown(2);
 
-    /* ---------------- SUMMARY ---------------- */
     doc.fontSize(12).text("Summary", { underline: true });
     doc.moveDown();
 
@@ -334,11 +325,11 @@ const exportSalesReportPDF = async (req, res, next) => {
 
     doc.moveDown(2);
 
-    /* ---------------- TABLE ---------------- */
+    /*TABLE */
     doc.fontSize(11).text("Order Details", { underline: true });
     doc.moveDown();
 
-    const colX = [40, 130, 210, 300, 380, 440, 500, 560];
+    const colX = [40, 110, 170, 240, 310, 360, 420, 470];
     const rowHeight = 20;
     const tableTop = doc.y;
 
@@ -358,14 +349,17 @@ const exportSalesReportPDF = async (req, res, next) => {
     );
 
     doc.y = tableTop + rowHeight;
-orders.forEach(order => {
+    orders.forEach(order => {
+      if (doc.y + rowHeight > doc.page.height - 40) {
+        doc.addPage();
+        doc.y = 40;
+      }
 
-  // Delivered items (for money)
   const deliveredItems = order.orderItems.filter(
     i => i.itemStatus === "delivered"
   );
 
-  // Cancelled / Returned (for refund display only)
+  
   const refundedItems = order.orderItems.filter(
     i => ["cancelled", "returned"].includes(i.itemStatus)
   );
@@ -392,14 +386,14 @@ orders.forEach(order => {
   const y = doc.y;
 
   doc.fontSize(8).font("Helvetica")
-    .text(order.orderId, colX[0], y)
-    .text(new Date(order.createdAt).toLocaleDateString(), colX[1], y)
-    .text(order.userId?.fullName || "Guest", colX[2], y)
-    .text(order.paymentMethod, colX[3], y)
-    .text(`₹${net.toFixed(2)}`, colX[4], y)
-    .text(`₹${discount.toFixed(2)}`, colX[5], y)
-    .text(`₹${gross.toFixed(2)}`, colX[6], y)
-    .text(order.orderStatus || "—", colX[7], y);
+    .text(order.orderId, colX[0], y,{ width: 60, ellipsis: true })
+    .text(new Date(order.createdAt).toLocaleDateString(), colX[1], y,{ width: 55 })
+    .text(order.userId?.fullName ? order.userId.fullName.split(" ")[0]:"Guest", colX[2], y,{ width: 60, ellipsis: true })
+    .text(order.paymentMethod, colX[3], y,{ width: 60, ellipsis: true })
+    .text(`₹${net.toFixed(2)}`, colX[4], y,{ width: 50 })
+    .text(`₹${discount.toFixed(2)}`, colX[5], y,{ width: 50 })
+    .text(`₹${gross.toFixed(2)}`, colX[6], y,{ width: 50 })
+    .text(order.orderStatus || "—", colX[7], y,{ width: 60 });
 
   doc.y = y + rowHeight;
 });
@@ -410,13 +404,11 @@ doc.end()
   }
 }
 
-
-
 const exportSalesReportExcel = async (req, res, next) => {
   try {
     const { filter = "today", startDate, endDate } = req.query;
 
-    /* ---------------- DATE FILTER (MATCH PDF EXACTLY) ---------------- */
+    /* DATE FILTER */
     const now = new Date();
     let dateFilter = {};
 
@@ -466,7 +458,7 @@ const exportSalesReportExcel = async (req, res, next) => {
       ...dateFilter
     };
 
-    /* ---------------- SUMMARY (SAME AS PDF) ---------------- */
+    /*  SUMMARY */
     const summaryAgg = await Order.aggregate([
       { $match: matchCondition },
       { $unwind: "$orderItems" },
@@ -537,7 +529,7 @@ const exportSalesReportExcel = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    /* ---------------- EXCEL SETUP ---------------- */
+    /*  EXCEL SETUP */
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Sales Report");
 
@@ -554,7 +546,6 @@ const exportSalesReportExcel = async (req, res, next) => {
 
     worksheet.getRow(1).font = { bold: true };
 
-    /* ---------------- SUMMARY ROWS ---------------- */
     worksheet.addRow([]);
     worksheet.addRow(["Summary"]);
     worksheet.addRow(["Total Orders", summary.totalOrders]);
@@ -565,7 +556,6 @@ const exportSalesReportExcel = async (req, res, next) => {
     worksheet.addRow(["Net Revenue", summary.netRevenue]);
     worksheet.addRow([]);
 
-    /* ---------------- ORDER ROWS ---------------- */
     orders.forEach(order => {
 
       const deliveredItems = order.orderItems.filter(
@@ -610,8 +600,6 @@ const exportSalesReportExcel = async (req, res, next) => {
         status: order.orderStatus || "-"
       });
     });
-
-    /* ---------------- RESPONSE ---------------- */
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -629,8 +617,6 @@ const exportSalesReportExcel = async (req, res, next) => {
     next(err);
   }
 };
-
-
 module.exports = { 
     getSalesReport,
     exportSalesReportPDF,
