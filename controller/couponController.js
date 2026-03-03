@@ -8,12 +8,21 @@ const getCouponlist = async (req, res, next) => {
         const search = req.query.search || ''
         const page = parseInt(req.query.page) || 1
         const limit = 6
+        const today = new Date()
+        await Coupon.updateMany({endDate: { $lt: today },isActive: true},
+            { $set: { isActive: false } }
+          );
 
+        await Coupon.updateMany({$expr: { $gte: ["$usedCount", "$usageLimit"] },isActive: true},
+          {$set: { isActive: false }}
+          )
         let filter = {}
         if (search) {
             filter = { code: { $regex: '.*' + search + '.*', $options: 'i' } }
         }
-        const coupons = await Coupon.find(filter)
+        
+        
+        const coupons = await Coupon.find({...filter,isDeleted:false})
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit)
@@ -33,6 +42,37 @@ const getCouponlist = async (req, res, next) => {
         next(err)
     }
 }
+const generateCouponCode = async (req, res, next) => {
+    try {
+  
+      const generateCode = (length = 8) => {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let code = "";
+  
+        for (let i = 0; i < length; i++) {
+          code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+  
+        return code;
+      };
+  
+      let code;
+      let exists = true;
+  
+      while (exists) {
+        code = generateCode(8);
+        exists = await Coupon.findOne({ code });
+      }
+  
+      res.status(200).json({
+        success: true,
+        code
+      });
+  
+    } catch (err) {
+      next(err);
+    }
+  };
 
 const addCoupon = async (req, res, next) => {
     try {
@@ -41,6 +81,7 @@ const addCoupon = async (req, res, next) => {
             minOrderPrice,
             discountType,
             discountValue,
+            maxDiscount,
             usageLimit,
             endDate
         } = req.body;
@@ -48,6 +89,9 @@ const addCoupon = async (req, res, next) => {
         if (!code || !discountType || !endDate) {
             throw new AppError('Missing required fields', HTTP_STATUS.BAD_REQUEST);
         }
+        if (discountType === 'PERCENTAGE' && !maxDiscount) {
+            throw new AppError('Max discount is required for percentage coupons', HTTP_STATUS.BAD_REQUEST);
+          }
 
         await Coupon.create({
             code,
@@ -55,7 +99,8 @@ const addCoupon = async (req, res, next) => {
             discountType,
             discountValue,
             usageLimit,
-            endDate: new Date(endDate)
+            endDate: new Date(endDate),
+            maxDiscount: discountType === 'PERCENTAGE' ? maxDiscount : null
         });
 
         res.status(HTTP_STATUS.CREATED).json({
@@ -71,7 +116,19 @@ const editCoupon = async (req, res, next) => {
     try {
         const { id } = req.params;
 
-        const coupon = await Coupon.findByIdAndUpdate(id, { ...req.body }, { new: true })
+        const updatedData = {
+            code: req.body.code,
+            minOrderPrice: req.body.minOrderPrice,
+            discountType: req.body.discountType,
+            discountValue: req.body.discountValue,
+            usageLimit: req.body.usageLimit,
+            endDate: new Date(req.body.endDate),
+            maxDiscount: req.body.discountType === 'PERCENTAGE'
+              ? req.body.maxDiscount
+              : null
+          };
+
+        const coupon = await Coupon.findByIdAndUpdate(id, updatedData, { new: true })
 
         if (!coupon) {
             throw new AppError('Coupon not found', HTTP_STATUS.BAD_REQUEST);
@@ -94,7 +151,9 @@ const removeCoupon = async (req, res, next) => {
             throw new AppError('Coupon not found', HTTP_STATUS.BAD_REQUEST)
         }
 
-        coupon.isActive = !coupon.isActive
+        
+        coupon.isDeleted = true
+    coupon.isActive = false
         await coupon.save()
 
         res.status(HTTP_STATUS.OK).json({
@@ -155,11 +214,31 @@ const getUserCoupon=async(req,res,next)=>{
         next (err)
     }
 }
+const getAvailableCoupons = async (req, res, next) => {
+    try {
+      const userId = req.session.user;
+      const user = await User.findById(userId);
+      const today = new Date();
+       today.setUTCHours(0, 0, 0, 0);
+
+      const coupons = await Coupon.find({
+       isActive: true,
+        endDate: { $gte: today },
+        $expr: { $lt: ["$usedCount", "$usageLimit"] }
+        }).lean();
+      res.json({ success: true, coupons });
+  
+    } catch (err) {
+      next(err);
+    }
+  };
 module.exports = {
     getCouponlist,
     addCoupon,
     editCoupon,
     removeCoupon,
     getReferral,
-    getUserCoupon
+    getUserCoupon,
+    getAvailableCoupons,
+    generateCouponCode
 }

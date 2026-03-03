@@ -128,8 +128,8 @@ toggle.addEventListener("click", () => {
             if(result.success){
                  await Swal.fire({icon:'success',
                 text:result.message,
-                showConfirmButton:true,
-                allowOutsideClick: false
+                showConfirmButton:false,
+                
             })
             
             window.location.href=result.redirectUrl

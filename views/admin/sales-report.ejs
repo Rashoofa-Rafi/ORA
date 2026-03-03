@@ -103,11 +103,11 @@ class="bg-red-600 text-white px-4 py-2 rounded text-sm">
             <tr class="text-left text-sm font-semibold text-white">
               <th class="px-4 py-3">Order ID</th>
               <th class="px-4 py-3">Date</th>
-              <th class="px-4 py-3">Customer</th>
               <th class="px-4 py-3">Payment</th>
               <th class="px-4 py-3 text-right">Gross</th>
               <th class="px-4 py-3 text-right">Discount</th>
-              <th class="px-4 py-3 text-right">netRevenue</th>
+              <th class="px-4 py-3 text-right">Refund</th>
+              <th class="px-4 py-3 text-right">NetAmount</th>
               <th class="px-4 py-3">Status</th>
             </tr>
           </thead>
@@ -145,9 +145,6 @@ class="bg-red-600 text-white px-4 py-2 rounded text-sm">
     <%= new Date(order.createdAt).toLocaleDateString() %>
   </td>
 
-  <td class="px-4 py-3">
-    <%= order.userId?.fullName || 'Guest' %>
-  </td>
 
   <td class="px-4 py-3 capitalize">
     <%= order.paymentMethod %>
@@ -160,8 +157,11 @@ class="bg-red-600 text-white px-4 py-2 rounded text-sm">
   <td class="px-4 py-3 text-right text-red-600">
     - ₹ <%= ((order.offerDiscount || 0) + (coupon?.discountAmount || 0)) %>
   </td>
+  <td class="px-4 py-3 text-right text-red-600">
+    - ₹ <%= order.refundAmount %>
+  </td>
 <td class="px-4 py-3 text-right font-semibold">
-    ₹ <%= order.finalAmount.toFixed(2) %>
+    ₹ <%= order.netAmount.toFixed(2) %>
   </td>
 
   <td class="px-4 py-3">

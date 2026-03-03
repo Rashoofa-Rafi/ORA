@@ -205,6 +205,8 @@
     const data = await res.json();
 
     if (res.ok) {
+      const cartBadge = document.getElementById('cart-count');
+      if (cartBadge) cartBadge.textContent = data.cartCount;
          await Swal.fire({
             icon:'success',
             title:data.message ,
@@ -217,7 +219,7 @@
         title:data.message,
         timer:2000
     })
-
+location.reload()
   } catch (err) {
     Swal.fire({
         icon:'error',
@@ -237,6 +239,10 @@
     const data = await res.json();
 
     if (res.ok) {
+      
+      const wishlistBadge = document.getElementById('wishlist-count');
+      if (wishlistBadge) wishlistBadge.textContent = data.wishlistCount;
+
          await Swal.fire({
             icon:'success',
             title:data.message ,
@@ -244,6 +250,7 @@
         })
       return;
     }
+    location.reload()
     Swal.fire({
         icon:'error',
         title:data.message,

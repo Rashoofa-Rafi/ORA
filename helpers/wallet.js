@@ -5,7 +5,7 @@ const HTTP_STATUS = require('../middleware/statusCode')
 
 
 async function creditWallet({orderId,reason,amount,userId}){
-    console.log(orderId,userId,amount,reason)
+    
     if(!userId){
             throw new AppError('please login',HTTP_STATUS.UNAUTHORIZED)
         }

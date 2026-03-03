@@ -65,6 +65,7 @@ const addToWishlist = async (req, res, next) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
+            wishlistCount: wishlist.items.length,
             message: 'successfully added to Wishlist'
         });
     } catch (err) {

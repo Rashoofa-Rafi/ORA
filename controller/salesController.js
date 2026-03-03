@@ -6,65 +6,43 @@ const ExcelJS = require("exceljs")
 
 const getSalesReport = async (req, res, next) => {
   try {
-    const {
-      filter = "year",
-      startDate,
-      endDate,
-      page = 1
-    } = req.query;
+    const { filter = "year", startDate, endDate, page = 1 } = req.query;
+
     const limit = 10;
     const skip = (page - 1) * limit;
-    let dateFilter = {};
     const now = new Date();
 
+    let dateFilter = {};
 
+    // DATE FILTER 
     if (filter === "today") {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: { $gte: start }}}
-      };
+      dateFilter.createdAt = { $gte: start };
     }
-   
-   
-
 
     if (filter === "week") {
       const start = new Date();
       start.setDate(start.getDate() - 7);
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
-      };
+      dateFilter.createdAt = { $gte: start };
     }
-
 
     if (filter === "month") {
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
-      };
+      dateFilter.createdAt = { $gte: start };
     }
-
 
     if (filter === "year") {
       const start = new Date(now.getFullYear(), 0, 1);
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
-      };
+      dateFilter.createdAt = { $gte: start };
     }
-
 
     if (filter === "custom" && startDate && endDate) {
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: {
-              $gte: new Date(startDate),
-              $lte: new Date(endDate)
-            }
-          }
-        }
+      dateFilter.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
       };
     }
-
 
     const matchCondition = {
       ...dateFilter,
@@ -102,7 +80,7 @@ const getSalesReport = async (req, res, next) => {
         $group: {
       _id: null,
 
-      totalOrders: { $sum: { $cond: [{ $eq: ["$hasDeliveredItem", 1] }, 1, 0] } },
+      totalOrders: { $sum:1 },
       totalSalesAmount: { $sum: "$grossSales" },
       totalCouponDiscount: { $sum: "$couponDiscount" },
       totalOfferDiscount: { $sum: "$offerDiscount" },
@@ -149,6 +127,15 @@ const getSalesReport = async (req, res, next) => {
     order.deliveredAmount = order.orderItems
       .filter(i => i.itemStatus === "delivered")
       .reduce((sum, i) => sum + (i.finalItemAmount || 0), 0);
+
+      order.refundAmount = order.orderItems
+      .filter(i => ["cancelled", "returned"].includes(i.itemStatus))
+      .reduce((sum, i) => sum + (i.refundAmount || 0), 0);
+
+      const totalFinalAmount = order.orderItems
+    .reduce((sum, i) => sum + (i.finalItemAmount || 0), 0);
+
+  order.netAmount = totalFinalAmount - order.refundAmount;
   });
 
 
@@ -174,49 +161,36 @@ const getSalesReport = async (req, res, next) => {
 const exportSalesReportPDF = async (req, res, next) => {
   try {
    const { filter = "today", startDate, endDate } = req.query;
+   const now = new Date();
+   let dateFilter = {};
 
     /*  DATE FILTER  */
-    const now = new Date();
-    let dateFilter = {};
-
     if (filter === "today") {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
-      };
+      dateFilter.createdAt = { $gte: start };
     }
 
     if (filter === "week") {
       const start = new Date();
       start.setDate(start.getDate() - 7);
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
-      };
+      dateFilter.createdAt = { $gte: start };
     }
 
     if (filter === "month") {
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
-      };
+      dateFilter.createdAt = { $gte: start };
     }
 
     if (filter === "year") {
       const start = new Date(now.getFullYear(), 0, 1);
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
-      };
+      dateFilter.createdAt = { $gte: start };
     }
 
     if (filter === "custom" && startDate && endDate) {
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: {
-              $gte: new Date(startDate),
-              $lte: new Date(endDate)
-            }
-          }
-        }
+      dateFilter.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
       };
     }
 
@@ -252,7 +226,7 @@ const exportSalesReportPDF = async (req, res, next) => {
         $group: {
       _id: null,
 
-      totalOrders: { $sum: { $cond: [{ $eq: ["$hasDeliveredItem", 1] }, 1, 0] } },
+      totalOrders: { $sum: 1 },
       totalSalesAmount: { $sum: "$grossSales" },
       totalCouponDiscount: { $sum: "$couponDiscount" },
       totalOfferDiscount: { $sum: "$offerDiscount" },
@@ -286,10 +260,7 @@ const exportSalesReportPDF = async (req, res, next) => {
   netRevenue: 0
 }
 /* ORDERS  */
-    const orders = await Order.find({
-      ...matchCondition,
-      orderItems: { $elemMatch: { itemStatus: "delivered" } }
-    })
+    const orders = await Order.find(matchCondition)
       .populate("userId", "fullName")
       .sort({ createdAt: -1 })
       .lean();
@@ -336,11 +307,11 @@ const exportSalesReportPDF = async (req, res, next) => {
     const headers = [
       "Order ID",
       "Date",
-      "Customer",
       "Payment",
-      "Net",
-      "Discount",
       "Gross",
+      "Discount",
+      "Refund",
+      "Net",
       "Status"
     ];
 
@@ -359,40 +330,31 @@ const exportSalesReportPDF = async (req, res, next) => {
     i => i.itemStatus === "delivered"
   );
 
-  
   const refundedItems = order.orderItems.filter(
     i => ["cancelled", "returned"].includes(i.itemStatus)
   );
 
-  const gross = deliveredItems.reduce(
+  const gross = order.orderItems.reduce(
     (sum, i) => sum + (i.price*i.quantity || 0),
     0
   );
 
-  const coupon = deliveredItems.reduce(
-    (sum, i) => sum + (i.couponShare || 0),
-    0
-  );
-
-  const offer = deliveredItems.reduce((sum, i) => sum + (i.discount || 0), 0);
-  const refund = refundedItems.reduce(
-    (sum, i) => sum + (i.refundAmount || 0),
-    0
-  );
-
+  const coupon = order.orderItems.reduce((sum, i) => sum + (i.couponShare || 0),0)
+  const offer = order.orderItems.reduce((sum, i) => sum + (i.discount || 0), 0);
+  const refund = refundedItems.reduce((sum, i) => sum + (i.refundAmount || 0),0)
   const discount = coupon + offer;
-  const net = gross - discount ;
+  const net = gross - (discount +refund);
 
   const y = doc.y;
 
   doc.fontSize(8).font("Helvetica")
     .text(order.orderId, colX[0], y,{ width: 60, ellipsis: true })
     .text(new Date(order.createdAt).toLocaleDateString(), colX[1], y,{ width: 55 })
-    .text(order.userId?.fullName ? order.userId.fullName.split(" ")[0]:"Guest", colX[2], y,{ width: 60, ellipsis: true })
-    .text(order.paymentMethod, colX[3], y,{ width: 60, ellipsis: true })
-    .text(`₹${net.toFixed(2)}`, colX[4], y,{ width: 50 })
-    .text(`₹${discount.toFixed(2)}`, colX[5], y,{ width: 50 })
-    .text(`₹${gross.toFixed(2)}`, colX[6], y,{ width: 50 })
+    .text(order.paymentMethod, colX[2], y,{ width: 60, ellipsis: true })
+    .text(`₹${gross.toFixed(2)}`, colX[3], y,{ width: 50 })
+    .text(`₹${discount.toFixed(2)}`, colX[4], y,{ width: 50 })
+    .text(`₹${refund.toFixed(2)}`, colX[5], y,{ width: 50 })
+    .text(`₹${net.toFixed(2)}`, colX[6], y,{ width: 50 })
     .text(order.orderStatus || "—", colX[7], y,{ width: 60 });
 
   doc.y = y + rowHeight;
@@ -407,49 +369,36 @@ doc.end()
 const exportSalesReportExcel = async (req, res, next) => {
   try {
     const { filter = "today", startDate, endDate } = req.query;
+   const now = new Date();
+   let dateFilter = {};
 
-    /* DATE FILTER */
-    const now = new Date();
-    let dateFilter = {};
-
+    /*  DATE FILTER  */
     if (filter === "today") {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
-      };
+      dateFilter.createdAt = { $gte: start };
     }
 
     if (filter === "week") {
       const start = new Date();
       start.setDate(start.getDate() - 7);
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
-      };
+      dateFilter.createdAt = { $gte: start };
     }
 
     if (filter === "month") {
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
-      };
+      dateFilter.createdAt = { $gte: start };
     }
 
     if (filter === "year") {
       const start = new Date(now.getFullYear(), 0, 1);
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: { $gte: start } }}
-      };
+      dateFilter.createdAt = { $gte: start };
     }
 
     if (filter === "custom" && startDate && endDate) {
-      dateFilter = {
-        orderItems: {$elemMatch: {deliveryDate: {
-              $gte: new Date(startDate),
-              $lte: new Date(endDate)
-            }
-          }
-        }
+      dateFilter.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
       };
     }
 
@@ -457,6 +406,7 @@ const exportSalesReportExcel = async (req, res, next) => {
       isFinalized: true,
       ...dateFilter
     };
+
 
     /*  SUMMARY */
     const summaryAgg = await Order.aggregate([
@@ -486,7 +436,7 @@ const exportSalesReportExcel = async (req, res, next) => {
        $group: {
       _id: null,
 
-      totalOrders: { $sum: { $cond: [{ $eq: ["$hasDeliveredItem", 1] }, 1, 0] }  },
+      totalOrders: { $sum:1  },
       totalSalesAmount: { $sum: "$grossSales" },
       totalCouponDiscount: { $sum: "$couponDiscount" },
       totalOfferDiscount: { $sum: "$offerDiscount" },
@@ -520,11 +470,8 @@ const exportSalesReportExcel = async (req, res, next) => {
       netRevenue: 0
     };
 
-    /* ---------------- ORDERS (MATCH PDF DATASET) ---------------- */
-    const orders = await Order.find({
-      ...matchCondition,
-      orderItems: { $elemMatch: { itemStatus: "delivered" } }
-    })
+    /* ORDERS */
+    const orders = await Order.find(matchCondition)
       .populate("userId", "fullName")
       .sort({ createdAt: -1 })
       .lean();
@@ -536,11 +483,11 @@ const exportSalesReportExcel = async (req, res, next) => {
     worksheet.columns = [
       { header: "Order ID", key: "orderId", width: 20 },
       { header: "Date", key: "date", width: 15 },
-      { header: "Customer", key: "customer", width: 25 },
-      { header: "Payment", key: "payment", width: 15 },
-      { header: "Net", key: "net", width: 15 },
-      { header: "Discount", key: "discount", width: 15 },
+      { header: "Payment", key: "payment", width: 15},
       { header: "Gross", key: "gross", width: 15 },
+      {header: "Discount", key: "discount", width: 15 },
+      { header: "Refund", key: "refund", width: 15 },
+      { header: "Net", key: "net", width: 15  },
       { header: "Status", key: "status", width: 15 }
     ];
 
@@ -558,45 +505,23 @@ const exportSalesReportExcel = async (req, res, next) => {
 
     orders.forEach(order => {
 
-      const deliveredItems = order.orderItems.filter(
-        i => i.itemStatus === "delivered"
-      );
-
-      const refundedItems = order.orderItems.filter(
-        i => ["cancelled", "returned"].includes(i.itemStatus)
-      );
-
-      const gross = deliveredItems.reduce(
-        (sum, i) => sum + (i.price * i.quantity|| 0),
-        0
-      );
-
-      const coupon = deliveredItems.reduce(
-        (sum, i) => sum + (i.couponShare || 0),
-        0
-      );
-
-      const offer = deliveredItems.reduce(
-        (sum, i) => sum + (i.discount || 0),
-        0
-      );
-
-      const refund = refundedItems.reduce(
-        (sum, i) => sum + (i.refundAmount || 0),
-        0
-      );
-
+      const deliveredItems = order.orderItems.filter( i => i.itemStatus === "delivered")
+      const refundedItems = order.orderItems.filter(i => ["cancelled", "returned"].includes(i.itemStatus) )
+      const gross = order.orderItems.reduce((sum, i) => sum + (i.price * i.quantity|| 0),0)
+      const coupon = order.orderItems.reduce((sum, i) => sum + (i.couponShare || 0),0)
+      const offer = deliveredItems.reduce((sum, i) => sum + (i.discount || 0),0)
+      const refund = refundedItems.reduce((sum, i) => sum + (i.refundAmount || 0),0)
       const discount = coupon + offer;
-      const net = gross - discount ;
+      const net = gross - (discount +refund);
 
       worksheet.addRow({
         orderId: order.orderId,
         date: new Date(order.createdAt).toLocaleDateString(),
-        customer: order.userId?.fullName || "Guest",
         payment: order.paymentMethod,
-        net: net.toFixed(2),
-        discount: discount.toFixed(2),
         gross: gross.toFixed(2),
+        discount: discount.toFixed(2),
+        refund:refund.toFixed(2),
+        net: net.toFixed(2),
         status: order.orderStatus || "-"
       });
     });

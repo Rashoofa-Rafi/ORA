@@ -38,51 +38,18 @@ const getOrders = async (req, res, next) => {
       .populate('orderItems.variantId')
       .sort({ createdAt: -1 })
 
-
-    const itemList = []
-
-    orders.forEach(order => {
-      order.orderItems.forEach(item => {
-        itemList.push({
-          orderId: order.orderId,
-          createdAt: order.createdAt,
-          paymentMethod: order.paymentMethod,
-          paymentStatus: order.payment.status,
-          orderStatus: order.orderStatus,
-          
-
-          // item-specific
-          itemId: item._id,
-          product: item.productId,
-          variant: item.variantId,
-          productName: item.productName,
-          quantity: item.quantity,
-          price: item.variantId.price,
-          image: item.image,
-          itemStatus: item.itemStatus,
-          finalItemAmount: item.finalItemAmount,
-          expectedDelivery: item.expectedDelivery
-        })
-      })
-    })
-
-    // ITEM LEVEL PAGINATION
-    const totalItems = itemList.length
-    const totalPages = Math.ceil(totalItems / limit)
-
-    const paginatedItems = itemList.slice(
-      (page - 1) * limit,
-      page * limit
-    )
-
-    res.render('user/profile/orders', {
-      orders: paginatedItems,
-      
-      page,
-      totalPages,
-      search,
-      status
-    })
+      const totalOrders = orders.length;
+      const totalPages = Math.ceil(totalOrders / limit);
+  
+      const paginatedOrders = orders.slice((page - 1) * limit, page * limit);
+  
+      res.render('user/profile/orders', {
+        orders: paginatedOrders,
+        page,
+        totalPages,
+        search,
+        status
+      });
 
   } catch (err) {
     next(err)
@@ -92,30 +59,27 @@ const getOrders = async (req, res, next) => {
 
 const getOrderDetails = async (req, res, next) => {
   try {
-    const { orderId, itemId } = req.params
-    const userId = req.session.user
+    const { orderId } = req.params;
+    const userId = req.session.user;
+
     if (!userId) {
-      throw new AppError('Please Login', HTTP_STATUS.BAD_REQUEST)
+      throw new AppError('Please Login', HTTP_STATUS.UNAUTHORIZED);
     }
-    const user = await User.findById(userId).select('fullName')
 
-    const order = await Orders.findOne({ orderId, userId, 'orderItems._id': itemId })
+    const order = await Orders.findOne({ orderId, userId })
       .populate('orderItems.productId')
-      .populate('orderItems.variantId')
-      .sort({ createdAt: -1 })
+      .populate('orderItems.variantId');
 
-if (!orderId) {
-  throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND)
-}
+    if (!order) {
+      throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND);
+    }
 
-res.render('user/profile/orderDetails',
-  { order ,itemId});
+    res.render('user/profile/orderDetails', { order });
 
   } catch (err) {
-  next(err)
-}
-
-}
+    next(err);
+  }
+};
 const cancelOrderItem = async (req, res, next) => {
   try {
     const userId = req.session.user;
@@ -132,6 +96,25 @@ const cancelOrderItem = async (req, res, next) => {
     if (!['pending', 'confirmed'].includes(item.itemStatus)) {
       throw new AppError('Item cannot be cancelled now', HTTP_STATUS.BAD_REQUEST);
     }
+    
+// Check coupon rules
+let subtotalAfterCancel = order.orderItems.reduce((sum, i) => {
+  if (i._id.toString() !== itemId && i.itemStatus !== "cancelled") {
+    return sum + (i.price * i.quantity);
+  }
+  return sum;
+}, 0);
+
+const coupon = order.coupons && order.coupons.length > 0
+? order.coupons[0]
+: null;
+
+if (coupon && subtotalAfterCancel < coupon.minOrderPrice) {
+throw new AppError(
+  "Item cannot be cancelled because applied coupon requires minimum order value.",
+  HTTP_STATUS.BAD_REQUEST
+);
+}
 
     // update item
     item.itemStatus = 'cancelled';
@@ -213,6 +196,29 @@ const returnOrderItem = async (req, res, next) => {
     if (item.itemStatus !== 'delivered') {
       throw new AppError('Only delivered item can be returned', HTTP_STATUS.BAD_REQUEST);
     }
+    // ✅ Check coupon minimum order rule before allowing return
+if (order.coupons && order.coupons.length > 0) {
+
+  let totalAfterReturn = order.orderItems.reduce((sum, i) => {
+    if (
+      i._id.toString() !== itemId &&
+      i.itemStatus !== "cancelled" &&
+      i.itemStatus !== "returned"
+    ) {
+      return sum + (i.finalItemAmount || i.price * i.quantity);
+    }
+    return sum;
+  }, 0);
+
+  const coupon = order.coupons[0]; // assuming one coupon
+
+  if (coupon && coupon.minOrderPrice && totalAfterReturn < coupon.minOrderPrice) {
+    throw new AppError(
+      "Item cannot be returned because applied coupon requires minimum order value.",
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+}
 
     item.itemStatus = 'return_requested';
     item.returnReason = reason;

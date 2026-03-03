@@ -180,17 +180,12 @@ const changePassword=async(req,res,next)=>{
     }
 }
 const logout=(req,res,next)=>{
-    req.session.destroy((err) => {
-    if (err) {
-      console.error("Error destroying session:", err);
-      return res.redirect("/admin/dashboard");
-    }
+    delete req.session.admin
 
-    res.clearCookie("connect.sid");
     res.setHeader('Cache-Control', 'no-store')
     return res.redirect("/admin/login");
-  });
-}
+  }
+
 
 
 module.exports={

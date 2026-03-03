@@ -33,127 +33,215 @@
                         Code</a></li>
             </ul>
         </aside>
-        <!-- RIGHT CONTENT -->
-        <% const item=order.orderItems.find( i=> i._id.toString() === itemId.toString())%>
+        <!-- CONTENT -->
+  <section class="flex-1 bg-white rounded-xl shadow p-6">
 
-            <section class="flex-1 bg-white rounded-xl shadow p-6">
+    <!-- HEADER -->
+    <div class="mb-6">
+      <h2 class="text-xl font-semibold">Order Details</h2>
+      <p class="text-sm text-gray-500 mt-1">
+        Order ID: <span class="font-medium"><%= order.orderId %></span>
+      </p>
 
-                <!-- Header -->
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <h2 class="text-xl font-semibold">Order Details</h2>
-                        <p class="text-sm text-gray-500 mt-1">
-                            Order ID: <span class="font-medium">
-                                <%= order.orderId %>
-                            </span>
-                        </p>
-                        <div>
-                            <%if(order.coupons && order.coupons.length > 0){%>
-                                <p class="text-green-400">₹<%= order.coupons[0].code %>applied
-                                </p>
-                                <%}%>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-700">Payment Method:<%= order.paymentMethod %></p>
-                            <p class="text-sm text-gray-700">Payment Status:<%= order.payment.status %></p>
-                            <p class="text-sm text-gray-700">Order Date:<%= order.createdAt.toDateString() %></p>
-                            <p class="text-sm text-gray-700">PlatformFee:<%= order.platformFee %></p>
-                            <p class="text-sm text-gray-700">DeliveryCharge:<%= order.deliveryCharge %></p>
-                            <p class="text-sm text-gray-700">Total Order Amount:₹<%= order.finalAmount %></p>
-                            <p>
-                                OrderStatus:
-                                <span class="text-sm text-gray-700
-          <%= order.orderStatus === 'delivered' ||order.orderStatus==='shipped' 
-            ? 'text-green-600'
-            : order.orderStatus === 'cancelled' || order.orderStatus === 'returned' 
-            ? 'text-red-600'
-            :order.orderStatus ==='partially_delivered'|| order.orderStatus === 'partially_returned' ||order.orderStatus ==='partially_cancelled' 
-            ? 'text-blue-600'
-            : 'text-yellow-600' %>">
-                                    <%= order.orderStatus%>
-                                </span>
-                            </p>
+      <p class="text-sm">Payment Method: <%= order.paymentMethod %></p>
+      <p class="text-sm">Payment Status: <%= order.payment.status %></p>
+      <p class="text-sm">Order Date: <%= order.createdAt.toDateString() %></p>
+      <p class="text-sm">TotalItems: ₹<%= order.totalItems %></p>
+      <p class="text-sm">SubTotal: ₹<%= order.totalPrice %></p>
+      <p class="text-sm">Platform Fee: ₹<%= order.platformFee %></p>
+      <p class="text-sm">Delivery Charge: ₹<%= order.deliveryCharge %></p>
+      <% if (order.offerDiscount && order.offerDiscount > 0) { %>
+        <p class="text-sm text-green-600">OfferDiscount: -₹<%= order.offerDiscount %></p>
+      <% } %>
+    
+      <% if (order.coupons && order.coupons.length > 0 && order.coupons[0].discountAmount > 0) { %>
+        <p class="text-sm text-green-600">Coupon Applied (<%= order.coupons[0].code %>)</p>
+          <p class="text-sm text-green-600">CouponDiscount: -₹<%= order.coupons[0].discountAmount %></p>
+        
+      <% } %>
+    
+      <p class="text-sm font-medium">
+        Total Paid: ₹<%= order.finalAmount %>
+      </p>
 
-                        </div>
-                    </div>
-
-                    <% if (item && item.itemStatus==='delivered' ) { %>
-                        <a href="/user/profile/orders/<%= order.orderId %>/items/<%= item._id %>/invoice"
-                            class="border px-4 py-2 rounded text-sm">
-                            Download Invoice
-                        </a>
-                        <% } %>
-                </div>
-
-                <% if (!item) { %>
-                    <p class="text-sm text-red-500">Item not found in this order.</p>
-                    <% } else { %>
-
-                        <!-- Item Card -->
-                        <div class="border rounded-lg p-5 flex gap-6">
-
-                            <!-- Image -->
-                            <img src="<%= item.image %>" class="w-24 h-32 object-cover rounded"
-                                alt="<%= item.productName %>" />
-
-                            <!-- Item Info -->
-                            <div class="flex-1 space-y-2 text-sm">
-
-                                <h3 class="font-medium text-base">
-                                    <%= item.productName %>
-                                </h3>
-
-                                <p>Price: ₹<%= item.variantId.price %>
-                                </p>
-                                <p>Quantity: <%= item.quantity %>
-                                </p>
-
-                                <% if (item.discount && item.discount> 0) { %>
-                                    <p class="text-green-600">
-                                        Offer Discount: -₹<%= item.discount %>
-                                    </p>
-                                    <% } %>
-
-                                        <% if (item.couponShare && item.couponShare> 0) { %>
-
-                                            <p class="text-green-600">
-                                                Coupon Discount: -₹<%= item.couponShare %>
-                                            </p>
-                                            <% } else { %>
-                                                <p class="text-gray-400">No coupon applied</p>
-                                                <% } %>
-
-                                                    <p class="font-medium">
-                                                        Final Amount: ₹<%= item.finalItemAmount %>
-                                                    </p>
-
-                                                    <p>
-                                                        Status:
-                                                        <span class="font-medium
-          <%= item.itemStatus === 'delivered'
-            ? 'text-green-600'
-            : item.itemStatus === 'cancelled' || item.itemStatus === 'returned'
-            ? 'text-red-600'
-            : 'text-yellow-600' %>">
-                                                            <%= item.itemStatus %>
-                                                        </span>
-                                                    </p>
-
-                            </div>
-                        </div>
-
-                        <!-- Order Summary -->
-                        <div class="mt-6 border-t pt-4 text-sm space-y-1">
-                           
-
-                        </div>
-
-                        <% } %>
-            </section>
+      <p>
+        Order Status:
+        <span class="
+          <%= order.orderStatus === 'delivered' ? 'text-green-600'
+          : order.orderStatus === 'cancelled' || order.orderStatus === 'returned'
+          ? 'text-red-600'
+          : 'text-yellow-600' %>">
+          <%= order.orderStatus %>
+        </span>
+      </p>
     </div>
+
+    <!-- ITEMS LIST -->
+    <% order.orderItems.forEach(item => { %>
+
+      <div class="border rounded-lg p-5 flex gap-6 mb-6">
+
+        <img src="<%= item.image %>"
+             class="w-24 h-32 object-cover rounded"
+             alt="<%= item.productName %>" />
+
+        <div class="flex-1 space-y-2 text-sm">
+
+          <h3 class="font-medium text-base">
+            <%= item.productName %>
+          </h3>
+
+          <p>Price: ₹<%= item.variantId.price %></p>
+          <p>Quantity: <%= item.quantity %></p>
+
+          <% if (item.discount > 0) { %>
+            <p class="text-green-600">Offer Discount: -₹<%= item.discount %></p>
+          <% } %>
+
+          <% if (item.couponShare > 0) { %>
+            <p class="text-green-600">Coupon Discount: -₹<%= item.couponShare %></p>
+          <% } %>
+
+          <p class="font-medium">
+            Final Amount: ₹<%= item.finalItemAmount %>
+          </p>
+
+          <p>
+            Status:
+            <span class="
+              <%= item.itemStatus === 'delivered'
+              ? 'text-green-600'
+              : item.itemStatus === 'cancelled' || item.itemStatus === 'returned'
+              ? 'text-red-600'
+              : 'text-yellow-600' %>">
+              <%= item.itemStatus %>
+            </span>
+          </p>
+
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="flex flex-col gap-2">
+
+          <% if (item.itemStatus === 'pending' || item.itemStatus === 'confirmed') { %>
+            <button onclick="openModal('cancel','<%= order.orderId %>','<%= item._id %>')"class="bg-black text-white px-3 py-1 rounded text-xs"
+                >
+               Cancel
+            </button>
+          <% } %>
+
+          <% if (item.itemStatus === 'delivered') { %>
+            <button  onclick="openModal('return','<%= order.orderId %>','<%= item._id %>')" class= "bg-black text-white px-3 py-1 rounded text-xs"
+                >
+                Return
+          </button>
+
+            <a href="/user/profile/orders/<%= order.orderId %>/items/<%= item._id %>/invoice"
+               class="border px-3 py-1 rounded text-xs text-center">
+               Invoice
+            </a>
+          <% } %>
+
+        </div>
+
+      </div>
+
+    <% }) %>
+
+  </section>
+    </div>
+    <!-- REASON MODAL (ONLY ONCE) -->
+<div id="reasonModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+    <div class="bg-white p-5 rounded w-80">
+      <h3 id="modalTitle" class="font-semibold mb-2"></h3>
+  
+      <textarea id="reasonInput"
+        class="w-full border p-2 text-sm"
+        placeholder="Enter reason"
+        required>
+      </textarea>
+  
+      <div class="flex justify-end gap-2 mt-3">
+        <button onclick="closeModal()" class="text-sm">Cancel</button>
+        <button id="confirmBtn" class="bg-black text-white px-3 py-1 text-sm rounded">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
 
     <%- include("../../partials/user/footer") %>
         <script>
             lucide.createIcons()
+
+            let currentAction = null;
+let orderId = null;
+let itemId = null;
+
+function openModal(action, oId, iId) {
+  currentAction = action;
+  orderId = oId;
+  itemId = iId;
+
+  document.getElementById('modalTitle').innerText =
+    action === 'cancel'
+      ? 'Enter cancellation reason'
+      : 'Enter return reason';
+
+  document.getElementById('reasonInput').value = '';
+  document.getElementById('reasonModal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('reasonModal').classList.add('hidden');
+}
+
+document.getElementById('confirmBtn').addEventListener('click', async () => {
+
+const reason = document.getElementById('reasonInput').value.trim();
+
+if (!reason) {
+  Swal.fire({ icon: 'warning', text: 'Reason is required' });
+  return;
+}
+
+const confirmResult = await Swal.fire({
+  title: currentAction === 'cancel'
+    ? 'Cancel this item?'
+    : 'Return this item?',
+  text: 'This action cannot be undone',
+  icon: 'warning',
+  showCancelButton: true,
+  confirmButtonText: 'Yes, proceed'
+});
+
+if (!confirmResult.isConfirmed) return;
+
+try {
+  const res = await fetch(
+    `/user/profile/orders/${orderId}/items/${itemId}/${currentAction}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason })
+    }
+  );
+console.log(orderId)
+console.log(itemId)
+console.log(reason)
+  const data = await res.json();
+
+  if (data.success) {
+    await Swal.fire({ icon: 'success', title: data.message });
+    location.reload();
+  } else {
+    Swal.fire({ icon: 'error', text: data.message || 'Something went wrong' });
+  }
+
+} catch (err) {
+  Swal.fire({ icon: 'error', text: 'Server error' });
+}
+
+});
 
         </script>

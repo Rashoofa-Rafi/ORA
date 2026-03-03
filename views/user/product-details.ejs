@@ -118,11 +118,6 @@
                         ADD TO CART
                     </button>
 
-
-                    <!-- <button class="w-1/2 min-w-[200px] py-2 rounded-md bg-green-700 text-white font-semibold
-               hover:bg-green-800 transition">BUY NOW
-                    </button> -->
-
                 </div>
 
                 <!-- DESCRIPTION -->
@@ -200,6 +195,8 @@
     const data = await res.json();
 
     if (res.ok) {
+        const cartBadge = document.getElementById('cart-count');
+      if (cartBadge) cartBadge.textContent = data.cartCount;
          await Swal.fire({
             icon:'success',
             title:data.message ,
@@ -224,7 +221,7 @@
 //add to wishlist
 
 async function addToWishlist(productId,variantId) {
-     console.log('FRONTEND →', productId, variantId); 
+     
   try {
     const res = await fetch(`/user/wishlist/add`, {
       method: 'POST',
@@ -235,6 +232,8 @@ async function addToWishlist(productId,variantId) {
     const data = await res.json();
 
     if (res.ok) {
+        const wishlistBadge = document.getElementById('wishlist-count');
+      if (wishlistBadge) wishlistBadge.textContent = data.wishlistCount;
          await Swal.fire({
             icon:'success',
             title:data.message ,

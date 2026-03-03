@@ -63,12 +63,12 @@ router.post('/products/add-product',IsAdminAuthenticated,nocache,upload.any(),pr
 
 
 router.patch('/products/edit-product/:id',IsAdminAuthenticated,nocache,upload.any(),productController.editProduct)
-router.patch('/products/delete/:id',IsAdminAuthenticated,nocache,productController.deleteProduct)
+router.patch('/products/toggle-status/:id',IsAdminAuthenticated,nocache,productController.toggleProductStatus)
 
 //for order Management
 
 router.get('/order',IsAdminAuthenticated,nocache,adminOrderController.getOrder)
-router.get('/order/:orderId/item/:itemId',IsAdminAuthenticated,nocache,adminOrderController.getOrderDetailPage)
+router.get('/order/:orderId',IsAdminAuthenticated,nocache,adminOrderController.getOrderDetailPage)
 router.post('/order-details/item-status',IsAdminAuthenticated,nocache,adminOrderController.updateStatus)
 router.post('/order/item/return-approve',IsAdminAuthenticated,nocache,adminOrderController.approveReturn)
 router.post('/order/item/return-reject',IsAdminAuthenticated,nocache,adminOrderController.rejectReturn)
@@ -85,6 +85,7 @@ router.patch('/offers/deactivate/:id',IsAdminAuthenticated,nocache,offerControll
 //for coupon management
 
 router.get('/coupons',IsAdminAuthenticated,nocache,couponController.getCouponlist)
+router.get('/coupon/generate', IsAdminAuthenticated,nocache,couponController.generateCouponCode);
 router.post('/coupons/add',IsAdminAuthenticated,nocache,couponController.addCoupon)
 router.put('/coupons/edit/:id',IsAdminAuthenticated,nocache,couponController.editCoupon)
 router.patch('/coupons/deactivate/:id',IsAdminAuthenticated,nocache,couponController.removeCoupon)

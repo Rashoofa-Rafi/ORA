@@ -160,7 +160,7 @@ const addToCart = async (req, res, next) => {
 
     // Check if item already exists in cart
     const existingItem = cart.items.find(item =>
-      item.productId.toString() === productId &&
+      item.productId.toString() === productId.toString() &&
       item.variantId.toString() === variant._id.toString()
     );
 
@@ -204,12 +204,13 @@ const addToCart = async (req, res, next) => {
     // Remove from wishlist if exists
     await Wishlist?.updateOne(
       { userId },
-      { $pull: { items: { productId } } }
+      { $pull: { items: { productId :productId,variantId:variantId} } }
     );
 
     return res.status(HTTP_STATUS.CREATED).json({
       message: 'Product added to cart successfully',
       cartCount: cart.totalItem
+      
     });
 
   } catch (err) {
@@ -311,6 +312,13 @@ const removeFromCart = async (req, res, next) => {
     cart.items = cart.items.filter(
       item => item._id.toString() !== cartItemId
     );
+    cart.totalItem = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+    cart.totalPrice = 0;
+    for (const item of cart.items) {
+      const v = await Variant.findById(item.variantId);
+      if (!v) continue;
+      cart.totalPrice += item.quantity * v.price;
+    }
 
     await cart.save();
 

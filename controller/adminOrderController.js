@@ -15,67 +15,33 @@ const getOrder = async (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 8;
 
-    const matchStage = {};
+    const query = {};
 
-    // Search by orderId OR username
+    // 🔎 Search by Order ID OR Username
     if (search) {
-      const users = await User.find({fullName: { $regex: search, $options: 'i' }})
-        .select('_id');
+      const users = await User.find({
+        fullName: { $regex: search, $options: 'i' }
+      }).select('_id');
 
-      matchStage.$or = [
+      query.$or = [
         { orderId: { $regex: search, $options: 'i' } },
         { userId: { $in: users.map(u => u._id) } }
       ];
     }
 
-    const pipeline = [
-      { $match: matchStage },
-
-      // explode items
-      { $unwind: '$orderItems' }
-    ];
-
-    // Filter by ITEM status (IMPORTANT)
+    // 📦 Order-level status filter
     if (status) {
-      pipeline.push({$match: { 'orderItems.itemStatus': status }});
+      query.orderStatus = status; // must exist in schema
     }
 
-    // Join user
-    pipeline.push(
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user'
-        }
-      },
-      { $unwind: '$user' }
-    );
+    const totalOrders = await Orders.countDocuments(query);
+    const totalPages = Math.ceil(totalOrders / limit);
 
-    // Sorting
-    pipeline.push({
-      $sort: {
-        createdAt: sort === 'oldest-newest' ? 1 : -1
-      }
-    });
-
-    // Pagination
-    pipeline.push(
-      { $skip: (page - 1) * limit },
-      { $limit: limit }
-    );
-
-    const orders = await Orders.aggregate(pipeline);
-
-    // Count for pagination
-    const countPipeline = [...pipeline];
-    countPipeline.splice(-2); // remove skip & limit
-    countPipeline.push({ $count: 'total' });
-
-    const countResult = await Orders.aggregate(countPipeline);
-    const totalItems = countResult[0]?.total || 0;
-    const totalPages = Math.ceil(totalItems / limit);
+    const orders = await Orders.find(query)
+      .populate('userId') 
+      .sort({ createdAt: sort === 'oldest-newest' ? 1 : -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res.render('admin/order', {
       orders,
@@ -94,34 +60,14 @@ const getOrder = async (req, res, next) => {
 // 
 const getOrderDetailPage = async (req, res, next) => {
   try {
-    const { itemId } = req.params;
+    const orderId=req.params.orderId
+    const order = await Orders.findOne({orderId})
+      .populate('userId')
+      // .populate('orderItems.productId')
+      // .populate('orderItems.productId').select('price')
 
-    const order = await Orders.findOne({ "orderItems._id": itemId },
-      {
-        orderId: 1,
-        userId: 1,
-        address: 1,
-        paymentMethod: 1,
-        createdAt: 1,
-        "orderItems.$": 1 
-      }
-    ).populate('userId', 'fullName email mobile')
-    .populate({
-      path:'orderItems.variantId',
-      select:'price'
-    })
-    
 
-    if (!order || !order.orderItems.length) {
-      throw new AppError('Order item not found', HTTP_STATUS.NOT_FOUND);
-    }
-
-    const items = order.orderItems[0];
-
-    res.render('admin/order-details', {
-      order,
-      items
-    });
+    res.render('admin/order-details', { order });
 
   } catch (err) {
     next(err);
@@ -144,6 +90,9 @@ const updateStatus=async(req,res,next)=>{
     }
 
     const item = order.orderItems.id(itemId);
+    if (item.itemStatus === 'delivered') {
+      throw new AppError("Delivered items cannot be modified",HTTP_STATUS.BAD_REQUEST)
+    }
 
     if (!item) {
       throw new AppError('Order item not found', HTTP_STATUS.NOT_FOUND);
@@ -238,17 +187,29 @@ const approveReturn = async (req, res, next) => {
     }
 
     item.itemStatus = 'returned';
+    if (item.returnReason && item.returnReason.toLowerCase() === 'damaged') {
+        await Variant.findByIdAndUpdate(item.variantId, {
+        $inc: { damagedStock: item.quantity }
+      });
+    
+    } else {
+        await Variant.findByIdAndUpdate(item.variantId, {
+        $inc: { stock: item.quantity }
+      });
+    
+    }
 
-    await Variant.findByIdAndUpdate(item.variantId, {
-      $inc: { stock: item.quantity }
-    });
-
+    if (item.returnReason !== 'damaged') {
     await Product.findByIdAndUpdate(item.productId, {
       $inc: { totalStock: item.quantity }
     });
+  }
 
     
     const refundAmount = item.finalItemAmount;
+    if (item.isRefunded) {
+      throw new AppError('Already refunded', HTTP_STATUS.BAD_REQUEST);
+    }
 
     if (order.paymentMethod !== 'COD') {
       let wallet = await Wallet.findOne({ userId: order.userId });
@@ -266,7 +227,9 @@ const approveReturn = async (req, res, next) => {
         balanceAfter:wallet.balance
       });
     }
-order.finalAmount -= refundAmount
+// order.finalAmount -= refundAmount
+item.refundAmount = refundAmount;
+item.isRefunded = true;
     
     const statuses = order.orderItems.map(i => i.itemStatus);
     if (statuses.every(s => s === 'returned')) {

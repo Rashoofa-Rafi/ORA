@@ -95,10 +95,6 @@ router.get('/profile/coupons',IsUserAuthenticated,nocache,couponController.getUs
 //wallet
 router.get('/profile/wallet',walletController.getWallet)
 
-
-
-
-
 //cart management
 
 router.get('/cart',IsUserAuthenticated,nocache,cartController.getCart)
@@ -121,6 +117,7 @@ router.get('/checkout',IsUserAuthenticated,nocache,checkoutController.getCheckou
 router.post('/checkout',IsUserAuthenticated,nocache,checkoutController.checkoutContinue)
 router.get('/payment',IsUserAuthenticated,nocache,checkoutController.getPaymentPage)
 router.post('/payment/place-order',IsUserAuthenticated,nocache,checkoutController.placeOrder)
+router.get('/checkout/coupons',IsUserAuthenticated,nocache,couponController.getAvailableCoupons);
 
 router.post('/payment/verify',IsUserAuthenticated,nocache,checkoutController.verifyRazorpayPayment)
 router.get('/order-success/:orderId',IsUserAuthenticated,nocache,checkoutController.getOrderSuccess)
@@ -133,7 +130,7 @@ router.delete('/coupons/remove',IsUserAuthenticated,nocache,checkoutController.r
 //Order management in user side
 
 router.get('/profile/orders',IsUserAuthenticated,nocache,orderController.getOrders)
-router.get('/profile/orders/:orderId/:items/:itemId',IsUserAuthenticated,nocache,orderController.getOrderDetails)
+router.get('/profile/orders/:orderId',IsUserAuthenticated,nocache,orderController.getOrderDetails)
 router.post('/profile/orders/:orderId/items/:itemId/cancel',IsUserAuthenticated,nocache,orderController.cancelOrderItem)
 router.post('/profile/orders/:orderId/items/:itemId/return',IsUserAuthenticated,nocache,orderController.returnOrderItem)
 router.get('/profile/orders/:orderId/items/:itemId/invoice',IsUserAuthenticated,nocache,orderController.downloadInvoice)

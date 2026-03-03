@@ -43,8 +43,8 @@
         <option value="cancelled" <%= status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
         <option value="returned" <%= status === 'returned' ? 'selected' : '' %>>Returned</option>
         <option value="return_requested" <%= status === 'return_requested' ? 'selected' : '' %>>Returne_requested</option>
-        <option value="returning" <%= status === 'returning' ? 'selected' : '' %>>Returning</option>
-        <option value="processing" <%= status === 'processing' ? 'selected' : '' %>>Processing</option>
+        <option value="returning" <%= status === 'partially_cancelled' ? 'selected' : '' %>>partially_cancelled</option>
+        <option value="processing" <%= status === 'partially_delivered' ? 'selected' : '' %>>partially_delivered</option>
     </select>
 
     <!-- Apply -->
@@ -79,7 +79,7 @@
                                             <%=order.orderId%>
                                         </td>
                                         <td class="px-4 py-2">
-                                            <%=order.user.fullName%>
+                                            <%=order.userId.fullName%>
                                         </td>
                                         <td class="px-4 py-2">
                                             <%=order.createdAt.toLocaleDateString("en-IN")%>
@@ -88,27 +88,31 @@
                                         <td class="px-4 py-2">
                                             <span class="font-medium
                                                     <%= 
-              order.orderItems.itemStatus === 'cancelled'||
-              order.orderItems.itemStatus==='returned' 
+              order.orderStatus === 'cancelled'||
+              order.Status==='returned' 
                 ? 'text-red-600'
-              :order.orderItems.itemStatus === 'delivered'||
-              order.orderItems.itemStatus==='shipped'||
-              order.orderItems.itemStatus==='return_requested'
+              :order.orderStatus === 'delivered'||
+              order.orderStatus==='shipped'||
+              order.orderStatus==='return_requested'
                 ? 'text-green-600'
-              :order.orderItems.itemStatus === 'pending'||
-               order.orderItems.itemStatus==='confirmed'||
-               order.orderItems.itemStatus==='returning'||
-               order.orderItems.itemStatus==='processing'
+              :order.orderStatus === 'pending'||
+               order.orderStatus==='confirmed'||
+               order.orderStatus==='returning'||
+               order.orderStatus==='processing'
                   ? 'text-yellow-600'
+               :order.orderStatus==='partially_delivered'||
+               order.orderStatus==='partially_cancelled'||
+               order.orderStatus==='partially_returned'
+               ? 'text-blue-600'
             : 'text-gray-600' %>">
              
 
   
-                                                        <%= order.orderItems.itemStatus %>
+                                                        <%= order.orderStatus %>
                                                     </span>
                                         </td>
                                         <td class="px-4 py-2 text-center">
-                                            <a href="/admin/order/<%= order._id %>/item/<%= order.orderItems._id %>" class="bg-yellow-500 text-white px-3 py-1.5 rounded hover:bg-gray-900 text-sm transition">View</button>
+                                            <a href="/admin/order/<%= order.orderId %>" class="bg-yellow-500 text-white px-3 py-1.5 rounded hover:bg-gray-900 text-sm transition">View</button>
                                         </td>
                                     </tr>
                                    

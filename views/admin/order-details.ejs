@@ -2,275 +2,220 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Order Details</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Order Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body class="bg-gray-100 h-screen ">
+<body class="bg-gray-100 h-screen">
+  <div class="flex h-full">
+    <%- include("../partials/admin/sidebar") %>
 
+    <!-- MAIN WRAPPER -->
+    <div class="flex-1 ml-64 flex flex-col h-full">
 
-    <div class="flex h-full">
-        <%- include("../partials/admin/sidebar") %>
+      <header class="h-24 px-6 bg-white border-b flex items-center">
+        <h1 class="text-2xl font-bold">Order Details</h1>
+      </header>
 
-            <!-- MAIN WRAPPER -->
-            <div class="flex-1 ml-64 flex flex-col h-full">
+      <main class="flex-1 p-6">
+        <div class="grid grid-cols-12 gap-6 h-full">
 
-                <header class="h-24 px-6 bg-white border-b flex items-center">
-                    <h1 class="text-2xl font-bold">Order Details</h1>
-                </header>
-                <main class="flex-1 p-6">
-                    <div class="grid grid-cols-12 gap-6 h-full">
+          <!-- LEFT PANEL : ORDER ITEMS -->
+          <div class="col-span-12 lg:col-span-8 h-full overflow-y-auto space-y-6 pr-2">
+            <div class="bg-white rounded shadow p-6">
+              <h2 class="text-lg font-semibold mb-6">Ordered Items</h2>
 
-                        <div class="col-span-12 lg:col-span-8 h-full overflow-y-auto space-y-6 pr-2">
-                        <!-- ORDER ITEMS -->
-<div class="bg-white rounded shadow p-6">
-  <h2 class="text-lg font-semibold mb-6">Ordered Item</h2>
+              <% if (order && order.orderItems && order.orderItems.length > 0) { %>
+                <% order.orderItems.forEach(items => { %>
+                  <div class="border rounded p-5 mb-6 space-y-4">
 
-  <% order.orderItems.forEach(items => { %>
-
-    <div class="border rounded p-5 mb-6 space-y-4">
-
-      <!-- ROW 1 : Order meta -->
-      <div class="grid grid-cols-2 text-sm text-gray-600">
-        <p><strong>Order ID:</strong> <%= order.orderId %></p>
-        <p class="text-right"><strong>Date:</strong> <%= order.createdAt.toDateString() %></p>
-      </div>
-
-      <!-- ROW 2 : Image + Name -->
-      <div class="grid grid-cols-12 gap-4 items-center">
-        <div class="col-span-3">
-          <img src="<%= items.image %>"
-               class="w-30 h-30 object-cover rounded border" />
-        </div>
-
-        <div class="col-span-9">
-          <p class="text-lg font-semibold"><%= items.productName %></p>
-        </div>
-      </div>
-
-      <!-- ROW 3 : Two column item details -->
-      <div class="grid grid-cols-2 gap-4 text-sm text-gray-700">
-        <div>
-          <p>Quantity: <strong><%= items.quantity %></strong></p>
-          <p>Price: ₹<strong><%= items.variantId.price %></strong></p>
-          <% if (items.discount && items.discount> 0) { %>
-                                    <p class="text-green-600">
-                                        Offer Discount: -₹<%= items.discount %>
-                                    </p>
-                                    <% } %>
-
-          
-          <% if (items.couponShare && items.couponShare> 0) { %>
-
-                                            <p class="text-green-600">
-                                                Coupon Discount: -₹<%= items.couponShare %>
-                                            </p>
-                                            <% } else { %>
-                                                <p class="text-gray-400">No coupon applied</p>
-                                                <% } %>
-          <p>FinalAmount: <strong><%= items.finalItemAmount %></strong></p>
-          <p>
-            Status:
-            <span class="font-medium
-               <%= 
-                items.itemStatus === 'cancelled' || items.itemStatus === 'returned'
-                  ? 'text-red-600'
-                : items.itemStatus === 'delivered' || items.itemStatus === 'shipped' || items.itemStatus === 'return_requested'
-                  ? 'text-green-600'
-                : items.itemStatus === 'returning' || items.itemStatus === 'pending' || items.itemStatus === 'confirmed'||
-                    items.itemStatus === 'processing'
-                  ? 'text-yellow-600'
-                : 'text-gray-600'
-              %>">
-              <%= items.itemStatus %>
-            </span>
-          </p>
-
-          <% if (items.itemStatus === 'cancelled') { %>
-            <p class="text-yellow-500">
-              Reason: <%= items.cancellationReason %>
-            </p>
-          <% } %>
-
-        </div>
-      </div>
-<% if (items.itemStatus === 'return_requested') { %>
-  <div class="bg-yellow-50 border border-yellow-300 rounded p-4 mt-4">
-    <p class="text-sm font-semibold text-yellow-700 mb-2">
-      Return Request Pending
-    </p>
-
-    <p class="text-sm text-gray-700 mb-3">
-      <strong>Reason:</strong> <%= items.returnReason %>
-    </p>
-
-    <div class="flex gap-3 justify-end">
-      <button
-        class="approve-return-btn bg-green-600 text-white px-4 py-1 rounded text-sm"
-        data-order-id="<%= order._id %>"
-        data-item-id="<%= items._id %>">
-        Approve 
-      </button>
-
-      <button
-        class="reject-return-btn bg-red-600 text-white px-4 py-1 rounded text-sm"
-        data-order-id="<%= order._id %>"
-        data-item-id="<%= items._id %>">
-        Reject 
-      </button>
-    </div>
-  </div>
-<% } %>
-
-      <!-- ROW 4 : Actions -->
-      <div class="flex justify-end gap-2">
-        <select
-          class="border px-2 py-1 text-sm item-status-select"
-          data-order-id="<%= order._id %>"
-          data-item-id="<%= items._id %>"
-        >
-          <option value="confirmed" <%= items.itemStatus === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
-          <option value="shipped" <%= items.itemStatus === 'shipped' ? 'selected' : '' %>>Shipped</option>
-          <option value="delivered" <%= items.itemStatus === 'delivered' ? 'selected' : '' %>>Delivered</option>
-          <option value="returning" <%= items.itemStatus === 'returning' ? 'selected' : '' %>>Returning</option>
-        </select>
-
-        <button
-          class="bg-black text-white px-4 py-1 text-sm rounded update-item-status-btn">
-          Save
-        </button>
-      </div>
-
-    </div>
-
-  <% }) %>
-</div>
-
-                        </div>
-
-                        <!--RIGHT PANEL  -->
-                        <div class="col-span-12 lg:col-span-4 h-full">
-
-                            <div class="bg-white rounded shadow p-6 h-full overflow-y-auto space-y-8">
-                                <section>
-                                    <h3 class="font-semibold border-b pb-2 mb-3">User Details</h3>
-                                    <p class="text-sm">
-                                        <%= order.userId.fullName %>
-                                    </p>
-                                    <p class="text-sm">
-                                        <%= order.userId.email %>
-                                    </p>
-                                    <p class="text-sm">
-                                        <%= order.userId.mobile %>
-                                    </p>
-                                </section>
-
-
-                                <section>
-                                    <h3 class="font-semibold border-b pb-2 mb-3">Shipping Address</h3>
-                                    <p class="text-sm font-medium">
-                                        <%= order.address.name %>
-                                    </p>
-                                    <p class="text-sm text-gray-600">
-                                        <%= order.address.addressLine %>,<br>
-                                            <%= order.address.city %>, <%= order.address.state %> <br>
-                                                    <%= order.address.phone %>
-                                    </p>
-                                </section>
-
-                                <!-- PAYMENT -->
-                                <section>
-                                    <h3 class="font-semibold border-b pb-2 mb-3">Payment</h3>
-                                    <p class="text-sm">
-                                        <span>PaymentMethod:</span>
-                                        <%= order.paymentMethod %>
-                                    </p>
-                                </section>
-
-                            </div>
-
-                        </div>
-
+                    <!-- ROW 1 : Order meta -->
+                    <div class="grid grid-cols-2 text-sm text-gray-600">
+                      <p><strong>Order ID:</strong> <%= order.orderId %></p>
+                      <p class="text-right"><strong>Date:</strong> <%= order.createdAt ? new Date(order.createdAt).toDateString() : 'N/A' %></p>
                     </div>
-                </main>
+
+                    <!-- ROW 2 : Image + Name -->
+                    <div class="grid grid-cols-12 gap-4 items-center">
+                      <div class="col-span-3">
+                        <img src="<%= items.image %>" class="w-30 h-30 object-cover rounded border" />
+                      </div>
+                      <div class="col-span-9">
+                        <p class="text-lg font-semibold"><%= items.productId ? items.productId.productName : 'Product' %></p>
+                      </div>
+                    </div>
+
+                    <!-- ROW 3 : Item details -->
+                    <div class="grid grid-cols-2 gap-4 text-sm text-gray-700">
+                      <div>
+                        <p>Quantity: <strong><%= items.quantity %></strong></p>
+                        <p>Price: ₹<strong><%= items.variantId ? items.variantId.price : 0 %></strong></p>
+
+                        <% if (items.discount && items.discount > 0) { %>
+                          <p class="text-green-600">Offer Discount: -₹<%= items.discount %></p>
+                        <% } %>
+
+                        <% if (items.couponShare && items.couponShare > 0) { %>
+                          <p class="text-green-600">Coupon Discount: -₹<%= items.couponShare %></p>
+                        <% } else { %>
+                          <p class="text-gray-400">No coupon applied</p>
+                        <% } %>
+
+                        <p>Final Amount: <strong>₹<%= items.finalItemAmount %></strong></p>
+
+                        <p>Status: 
+                          <span class="font-medium <%= 
+                            items.itemStatus === 'cancelled' || items.itemStatus === 'returned' ? 'text-red-600' :
+                            items.itemStatus === 'delivered' || items.itemStatus === 'shipped' || items.itemStatus === 'return_requested' ? 'text-green-600' :
+                            items.itemStatus === 'returning' || items.itemStatus === 'pending' || items.itemStatus === 'confirmed' || items.itemStatus === 'processing' ? 'text-yellow-600' :
+                            'text-gray-600' %>">
+                            <%= items.itemStatus %>
+                          </span>
+                        </p>
+
+                        <% if (items.itemStatus === 'cancelled') { %>
+                          <p class="text-yellow-500">Reason: <%= items.cancellationReason %></p>
+                        <% } %>
+                      </div>
+                    </div>
+
+                    <!-- RETURN REQUEST PANEL -->
+                    <% if (items.itemStatus === 'return_requested') { %>
+                      <div class="bg-yellow-50 border border-yellow-300 rounded p-4 mt-4">
+                        <p class="text-sm font-semibold text-yellow-700 mb-2">Return Request Pending</p>
+                        <p class="text-sm text-gray-700 mb-3"><strong>Reason:</strong> <%= items.returnReason %></p>
+                        <div class="flex gap-3 justify-end">
+                          <button class="approve-return-btn bg-green-600 text-white px-4 py-1 rounded text-sm"
+                                  data-order-id="<%= order._id %>" data-item-id="<%= items._id %>">Approve</button>
+                          <button class="reject-return-btn bg-red-600 text-white px-4 py-1 rounded text-sm"
+                                  data-order-id="<%= order._id %>" data-item-id="<%= items._id %>">Reject</button>
+                        </div>
+                      </div>
+                    <% } %>
+
+                    <!-- ROW 4 : Item status update -->
+                    <div class="flex justify-end gap-2 mt-2">
+                      <select class="border px-2 py-1 text-sm item-status-select"
+                              data-order-id="<%= order._id %>"
+                              data-item-id="<%= items._id %>"
+                              <%= (items.itemStatus === 'delivered' || items.itemStatus === 'cancelled')? 'disabled' : '' %>>
+                        <option value="confirmed" <%= items.itemStatus === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+                        <option value="shipped" <%= items.itemStatus === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                        <option value="delivered" <%= items.itemStatus === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                        <option value="returning" <%= items.itemStatus === 'returning' ? 'selected' : '' %>>Returning</option>
+                      </select>
+
+                      <button class="bg-black text-white px-4 py-1 text-sm rounded update-item-status-btn">Save</button>
+                    </div>
+
+                  </div>
+                <% }) %>
+              <% } else { %>
+                <p>No items found for this order</p>
+              <% } %>
 
             </div>
+          </div>
+
+          <!-- RIGHT PANEL : USER, SHIPPING, PAYMENT -->
+          <div class="col-span-12 lg:col-span-4 h-full">
+            <div class="bg-white rounded shadow p-6 h-full overflow-y-auto space-y-8">
+
+              <!-- USER DETAILS -->
+              <section>
+                <h3 class="font-semibold border-b pb-2 mb-3">User Details</h3>
+                <p class="text-sm"><%= order.userId ? order.userId.fullName : 'N/A' %></p>
+                <p class="text-sm"><%= order.userId ? order.userId.email : 'N/A' %></p>
+                <p class="text-sm"><%= order.userId ? order.userId.mobile : 'N/A' %></p>
+              </section>
+
+              <!-- SHIPPING ADDRESS -->
+              <section>
+                <h3 class="font-semibold border-b pb-2 mb-3">Shipping Address</h3>
+                <p class="text-sm font-medium"><%= order.address ? order.address.name : 'N/A' %></p>
+                <p class="text-sm text-gray-600">
+                  <%= order.address ? order.address.addressLine : '' %>, <br>
+                  <%= order.address ? order.address.city : '' %>, <%= order.address ? order.address.state : '' %> <br>
+                  <%= order.address ? order.address.phone : '' %>
+                </p>
+              </section>
+
+              <!-- PAYMENT -->
+              <section>
+                <h3 class="font-semibold border-b pb-2 mb-3">Payment</h3>
+                <p class="text-sm"><strong>Payment Method:</strong> <%= order.paymentMethod || 'N/A' %></p>
+              </section>
+
+            </div>
+          </div>
+
+        </div>
+      </main>
     </div>
+  </div>
+
   
-</body>
+  <script>
+    // Update item status
+    document.querySelectorAll('.update-item-status-btn').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        const select = e.target.previousElementSibling;
+        const orderId = select.dataset.orderId;
+        const itemId = select.dataset.itemId;
+        const itemStatus = select.value;
 
-<script>
-  document.querySelectorAll('.update-item-status-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const select = e.target.previousElementSibling;
+        try {
+          const res = await fetch('/admin/order-details/item-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, itemId, itemStatus })
+          });
 
-      const orderId = select.dataset.orderId;
-      const itemId = select.dataset.itemId;
-      const itemStatus = select.value;
-      
+          const data = await res.json();
+          if (!res.ok) {
+            Swal.fire(data.message);
+            return;
+          }
+
+          await Swal.fire('Item status updated successfully');
+          location.reload();
+
+        } catch (err) {
+          Swal.fire({ icon: 'error', title: 'Error', text: 'Internal server error' });
+        }
+      });
+    });
+
+    // Approve / Reject return
+    document.addEventListener('click', async e => {
+      const approveBtn = e.target.closest('.approve-return-btn');
+      const rejectBtn = e.target.closest('.reject-return-btn');
+      let action = approveBtn || rejectBtn;
+
+      if (!action) return;
+
+      const orderId = action.dataset.orderId;
+      const itemId = action.dataset.itemId;
+      const url = approveBtn ? '/admin/order/item/return-approve' : '/admin/order/item/return-reject';
 
       try {
-        const res = await fetch('/admin/order-details/item-status', {
+        const res = await fetch(url, {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ orderId, itemId, itemStatus })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId, itemId })
         });
-
         const data = await res.json();
-
-        if (!res.ok) {
-          Swal.fire(data.message );
-          return;
-        }
-
-        await Swal.fire('Item status updated successfully');
+        Swal.fire(data.message);
+        location.reload();
 
       } catch (err) {
-        Swal.fire({
-            icon:'error',
-            message:'Internal server error'
-        })
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Something went wrong' });
       }
     });
-  });
-  
-document.addEventListener('click', async (e) => {
-  const approveBtn = e.target.closest('.approve-return-btn');
-  const rejectBtn = e.target.closest('.reject-return-btn');
+  </script>
 
-  let action = null;
-  if (approveBtn) action = approveBtn;
-  else if (rejectBtn) action = rejectBtn;
-
-  if (action) {
-    const orderId = action.dataset.orderId;
-    const itemId = action.dataset.itemId;
-    const url = approveBtn ? '/admin/order/item/return-approve' : '/admin/order/item/return-reject';
-
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, itemId })
-      });
-      const data = await res.json();
-      Swal.fire(data.message);
-      // optionally, reload or update UI
-    } catch (err) {
-      console.error(err);
-      Swal.fire('Something went wrong');
-    }
-  }
-});
-
-
-    
-</script>
-
-
-
+</body>
 </html>

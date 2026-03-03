@@ -9,6 +9,10 @@ const getOfferlist = async (req, res, next) => {
         const search = req.query.search || ""
         const page = parseInt(req.query.page) || 1
         const limit = 6
+        const today = new Date()
+        await Offer.updateMany({endDate: { $lt: today },isActive: true},
+            { $set: { isActive: false } }
+          )
 
         let filter = {}
         if (search) {

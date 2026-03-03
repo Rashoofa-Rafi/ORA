@@ -27,12 +27,17 @@ const couponSchema= new mongoose.Schema({
         enum: ['PERCENTAGE', 'FLAT'],
         required:true
     },
-    maxDiscountAmount:{
-        type:Number
+    maxDiscount:{
+        type:Number,
+        defualt:null
     },
     isActive:{
         type:Boolean,
         default:true
+    },
+    isDeleted:{
+        type:Boolean,
+        default:false
     },
     usageLimit:{
         type:Number,

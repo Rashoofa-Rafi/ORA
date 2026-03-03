@@ -283,24 +283,30 @@ await product.save()
   }
 };
 
-const deleteProduct = async (req, res, next) => {
+const toggleProductStatus = async (req, res, next) => {
   try {
-    const productId = req.params.id
-    const updated = await Product.findByIdAndUpdate(productId, { isListed: false })
+    const productId = req.params.id;
 
-    if (!updated) {
-      throw new AppError("Failed to delete product", HTTP_STATUS.BAD_REQUEST)
+    const product = await Product.findById(productId);
 
+    if (!product) {
+      throw new AppError("Product not found", HTTP_STATUS.NOT_FOUND);
     }
 
-    return res.status(HTTP_STATUS.CREATED).json({
+    product.isListed = !product.isListed;
+    await product.save();
+
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: "Product deleted successfully",
+      message: product.isListed
+        ? "Product unblocked successfully"
+        : "Product blocked successfully",
     });
+
   } catch (err) {
-    next(new AppError(err.message, HTTP_STATUS.INTERNAL_SERVER_ERROR))
+    next(new AppError(err.message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
-}
+};
 
 
 module.exports = {
@@ -309,5 +315,5 @@ module.exports = {
   addProduct,
   geteditProduct,
   editProduct,
-  deleteProduct
+  toggleProductStatus
 }

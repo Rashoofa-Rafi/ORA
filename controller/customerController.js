@@ -79,21 +79,7 @@ const blockStatus= async(req,res,next)=>{
     }
 
     const isBlocked = action === 'block'
-     if (isBlocked) {
-      const activeOrderCount = await Order.countDocuments({
-        userId: id,
-        orderStatus: {
-          $nin: ["delivered", "cancelled", "returned"]
-        }
-      });
-
-      if (activeOrderCount > 0) {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          success: false,
-          message: "Customer has active orders. Blocking not allowed."
-        });
-      }
-    }
+     
     await Customer.findByIdAndUpdate(id, { isBlocked });
         res.status(HTTP_STATUS.CREATED).json({
             success:true,

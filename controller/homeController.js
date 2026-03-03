@@ -4,6 +4,8 @@ const Variants=require('../models/varientSchema');
 const HTTP_STATUS = require('../middleware/statusCode');
 const AppError=require('../config/AppError')
 const User=require('../models/userSchema')
+const Cart=require('../models/cartSchema')
+const Wishlist=require('../models/wishlistSchema')
 
 const loadHome=async(req,res,next)=>{
  try {
@@ -46,12 +48,30 @@ const loadHome=async(req,res,next)=>{
         image: firstVariant?.images?.[0] 
       }
     })
+    const userId = req.session.user;
+
+let cartCount = 0;
+let wishlistCount = 0;
+
+if (userId) {
+   const cart = await Cart.findOne({ userId });
+   if (cart) {
+      cartCount = cart.totalItem;
+   }
+
+   const wishlist = await Wishlist.findOne({ userId });
+   if (wishlist) {
+      wishlistCount = wishlist.items.length;
+   }
+}
 
     return res.render('user/home', {
       
       categories,
       latestProducts,
       topLaunches,
+      cartCount,
+   wishlistCount,
       query: req.query
     });
 
@@ -59,24 +79,15 @@ const loadHome=async(req,res,next)=>{
    next(new AppError(err.message ,HTTP_STATUS.INTERNAL_SERVER_ERROR))
   }
 };
-const logout = (req, res,next) => {
-   req.logout(err => {
-    if (err) {
-      console.error("Passport logout error:", err);
-      return next(err);
-    }
-  req.session.destroy((err) => {
-    if (err) {
-      console.error("Error destroying session:", err);
-      return res.redirect("/user/home");
-    }
+const logout = (req, res, next) => {
+  req.logout(err => {
+    if (err) return next(err);
 
-    res.clearCookie("connect.sid");
-    res.setHeader('Cache-Control', 'no-store')
+    delete req.session.user;   
+    
+    res.setHeader('Cache-Control', 'no-store');
     return res.redirect("/user/login");
   });
-
-})
 };
 const getdeleteAccount=async(req,res,next)=>{
   try {
@@ -87,7 +98,7 @@ const getdeleteAccount=async(req,res,next)=>{
 }
 const deleteAccount=async(req,res,next)=>{
   try {
-    const userId=req.session.user
+    const userId=req.session.user 
     if(!userId){
       throw new AppError('please login',HTTP_STATUS.UNAUTHORIZED)
 
@@ -107,12 +118,8 @@ const deleteAccount=async(req,res,next)=>{
     user.deletedAt=new Date()
     await user.save()
 
-    req.session.destroy((err) => {
-      if (err) {
-        console.error("Session destroy error:", err);
-      }
-      return res.redirect("/user/login");
-    });
+    delete req.session.user;
+    
 
     return res.status(HTTP_STATUS.OK).json({
   success: true,

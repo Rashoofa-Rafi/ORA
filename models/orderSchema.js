@@ -79,7 +79,11 @@ const couponSchema=new mongoose.Schema({
   discountAmount: {
     type: Number,
     default: 0
-  }
+  },
+  minOrderPrice: Number,
+  discountType: String,
+  discountValue: Number,
+  maxDiscount: Number
 
 },{_id:false})
 
@@ -166,7 +170,7 @@ const orderSchema = new mongoose.Schema({
      status: {
       type: String,
       enum: ['PENDING', 'PAID', 'FAILED'],
-      defualt:'PENDING'
+      default:'PENDING'
     },
     razorpay: {
      orderId: String,

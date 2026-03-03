@@ -7,7 +7,7 @@ const IsUserLoggedOut = async (req, res, next) => {
       const user = await User.findById(req.session.user);
 
       if (user && user.isBlocked) {
-        req.session.destroy();
+        delete req.session.user;
         return res.render("user/login", {
           message: "Your account has been blocked by admin.",
         });
@@ -35,13 +35,13 @@ const IsUserAuthenticated = async (req, res, next) => {
     const user = await User.findById(req.session.user);
 
     if (!user) {
-      req.session.destroy();
+      delete req.session.user;
       return res.redirect("/user/signup");
     }
 
    
     if (user.isBlocked) {
-      req.session.destroy();
+      delete req.session.user;
       return res.render("user/login", {
         message: "Your account has been blocked by admin.",
       });
@@ -84,13 +84,13 @@ const IsAdminAuthenticated = async (req, res, next) => {
 
     
     if (!admin) {
-      req.session.destroy();
+      delete req.session.admin;
       return res.redirect("/admin/login");
     }
 
    
     if (admin.role !== "admin") {
-      req.session.destroy();
+      delete req.session.admin;
       return res.redirect("/admin/login");
     }
 

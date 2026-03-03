@@ -66,100 +66,71 @@
           <button class="bg-black text-white px-4 py-2 rounded text-sm">Search</button>
           <a href="/user/profile/orders" class="bg-yellow-400 text-white px-4 py-2 rounded text-sm">Clear</a>
 
+      </form>
+   </div>
 
+   <% if (orders && orders.length > 0) { %>
 
-        </form>
+    <% orders.forEach(order => { %>
+
+      <div class="border rounded-lg p-4 mb-4 hover:bg-gray-50">
+
+        <div class="flex justify-between items-center">
+
+          <!-- LEFT INFO -->
+          <div class="cursor-pointer flex-1"
+               onclick="window.location.href='/user/profile/orders/<%= order.orderId %>'">
+
+            <p class="font-semibold text-sm">
+              Order ID: <%= order.orderId %>
+            </p>
+
+            <p class="text-xs text-gray-500">
+              Placed on: <%= order.createdAt.toDateString() %>
+            </p>
+
+            <p class="text-xs mt-1">
+              Status:
+              <span class="<%=
+                order.orderStatus === 'cancelled' ? 'text-red-600' :
+                order.orderStatus === 'delivered' ? 'text-green-600' :
+                'text-yellow-600'
+              %>">
+                <%= order.orderStatus %>
+              </span>
+            </p>
+
+            <p class="text-xs">
+              Payment: <%= order.payment.status %>
+            </p>
+          </div>
+
+          <!-- RIGHT SIDE -->
+          <div class="text-right text-sm space-y-2">
+
+            <p>Total Items: <%= order.orderItems.length %></p>
+            <p>Total Amount: ₹<%= order.finalAmount %></p>
+
+            <% if (order.payment.status === "PENDING" ||order.payment.status==='FAILED') { %>
+              <button
+                class="retryBtn bg-yellow-500 text-white px-3 py-1 rounded text-xs"
+                data-order="<%= order.orderId %>">
+                Retry Payment
+              </button>
+            <% } %>
+
+          </div>
+
+        </div>
 
       </div>
-      <% const retryShown={}; %>
-        <% if (orders && orders.length> 0) { %>
-          <% orders.forEach(item=> { %>
 
-            <div class="orderRow border rounded-lg p-4 mb-4 hover:bg-gray-50 cursor-pointer"
-              data-href="/user/profile/orders/<%= item.orderId %>/items/<%= item.itemId %>">
+    <% }) %>
 
-              <div class="flex gap-4">
-                <img src="<%= item.image %>" class="w-16 h-16 object-cover rounded">
+  <% } else { %>
+    <p class="text-sm text-gray-500">No orders found.</p>
+  <% } %>
 
-                <div class="flex-1">
-                  <p class="text-sm font-medium">
-                    <%= item.productName %>
-                  </p>
-
-                  <p class="text-xs text-gray-500">
-                    Order ID: <%= item.orderId %>
-                  </p>
-
-                  <p class="text-xs">Qty: <%= item.quantity %>
-                  </p>
-                  
-
-                  <p class="text-xs mt-1">
-                    Item Status:
-                    <span class="font-medium
-              <%= item.itemStatus === 'cancelled' || item.itemStatus === 'returned'
-                ? 'text-red-600'
-                : item.itemStatus === 'delivered' || item.itemStatus === 'shipped'
-                ? 'text-green-600'
-                : 'text-yellow-600' %>">
-                      <%= item.itemStatus %>
-                    </span>
-                  </p>
-                </div>
-                <div class="text-right text-sm space-y-2">
-                  <% if (item.itemStatus==='delivered' ) { %>
-                    <button class="returnBtn bg-black text-white px-3 py-1 rounded text-xs"
-                      data-order="<%= item.orderId %>" data-item="<%= item.itemId %>">
-                      Return
-                    </button>
-                    <% } %>
-
-                      <% if (item.itemStatus==='pending' || item.itemStatus==='confirmed' ) { %>
-                        <button class="cancelBtn bg-black text-white px-3 py-1 rounded text-xs"
-                          data-order="<%= item.orderId %>" data-item="<%=item.itemId %>">
-                          Cancel
-                        </button>
-                        <% } %>
-
-                          <% if ( item.paymentStatus==='FAILED' ||item.paymentStatus==='PENDING' && !retryShown[item.orderId] ) { %>
-
-                            <% retryShown[item.orderId]=true; %>
-
-                              <button class="retryBtn bg-yellow-500 text-white px-3 py-1 rounded text-xs"
-                                data-order="<%= item.orderId %>">
-                                Retry Payment
-                              </button>
-
-                              <% } %>
-
-
-
-
-                </div>
-              </div>
-
-            </div>
-
-
-            <% }) %>
-
-              <% } else { %>
-                <p class="text-sm text-gray-500">No orders found.</p>
-                <% } %>
-  </div>
-  </div>
-  <div id="reasonModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-
-    <div class="bg-white p-5 rounded w-80">
-      <h3 id="modalTitle" class="font-semibold mb-2"></h3>
-
-      <textarea id="reasonInput" class="w-full border p-2 text-sm" placeholder="Enter reason" required></textarea>
-      <div class="flex justify-end gap-2 mt-3">
-        <button onclick="closeModal()" class="text-sm">Cancel</button>
-        <button id="confirmBtn" class="bg-black text-white px-3 py-1 text-sm rounded"> Confirm</button>
-      </div>
-    </div>
-  </div>
 
   <div class="mt-4 flex justify-center items-center space-x-2">
     <a href="/user/orders?page=<%= page-1 %>&search=<%= search  %>&status=<%= status || '' %>"
@@ -186,47 +157,16 @@
     <script>
       lucide.createIcons();
 
-      let currentAction = '';
-      let orderId = '';
-      let itemId = '';
 
-      function openModal(action, oId, iId) {
-        currentAction = action;
-        orderId = oId;
-        itemId = iId;
 
-        document.getElementById('modalTitle').innerText =
-          action === 'cancel' ? 'Cancel Item' : 'Return Item';
-
-        document.getElementById('reasonInput').value = '';
-        document.getElementById('reasonModal').classList.remove('hidden');
-      }
-
-      function closeModal() {
-        document.getElementById('reasonModal').classList.add('hidden');
-      }
-
-      // Row click navigation
-      document.querySelectorAll('.orderRow').forEach(row => {
-        row.addEventListener('click', function () {
-          window.location.href = row.dataset.href;
-        });
-      });
-
-      // Cancel/Return butto
-      document.querySelectorAll('.cancelBtn, .returnBtn').forEach(btn => {
-        btn.addEventListener('click', function (e) {
-          e.stopPropagation(); 
-          const action = btn.classList.contains('cancelBtn') ? 'cancel' : 'return';
-          openModal(action, btn.dataset.order, btn.dataset.item);
-        });
-      });
-      // Retry payment button
-      document.querySelectorAll('.retryBtn').forEach(btn => {
+ // Retry payment button
+ document.querySelectorAll('.retryBtn').forEach(btn => {
   btn.addEventListener('click', async function (e) {
     e.stopPropagation();
 
+
     const orderId = btn.dataset.order;
+
 
     const confirmResult = await Swal.fire({
       title: 'Retry payment?',
@@ -237,7 +177,9 @@
       cancelButtonText: 'Cancel'
     });
 
+
     if (!confirmResult.isConfirmed) return;
+
 
     try {
       const res = await fetch(`/user/profile/orders/${orderId}/retry-payment`, {
@@ -245,15 +187,19 @@
         headers: { 'Content-Type': 'application/json' }
       });
 
+
       // Log response for debugging
       console.log('Retry fetch response', res.status, res.statusText);
+
 
       const data = await res.json();
       console.log('Retry fetch data', data);
 
+
       if (!res.ok || !data.success) {
         return Swal.fire('Error', data.message || 'Unable to retry payment', 'error');
       }
+
 
       // ✅ Open Razorpay for retry
       openRazorpay({
@@ -261,6 +207,7 @@
         amount: data.amount,
         orderId: data.orderId
       });
+
 
     } catch (err) {
       console.error('Retry fetch error', err);
@@ -279,6 +226,7 @@ function openRazorpay({ razorpayOrderId, amount, orderId }) {
               await verifyPayment({ ...response, orderId });
             },
 
+
             modal: {
               ondismiss: async function () {
                 await fetch(`/user/profile/orders/${orderId}/payment-failed`, {
@@ -295,11 +243,14 @@ function openRazorpay({ razorpayOrderId, amount, orderId }) {
                   window.location.href = '/user/profile/orders';
                 });
 
+
               }
             },
 
+
             theme: { color: "#3399cc" }
           };
+
 
           const rzp = new Razorpay(options)
           rzp.on('payment.failed', async function (response) {
@@ -313,6 +264,7 @@ function openRazorpay({ razorpayOrderId, amount, orderId }) {
               })
             });
 
+
             Swal.fire({
               icon: 'error',
               title: 'Payment Failed',
@@ -324,8 +276,10 @@ function openRazorpay({ razorpayOrderId, amount, orderId }) {
             });
           });
 
+
           rzp.open();
         };
+
 
 async function verifyPayment(payload) {
           try {
@@ -335,7 +289,9 @@ async function verifyPayment(payload) {
               body: JSON.stringify(payload)
             });
 
+
             const data = await res.json();
+
 
             if (!res.ok || !data.success) {
               await fetch(`/user/profile/orders/${payload.orderId}/payment-failed`, {
@@ -352,54 +308,20 @@ async function verifyPayment(payload) {
               return window.location.href = '/user/profile/orders';
 
 
+
+
             }
+
 
             // ✅ Success
             window.location.href = `/user/order-success/${data.orderId}`;
+
 
           } catch (err) {
             Swal.fire('Error', 'Something went wrong', 'error');
           }
         }
-      // Confirm modal
-      document.getElementById('confirmBtn').addEventListener('click', async () => {
-        const reason = document.getElementById('reasonInput').value.trim();
-        if (!reason) {
-          Swal.fire({ icon: 'warning', text: 'Reason is required' });
-          return;
-        }
 
-        const confirmResult = await Swal.fire({
-          title: currentAction === 'cancel'
-            ? 'Are you sure you want to cancel this item?'
-            : 'Are you sure you want to return this item?',
-          text: 'This action cannot be undone',
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonText: 'Yes, proceed',
-          cancelButtonText: 'Cancel',
-          reverseButtons: true
-        });
-
-        if (!confirmResult.isConfirmed) return;
-
-        const url = `/user/profile/orders/${orderId}/items/${itemId}/${currentAction}`;
-
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reason })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          await Swal.fire({ icon: 'success', title: data.message });
-          location.reload();
-        } else {
-          Swal.fire(data.message || 'Something went wrong');
-        }
-      });
     </script>
     </body>
     </html>
