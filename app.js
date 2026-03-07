@@ -90,7 +90,9 @@ app.use('/admin', (req, res, next) => {
 
 app.use('/user',userRouter)
 app.use('/admin',adminRouter)
-
+app.get("/", (req, res) => {
+  res.redirect("/user/home"); // optional root route
+});
 app.use(notFound)
 app.use(errorHandler)
 

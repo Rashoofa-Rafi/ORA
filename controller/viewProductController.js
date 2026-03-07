@@ -3,6 +3,7 @@ const Variant = require('../models/varientSchema')
 const Category=require('../models/categorySchema')
 const Subcategory=require('../models/subcategorySchema')
 const Offer=require('../models/offerSchema.js')
+const { calculateItemPrice } = require('../config/offerCalculator')
 const HTTP_STATUS = require('../middleware/statusCode.js');
 const AppError=require('../config/AppError')
 const BRAND_OPTIONS = ['CASIO','TITAN','FOSSIL','FASTRACK','ROLEX','NAVIFORCE','OTHERS']
@@ -10,17 +11,7 @@ const MATERIAL_OPTIONS = ['Metal','Rubber','Leather']
 const DIALTYPE_OPTIONS = ['Analogue','Digital']
 const listProducts = async (req, res, next) => {
   try {
-    let {
-      search,
-      category,
-      subcategory,
-      brand,
-      material,
-      dialType,
-      sort,
-      page,
-    } = req.query;
-
+    let {search,category,subcategory,brand,material,dialType,sort,page,} = req.query;
     page = parseInt(page) || 1;
     const limit = 8;
     const skip = (page - 1) * limit;
@@ -46,7 +37,7 @@ const listProducts = async (req, res, next) => {
       });
       filter.subcategory_Id = subcategoryDoc ? subcategoryDoc._id : null;
     }
-
+    
     if (brand) filter.brand = brand;
     if (material) filter.material = material;
     if (dialType) filter.dialType = dialType;
@@ -57,10 +48,9 @@ const listProducts = async (req, res, next) => {
       if (!isNaN(min)) variantPriceMatch.$gte = min;
       if (!isNaN(max)) variantPriceMatch.$lte = max;
     }
-
+    const now = new Date()
     const pipeline = [
       { $match: filter },
-
       {
         $lookup: {
           from: "variants",
@@ -69,42 +59,29 @@ const listProducts = async (req, res, next) => {
           as: "variants",
         },
       },
-
       { $unwind: "$variants" },
+      ...(req.query.priceRange ? [{ $match: { "variants.price": variantPriceMatch } }] : []),
+      {
+        $group: {
+          _id: "$_id",
+          productname: { $first: "$productname" },
+          description: { $first: "$description" },
+          brand: { $first: "$brand" },
+          category_Id: { $first: "$category_Id" },
+          firstVariant: { $first: "$variants" },
+        },
+      },
+      ...(sort === "low-high"
+        ? [{ $sort: { "firstVariant.price": 1 } }]
+        : sort === "high-low"
+        ? [{ $sort: { "firstVariant.price": -1 } }]
+        : sort === "a-z"
+        ? [{ $sort: { productname: 1 } }]
+        : sort === "z-a"
+        ? [{ $sort: { productname: -1 } }]
+        : []),
     ];
 
-    // Price filter
-    if (req.query.priceRange) {
-      pipeline.push({
-        $match: {
-          "variants.price": variantPriceMatch,
-        },
-      });
-    }
-
-    // Group (FIRST variant only — no sorting before this)
-    pipeline.push({
-      $group: {
-        _id: "$_id",
-        productname: { $first: "$productname" },
-        description: { $first: "$description" },
-        brand: { $first: "$brand" },
-        firstVariant: { $first: "$variants" },
-      },
-    });
-
-    // Product-level sorting
-    if (sort === "low-high") {
-      pipeline.push({ $sort: { "firstVariant.price": 1 } });
-    } else if (sort === "high-low") {
-      pipeline.push({ $sort: { "firstVariant.price": -1 } });
-    } else if (sort === "a-z") {
-      pipeline.push({ $sort: { productname: 1 } });
-    } else if (sort === "z-a") {
-      pipeline.push({ $sort: { productname: -1 } });
-    }
-
-    // Count after filters
     const totalResult = await Product.aggregate(pipeline);
     const totalProducts = totalResult.length;
     const totalPages = Math.ceil(totalProducts / limit);
@@ -114,16 +91,28 @@ const listProducts = async (req, res, next) => {
     pipeline.push({ $limit: limit });
 
     const productsData = await Product.aggregate(pipeline);
+    const productsForUser = await Promise.all(
+      productsData.map(async (p) => {
+        const variant = p.firstVariant;
+        if (!variant) return null;
 
-    const productsForUser = productsData.map((p) => ({
-      _id: p._id,
-      name: p.productname,
-      description: p.description,
-      mainImage: p.firstVariant?.images?.[0], // first variant image
-      price: p.firstVariant?.price,
-      brand: p.brand,
-      variantId: p.firstVariant?._id,
-    }));
+        const priceData = await calculateItemPrice(p, variant, p.category_Id);
+
+        return {
+          _id: p._id,
+          name: p.productname,
+          description: p.description,
+          mainImage: variant?.images?.[0],
+          price: priceData.finalPrice,
+          originalPrice: priceData.discountAmount ? priceData.basePrice : null,
+          offerPercentage: priceData.discountAmount
+            ? Math.round((priceData.discountAmount / priceData.basePrice) * 100)
+            : null,
+          brand: p.brand,
+          variantId: variant?._id,
+        };
+      })
+    );
 
     return res.render("user/allProduct", {
       products: productsForUser,
@@ -132,11 +121,12 @@ const listProducts = async (req, res, next) => {
       query: req.query,
       category,
       subcategory,
+      noResults: productsForUser.length === 0,
       brandOptions: BRAND_OPTIONS,
       materialOptions: MATERIAL_OPTIONS,
       dialTypeOptions: DIALTYPE_OPTIONS,
     });
-
+    
   } catch (err) {
     next(new AppError(err.message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
@@ -148,90 +138,28 @@ const getProductDetails = async (req, res,next) => {
     const productId = req.params.id;
     const selectedVariantId = req.query.variant
 
-    // 1️⃣ Fetch product data
     const product = await Product.findById(productId)
     .populate('category_Id')
     .populate('subcategory_Id')
 
     if (!product) return res.status(404).send("Product not found");
-
-    // 2️⃣ Fetch variants separately because they are in different collection
     const variants = await Variant.find({ product_id: productId });
 
     if (!variants.length) {
       return res.status(404).send("No variants available for this product");
     }
 
-    // 3️⃣ Determine active variant
-    let activeVariant;
+   let activeVariant;
 
     if (selectedVariantId) {
       activeVariant = variants.find(v => v._id.toString() === selectedVariantId);
     }
-
-    // default → the first one
     if (!activeVariant) {
       activeVariant = variants[0];
     }
-     const basePrice = activeVariant.price;
+    const priceData = await calculateItemPrice(product, activeVariant, product.category_Id._id);
 
-    // 4️⃣ Calculate active offer
-    const now = new Date();
-    let activeOffer = null;
-    let finalPrice = basePrice;
-
-    // PRODUCT OFFER (priority)
-    const productOffer = await Offer.findOne({
-      type: "PRODUCT",
-      productId: product._id,
-      isActive: true,
-      startDate: { $lte: now },
-      endDate: { $gte: now },
-    });
-    if (productOffer) {
-      if (productOffer.discountType === "PERCENTAGE") {
-        finalPrice = basePrice - (basePrice * productOffer.discountValue) / 100;
-      } else {
-        finalPrice = basePrice - productOffer.discountValue;
-      }
-      activeOffer = {
-        type: "product",
-        percentage:
-          productOffer.discountType === "PERCENTAGE"
-            ? productOffer.discountValue
-            : Math.round((productOffer.discountValue / basePrice) * 100),
-        discountedPrice: finalPrice,
-        originalPrice: basePrice,
-      };
-    } else {
-      // CATEGORY OFFER (fallback)
-      const categoryOffer = await Offer.findOne({
-        type: "CATEGORY",
-        categoryId: product.category_Id._id,
-        isActive: true,
-        startDate: { $lte: now },
-        endDate: { $gte: now },
-      });
-
-      if (categoryOffer) {
-        if (categoryOffer.discountType === "PERCENTAGE") {
-          finalPrice = basePrice - (basePrice * categoryOffer.discountValue) / 100;
-        } else {
-          finalPrice = basePrice - categoryOffer.discountValue;
-        }
-        activeOffer = {
-          type: "category",
-          percentage:
-            categoryOffer.discountType === "PERCENTAGE"
-              ? categoryOffer.discountValue
-              : Math.round((categoryOffer.discountValue / basePrice) * 100),
-          discountedPrice: finalPrice,
-          originalPrice: basePrice,
-        };
-      }
-    }
-
-    // 4️⃣ Prepare structured response
+    //  Prepare structured response
     const productData = {
       id: product._id,
       name: product.productname,
@@ -246,11 +174,20 @@ const getProductDetails = async (req, res,next) => {
       activeVariant: {
         id: activeVariant._id,
         color: activeVariant.color,
-        price: finalPrice,
+        price: priceData.finalPrice,
         images: activeVariant.images,
         stock: activeVariant.stock
       },
-      activeOffer,
+      activeOffer: priceData.appliedOffer
+        ? {
+            type: priceData.appliedOffer.type,
+            discountedPrice: priceData.finalPrice,
+            originalPrice: priceData.basePrice,
+            percentage: priceData.appliedOffer.discountType === 'PERCENTAGE'
+              ? priceData.appliedOffer.discountValue
+              : Math.round((priceData.appliedOffer.discountValue / priceData.basePrice) * 100),
+          }
+        : null,
     };
    const breadcrumb = [
   { name: "Home", url: "/user/allproduct" },

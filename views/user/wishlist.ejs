@@ -50,15 +50,22 @@
                                     <div class="p-4 flex-1 flex flex-col justify-between">
 
                                         <div>
+                                            
                                             <h2 class="font-semibold text-lg">
                                                 <%= item.productId?.productname || 'Product unavailable' %>
                                             </h2>
 
-                                            <p class="text-yellow-600 font-bold mt-1">
-                                                ₹<%= item.variantId?.price || 0 %>
-                                            </p>
+                                            <% if(item.offerPercentage !== null && item.offerPercentage !== undefined) { %>
+                                                <div class="flex items-center gap-2 mt-1">
+                                                  <p class="text-yellow-600 font-bold">₹<%= item.finalPrice ? item.finalPrice : item.variantId.price %></p>
+                                                  <p class="text-gray-400 line-through text-sm">₹<%= item.originalPrice %></p>
+                                                  <span class="bg-green-500 text-white text-xs px-2 py-0.5 rounded"><%= item.offerPercentage %>%OFF</span>
+                                                </div>
+                                              <% } else { %>
+                                                <p class="text-yellow-600 font-bold mt-1">₹<%= item.originalPrice %></p>
+                                              <% } %>
                                         </div>
-
+                                        
                                         <div class="flex items-center justify-between mt-4">
                                             <button class="moveBtn text-green-500 text-sm"
                                                 type="button"
@@ -81,15 +88,20 @@
                                     <%- JSON.stringify(
                                         wishlist.items.map(item => ({
                                             productId: item.productId?._id,
-                                            variantId: item.variantId?._id
+                                            variantId: item.variantId?._id,
+                                            finalPrice: item.finalPrice,
+                        originalPrice: item.originalPrice,
+                        offerPercentage: item.offerPercentage
+                                            
                                         }))
                                     ) %>
                                 </script>
+                            </div>
+                        </div>
                                     <%}%>
 
 
-                        </div>
-                    </div>
+                        
         </div>
 </body>
 <%- include("../partials/user/footer") %>

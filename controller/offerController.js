@@ -58,21 +58,27 @@ const addOffer = async (req, res, next) => {
             startDate,
             endDate
         } = req.body;
+        if (!name || !discountType || !discountValue) {
+            throw new AppError("Missing required fields", HTTP_STATUS.BAD_REQUEST);
+        }
 
         if (type === "PRODUCT" && !productId) {
-            throw new Error("Product offer requires productId",HTTP_STATUS.BAD_REQUEST);
+            throw new AppError("Product offer requires productId",HTTP_STATUS.BAD_REQUEST);
         }
 
         if (type === "CATEGORY" && !categoryId) {
-            throw new Error("Category offer requires categoryId",HTTP_STATUS.BAD_REQUEST);
+            throw new AppError("Category offer requires categoryId",HTTP_STATUS.BAD_REQUEST);
         }
 
         if (discountType === "PERCENT" && discountValue > 90) {
-            throw new Error("Percent discount too high",HTTP_STATUS.BAD_REQUEST);
+            throw new AppError("Percent discount too high",HTTP_STATUS.BAD_REQUEST);
+        }
+        if (discountValue <= 0) {
+            throw new AppError("Discount must be greater than 0", HTTP_STATUS.BAD_REQUEST);
         }
 
         if (new Date(startDate) >= new Date(endDate)) {
-            throw new Error("Invalid offer date range",HTTP_STATUS.BAD_REQUEST);
+            throw new AppError("Invalid offer date range",HTTP_STATUS.BAD_REQUEST);
         }
         const offerQuery = {type,
             isActive:true,

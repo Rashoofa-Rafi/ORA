@@ -2,9 +2,7 @@ const AppError = require("../config/AppError");
 const HTTP_STATUS = require("../middleware/statusCode");
 
 const notFound = (req, res, next) => {
-  next(
-    new AppError(`Route not found: ${req.originalUrl}`, HTTP_STATUS.NOT_FOUND)
-  );
-};
+  res.status(404).render("user/page404"); 
+}
 
 module.exports = notFound;

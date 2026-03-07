@@ -13,7 +13,9 @@
     
     <div class="container mx-auto px-4 py-8">
         <p class="text-center text-gray-600 mt-2">Stock Up Your Fashion Wardrobe With A Perfect Style. .</p>
-
+        <% if (noResults) { %>
+          <p class="text-red-500 text-center font-medium mt-4">Products not available</p>
+        <% } %>
         <!-- Category Filter Buttons -->
         <div class="flex justify-center gap-3 mt-6">
             <button onclick="window.location.href='/user/allproduct' "  class="px-6 py-2 border border-gray-800 hover:bg-gray-800 hover:text-white transition rounded-full">ALL</button>
@@ -150,7 +152,15 @@
 
         <div class="p-4 flex-1 flex flex-col">
           <h2 class="font-semibold text-lg mb-1"><%= product.name %></h2>
-          <p class="font-bold text-yellow-600">₹<%= product.price %></p>
+          <% if(product.offerPercentage) { %>
+            <div class="flex items-center gap-2">
+              <p class="font-bold text-yellow-600">₹<%= product.price %></p>
+              <p class="line-through text-gray-400 text-lg">₹<%= product.originalPrice %></p>
+              <span class="bg-green-500 text-white text-xs px-1 rounded"><%= product.offerPercentage %>%OFF</span>
+            </div>
+          <% } else { %>
+            <p class="font-bold text-yellow-600">₹<%= product.price %></p>
+          <% } %>
         </div>
       </div>
 

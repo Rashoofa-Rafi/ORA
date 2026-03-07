@@ -97,24 +97,7 @@ const cancelOrderItem = async (req, res, next) => {
       throw new AppError('Item cannot be cancelled now', HTTP_STATUS.BAD_REQUEST);
     }
     
-// Check coupon rules
-let subtotalAfterCancel = order.orderItems.reduce((sum, i) => {
-  if (i._id.toString() !== itemId && i.itemStatus !== "cancelled") {
-    return sum + (i.price * i.quantity);
-  }
-  return sum;
-}, 0);
 
-const coupon = order.coupons && order.coupons.length > 0
-? order.coupons[0]
-: null;
-
-if (coupon && subtotalAfterCancel < coupon.minOrderPrice) {
-throw new AppError(
-  "Item cannot be cancelled because applied coupon requires minimum order value.",
-  HTTP_STATUS.BAD_REQUEST
-);
-}
 
     // update item
     item.itemStatus = 'cancelled';
@@ -196,30 +179,7 @@ const returnOrderItem = async (req, res, next) => {
     if (item.itemStatus !== 'delivered') {
       throw new AppError('Only delivered item can be returned', HTTP_STATUS.BAD_REQUEST);
     }
-    // ✅ Check coupon minimum order rule before allowing return
-if (order.coupons && order.coupons.length > 0) {
-
-  let totalAfterReturn = order.orderItems.reduce((sum, i) => {
-    if (
-      i._id.toString() !== itemId &&
-      i.itemStatus !== "cancelled" &&
-      i.itemStatus !== "returned"
-    ) {
-      return sum + (i.finalItemAmount || i.price * i.quantity);
-    }
-    return sum;
-  }, 0);
-
-  const coupon = order.coupons[0]; // assuming one coupon
-
-  if (coupon && coupon.minOrderPrice && totalAfterReturn < coupon.minOrderPrice) {
-    throw new AppError(
-      "Item cannot be returned because applied coupon requires minimum order value.",
-      HTTP_STATUS.BAD_REQUEST
-    );
-  }
-}
-
+   
     item.itemStatus = 'return_requested';
     item.returnReason = reason;
 
@@ -385,3 +345,4 @@ module.exports = {
   returnOrderItem,
   downloadInvoice
 }
+

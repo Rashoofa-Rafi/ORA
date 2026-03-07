@@ -71,11 +71,32 @@
                                                 <%= item.product?.productname || 'Product unavailable' %>
 
                                             </h2>
+                                            <% if (item.finalPrice && item.appliedOffer) { %>
+                                                <!-- Show offer -->
+                                                <div class="flex items-center gap-2 mt-1">
+                                                  <p class="text-yellow-600 font-bold">
+                                                    ₹<%= item.finalPrice %>
+                                                  </p>
+                                            
+                                                  <p class="text-gray-400 line-through text-lg">
+                                                    ₹<%= item.variant?.price %>
+                                                  </p>
+                                            
+                                                  <span class="bg-green-500 text-white text-xs px-2 py-0.5 rounded">
+                                                    <%= item.appliedOffer.discountType === 'PERCENTAGE'
+                                                          ? item.appliedOffer.discountValue
+                                                          : Math.round((item.appliedOffer.discountValue / item.variant.price) * 100)
+                                                      %>%OFF
+                                                  </span>
+                                                </div>
+                                              <% } else { %>
+                                               
+                                                <p class="text-yellow-600 font-bold mt-1">
+                                                  ₹<%= item.variant ? item.variant.price : 0 %>
+                                                </p>
+                                              <% } %>
 
-                                            <p class="text-yellow-600 font-bold mt-1">
-                                                ₹<%= item.variant ? item.variant.price : 0 %>
-
-                                            </p>
+                                            
 
                                             <% if (!item.isAvailable) { %>
                                                 <p class="text-red-500 text-sm mt-1">

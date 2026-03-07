@@ -63,8 +63,7 @@ const getOrderDetailPage = async (req, res, next) => {
     const orderId=req.params.orderId
     const order = await Orders.findOne({orderId})
       .populate('userId')
-      // .populate('orderItems.productId')
-      // .populate('orderItems.productId').select('price')
+      
 
 
     res.render('admin/order-details', { order });
@@ -187,7 +186,7 @@ const approveReturn = async (req, res, next) => {
     }
 
     item.itemStatus = 'returned';
-    if (item.returnReason && item.returnReason.toLowerCase() === 'damaged') {
+    if (item.returnReason && item.returnReason.toLowerCase() === 'product damaged') {
         await Variant.findByIdAndUpdate(item.variantId, {
         $inc: { damagedStock: item.quantity }
       });

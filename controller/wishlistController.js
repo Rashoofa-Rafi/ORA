@@ -3,31 +3,68 @@ const Cart = require('../models/cartSchema')
 const Variant = require('../models/varientSchema')
 const Product = require('../models/productSchema')
 const User = require('../models/userSchema')
+const Offer=require('../models/offerSchema')
+const { calculateItemPrice } = require('../config/offerCalculator')
 const AppError = require('../config/AppError')
 const HTTP_STATUS = require('../middleware/statusCode')
 const notFound = require('../middleware/notFound')
 
 const getWishlist = async (req, res, next) => {
     try {
-        const userId = req.session.user
-        if (!userId) {
-            throw new AppError('Please login', HTTP_STATUS.UNAUTHORIZED)
-        }
-        const wishlist = await Wishlist.findOne({ userId })
-            .populate('items.productId')
-            .populate('items.variantId')
+      const userId = req.session.user;
+  
+      if (!userId) {
+        throw new AppError("Please login", HTTP_STATUS.UNAUTHORIZED);
+      }
+  
+      
+      const wishlist = await Wishlist.findOne({ userId })
+      .populate({
+        path: "items.productId",
+        populate: { path: "category_Id", select: "_id name" }
+      })
+      .populate({
+        path: "items.variantId",
+        select: "price stock color images"
+      })
+      
+  if (!wishlist || wishlist.items.length === 0) {
+    return res.render("user/wishlist", { wishlist: null });
+  }
 
-        if (!wishlist || wishlist.items.length === 0) {
-            return res.render('user/wishlist', { wishlist: null });
-        }
+  const updatedItems = await Promise.all(
+    wishlist.items.map(async (item) => {
+      const product = item.productId;
+      const variant = item.variantId;
+  
+      if (!product || !variant) return item;
+  
+      const priceData = await calculateItemPrice(
+        product,
+        variant,
+        product.category_Id._id
+      );
+  
+      return {
+        ...item.toObject(),
+        finalPrice: priceData.finalPrice,
+        originalPrice: priceData.discountAmount ? priceData.basePrice : null,
+        offerPercentage: priceData.discountAmount
+          ? Math.round((priceData.discountAmount / priceData.basePrice) * 100)
+          : null
+      };
+    })
+  );
 
-
-        res.render('user/wishlist', { wishlist });
-
+  const wishlistObj = wishlist.toObject();
+wishlistObj.items = updatedItems;
+  
+      res.render("user/wishlist", { wishlist: wishlistObj });
+  
     } catch (err) {
-        next(err)
+      next(err);
     }
-}
+  };
 
 const addToWishlist = async (req, res, next) => {
     try {

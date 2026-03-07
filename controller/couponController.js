@@ -89,9 +89,38 @@ const addCoupon = async (req, res, next) => {
         if (!code || !discountType || !endDate) {
             throw new AppError('Missing required fields', HTTP_STATUS.BAD_REQUEST);
         }
-        if (discountType === 'PERCENTAGE' && !maxDiscount) {
-            throw new AppError('Max discount is required for percentage coupons', HTTP_STATUS.BAD_REQUEST);
+        if (discountValue <= 0) {
+          throw new AppError('Discount value must be greater than 0', HTTP_STATUS.BAD_REQUEST);
+      }
+
+      if (minOrderPrice && minOrderPrice <= 0) {
+          throw new AppError('Minimum order price must be positive', HTTP_STATUS.BAD_REQUEST);
+      }
+      if (discountType === 'PERCENTAGE') {
+
+        if (discountValue > 90) {
+            throw new AppError('Percentage discount too high', HTTP_STATUS.BAD_REQUEST);
+        }
+
+        if (!maxDiscount || maxDiscount <= 0) {
+            throw new AppError('Valid max discount required for percentage coupon', HTTP_STATUS.BAD_REQUEST);
+        }
+    }
+
+   if (discountType === 'FIXED') {
+
+        if (!minOrderPrice) {
+            throw new AppError('Minimum order price required for fixed coupon', HTTP_STATUS.BAD_REQUEST);
+        }
+
+        if (discountValue >= minOrderPrice) {
+            throw new AppError('Discount value cannot be greater than or equal to minimum order price',HTTP_STATUS.BAD_REQUEST)
           }
+    }
+    if (new Date(endDate) <= new Date()) {
+        throw new AppError('End date must be in the future', HTTP_STATUS.BAD_REQUEST);
+    }
+
 
         await Coupon.create({
             code,

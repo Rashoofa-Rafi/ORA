@@ -154,12 +154,17 @@
 <div id="reasonModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
     <div class="bg-white p-5 rounded w-80">
       <h3 id="modalTitle" class="font-semibold mb-2"></h3>
-  
-      <textarea id="reasonInput"
-        class="w-full border p-2 text-sm"
-        placeholder="Enter reason"
-        required>
-      </textarea>
+      <select id="reasonInput" class="w-full border p-2 text-sm" required>
+        <option value="">Select a reason</option>
+        <option value="Changed my mind">Changed my mind</option>
+        <option value="Ordered by mistake">Ordered by mistake</option>
+        <option value="Found better price elsewhere">Found better price elsewhere</option>
+        <option value="Product damaged">Product damaged</option>
+        <option value="Wrong item delivered">Wrong item delivered</option>
+        <option value="Quality not as expected">Quality not as expected</option>
+        <option value="Delayed delivery">Delayed delivery</option>
+        <option value="Duplicate order">Duplicate order</option>
+      </select>
   
       <div class="flex justify-end gap-2 mt-3">
         <button onclick="closeModal()" class="text-sm">Cancel</button>
@@ -188,7 +193,7 @@ function openModal(action, oId, iId) {
       ? 'Enter cancellation reason'
       : 'Enter return reason';
 
-  document.getElementById('reasonInput').value = '';
+  const reason=document.getElementById('reasonInput').value.trim();
   document.getElementById('reasonModal').classList.remove('hidden');
 }
 
