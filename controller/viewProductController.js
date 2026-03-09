@@ -114,7 +114,7 @@ const listProducts = async (req, res, next) => {
       })
     );
 
-    return res.render("user/allProduct", {
+    return res.render("user/allproduct", {
       products: productsForUser,
       totalPages,
       currentPage: page,
