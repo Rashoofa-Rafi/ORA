@@ -2,6 +2,7 @@ const Order = require("../models/orderSchema");
 const mongoose = require("mongoose");
 const PDFDocument = require("pdfkit");
 const ExcelJS = require("exceljs")
+const AppError = require('../config/AppError')
 
 
 const getSalesReport = async (req, res, next) => {
@@ -38,6 +39,7 @@ const getSalesReport = async (req, res, next) => {
     }
 
     if (filter === "custom" && startDate && endDate) {
+      
       dateFilter.createdAt = {
         $gte: new Date(startDate),
         $lte: new Date(endDate)

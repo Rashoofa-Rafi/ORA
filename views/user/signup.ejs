@@ -112,8 +112,7 @@ if(referralInput){
         const Cpassword = document.getElementById('Cpassword').value
         //set a flag for all fields are valid
         let isValid = true;
-
-
+        
         if (fullName === '') {
             Swal.fire({
                 icon: 'error',
@@ -165,7 +164,7 @@ if(referralInput){
             isValid = false;
         }
         //validate password
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
         if (password === '') {
             Swal.fire({
                 icon: 'error',
@@ -203,6 +202,13 @@ if(referralInput){
                 showConfirmButton: false
             })
             isValid = false;
+        }
+        if(!fullName || !password || !email || !mobile){
+            Swal.fire({
+                icon:'error',
+            text:'Please fill all required fields'
+        })
+        isValid = false;
         }
         // stop if validation fails
         if (!isValid) return;

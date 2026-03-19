@@ -9,7 +9,7 @@ const HTTP_STATUS = require('../middleware/statusCode')
 const getWallet=async(req,res,next)=>{
     try {
         const page=parseInt(req.query.page) || 1
-        const limit=4
+        const limit=6
         const userId=req.session.user
         if(!userId){
             throw new AppError('Please login',HTTP_STATUS.UNAUTHORIZED)
@@ -25,8 +25,9 @@ const getWallet=async(req,res,next)=>{
         .skip((page-1)*limit)
         .limit(limit)
 
-        const totalDocument=await WalletTransaction.countDocuments(userId)
+        const totalDocument=await WalletTransaction.countDocuments({userId})
         const totalPages=Math.ceil(totalDocument/limit)
+        
 
         res.render('user/profile/wallet',{
             wallet,

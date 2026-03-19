@@ -30,8 +30,8 @@
         </select>
 
         <div id="customDates" class="flex gap-2 <%= query.filter==='custom'?'':'hidden' %>">
-          <input type="date" name="startDate"  value="<%= query.startDate || '' %>" class="border rounded px-2 py-1 text-sm" />
-          <input type="date" name="endDate" value="<%= query.endDate || '' %>" class="border rounded px-2 py-1 text-sm" />
+          <input type="date" id="startDate" name="startDate"  value="<%= query.startDate || '' %>" class="border rounded px-2 py-1 text-sm" />
+          <input type="date"  id="endDate" name="endDate" value="<%= query.endDate || '' %>" class="border rounded px-2 py-1 text-sm" />
         </div>
 
         <button class="bg-gray-800 text-white px-4 py-2 rounded text-sm">Apply</button>
@@ -41,7 +41,7 @@
   if (filter === 'custom' && startDate && endDate) { %>
   &startDate=<%= startDate %>&endDate=<%= endDate %>
 <% } %>"
-class="bg-red-600 text-white px-4 py-2 rounded text-sm">
+class="export-btn bg-red-600 text-white px-4 py-2 rounded text-sm">
   Export PDF
 </a>
 
@@ -50,7 +50,7 @@ class="bg-red-600 text-white px-4 py-2 rounded text-sm">
   if (filter === 'custom' && startDate && endDate) { %>
   &startDate=<%= startDate %>&endDate=<%= endDate %>
 <% } %>"
-           class="bg-green-600 text-white px-4 py-2 rounded text-sm">
+           class="export-btn bg-green-600 text-white px-4 py-2 rounded text-sm">
           Export Excel
         </a>
       </form>
@@ -221,6 +221,7 @@ class="bg-red-600 text-white px-4 py-2 rounded text-sm">
 </div>
 </body>
 <script>
+ document.addEventListener('DOMContentLoaded', () => {
   const filterSelect = document.getElementById("filterSelect");
   const customDates = document.getElementById("customDates");
 
@@ -231,6 +232,51 @@ class="bg-red-600 text-white px-4 py-2 rounded text-sm">
       customDates.classList.add("hidden");
     }
   });
+
+  document.querySelectorAll('.export-btn').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      const filter = filterSelect.value
+      const startDate = document.getElementById('startDate')?.value
+      const endDate = document.getElementById('endDate')?.value
+
+      if (filter === "custom") {
+        e.preventDefault()
+        if (!startDate || !endDate) {
+          
+          Swal.fire({
+            icon: "error",
+            text: "Start date and End date are required"
+          })
+          return
+        }
+
+        const start = new Date(startDate)
+        const end = new Date(endDate)
+        const today = new Date()
+        today.setHours(0,0,0,0)
+
+        if (start > end) {
+         
+          Swal.fire({
+            icon: "error",
+            text: "Start date cannot be greater than End date"
+          })
+          return
+        }
+
+        if (start > today || end > today) {
+          
+          Swal.fire({
+            icon: "error",
+            text: "Future dates are not allowed"
+          })
+          return
+        }
+        window.location.href = btn.href
+      }
+    })
+  })
+})
 </script>
 
 </html>

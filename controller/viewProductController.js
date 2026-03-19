@@ -62,6 +62,9 @@ const listProducts = async (req, res, next) => {
       { $unwind: "$variants" },
       ...(req.query.priceRange ? [{ $match: { "variants.price": variantPriceMatch } }] : []),
       {
+        $sort: { "variants.price": 1 }
+      },
+      {
         $group: {
           _id: "$_id",
           productname: { $first: "$productname" },
